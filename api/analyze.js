@@ -54,8 +54,10 @@ ${text}
 - ביט ללא מעקב: BIT, ביט, העברה בביט
 - מזומן ללא מעקב: משיכת מזומן, כספומט, ATM
 
-פורמט תשובה - JSON בלבד:
-{"expenses": [{"description": "שם העסק", "amount": 123.45, "category": "קטגוריה"}, ...]}`;
+פורמט תשובה - JSON בלבד, בלי שום טקסט נוסף לפני או אחרי:
+{"expenses": [{"description": "שם העסק", "amount": 123.45, "category": "קטגוריה"}]}
+
+חשוב מאוד: החזר רק JSON תקין, בלי הסברים, בלי markdown, בלי קוד. רק את האובייקט JSON.`;
 
   try {
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -88,11 +90,24 @@ ${text}
 
     const jsonMatch = content.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
-      return res.status(500).json({ error: 'Invalid AI response' });
+      return res.status(500).json({ error: 'Invalid AI response', raw: content });
     }
 
-    const result = JSON.parse(jsonMatch[0]);
-    return res.status(200).json(result);
+    try {
+      // Clean the JSON string from potential issues
+      let jsonStr = jsonMatch[0];
+      jsonStr = jsonStr.replace(/[\u0000-\u001F]+/g, ' '); // Remove control characters
+      jsonStr = jsonStr.replace(/,\s*}/g, '}'); // Remove trailing commas
+      jsonStr = jsonStr.replace(/,\s*]/g, ']'); // Remove trailing commas in arrays
+      
+      const result = JSON.parse(jsonStr);
+      return res.status(200).json(result);
+    } catch (parseError) {
+      return res.status(500).json({ 
+        error: 'Failed to parse AI response: ' + parseError.message,
+        raw: content.substring(0, 500)
+      });
+    }
 
   } catch (error) {
     return res.status(500).json({ error: error.message });
