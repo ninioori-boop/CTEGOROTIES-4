@@ -62,7 +62,13 @@ ${text}
 
     if (!response.ok) {
       const err = await response.json();
-      return res.status(500).json({ error: err.error?.message || 'OpenAI error' });
+      const errorMessage = err.error?.message || 'OpenAI error';
+      console.error('OpenAI Error:', JSON.stringify(err));
+      return res.status(500).json({ 
+        error: errorMessage,
+        details: err.error,
+        keyPreview: API_KEY ? API_KEY.substring(0, 10) + '...' + API_KEY.substring(API_KEY.length - 4) : 'NO KEY'
+      });
     }
 
     const data = await response.json();
