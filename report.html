@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>דוח מיפוי הוצאות</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap');
+
+    :root {
+      --primary: #1a365d;
+      --primary-light: #2c5282;
+      --accent: #3182ce;
+      --gold: #d69e2e;
+      --white: #ffffff;
+      --gray-light: #f7fafc;
+      --gray: #718096;
+      --black: #1a202c;
+      --green: #38a169;
+      --red: #e53e3e;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Heebo', sans-serif;
+      background: linear-gradient(180deg, var(--gray-light) 0%, #edf2f7 100%);
+      min-height: 100vh;
+      color: var(--black);
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    /* Header */
+    .report-header {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+      color: var(--white);
+      padding: 3rem 2rem;
+      border-radius: 20px;
+      text-align: center;
+      margin-bottom: 2rem;
+      box-shadow: 0 10px 40px rgba(26, 54, 93, 0.3);
+    }
+
+    .report-header h1 {
+      font-size: 2.5rem;
+      font-weight: 800;
+      margin-bottom: 0.5rem;
+    }
+
+    .report-header p {
+      font-size: 1.1rem;
+      opacity: 0.9;
+    }
+
+    .report-date {
+      margin-top: 1rem;
+      font-size: 0.95rem;
+      opacity: 0.8;
+    }
+
+    /* Total Summary Card */
+    .total-card {
+      background: linear-gradient(135deg, var(--gold) 0%, #b7791f 100%);
+      color: var(--white);
+      padding: 2.5rem;
+      border-radius: 20px;
+      text-align: center;
+      margin-bottom: 2rem;
+      box-shadow: 0 10px 40px rgba(214, 158, 46, 0.3);
+    }
+
+    .total-card h2 {
+      font-size: 1.2rem;
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+      opacity: 0.9;
+    }
+
+    .total-amount {
+      font-size: 4rem;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .total-count {
+      font-size: 1.1rem;
+      margin-top: 0.5rem;
+      opacity: 0.9;
+    }
+
+    /* Categories Grid */
+    .categories-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 1.5rem;
+      text-align: center;
+    }
+
+    .categories-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .category-card {
+      background: var(--white);
+      border-radius: 16px;
+      padding: 1.5rem;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      border-right: 5px solid var(--accent);
+    }
+
+    .category-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+    }
+
+    .category-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      padding-bottom: 1rem;
+      border-bottom: 2px solid var(--gray-light);
+    }
+
+    .category-name {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: var(--primary);
+    }
+
+    .category-name .icon {
+      font-size: 1.5rem;
+    }
+
+    .category-total {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .category-count {
+      font-size: 0.85rem;
+      color: var(--gray);
+      margin-bottom: 0.5rem;
+    }
+
+    .expense-list {
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .expense-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.6rem 0;
+      border-bottom: 1px dashed #e2e8f0;
+    }
+
+    .expense-item:last-child {
+      border-bottom: none;
+    }
+
+    .expense-name {
+      color: var(--black);
+      font-size: 0.95rem;
+    }
+
+    .expense-amount {
+      font-weight: 600;
+      color: var(--primary-light);
+      white-space: nowrap;
+    }
+
+    /* Chart Section */
+    .chart-section {
+      background: var(--white);
+      border-radius: 20px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+
+    .chart-title {
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: var(--primary);
+      margin-bottom: 1.5rem;
+      text-align: center;
+    }
+
+    .bar-chart {
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+    }
+
+    .bar-item {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .bar-label {
+      width: 150px;
+      font-size: 0.9rem;
+      color: var(--black);
+      text-align: left;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .bar-container {
+      flex: 1;
+      height: 28px;
+      background: var(--gray-light);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent) 0%, var(--primary-light) 100%);
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      padding-right: 10px;
+      transition: width 0.5s ease;
+    }
+
+    .bar-value {
+      width: 80px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--primary);
+      text-align: left;
+    }
+
+    /* Actions */
+    .actions {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-bottom: 2rem;
+    }
+
+    .btn {
+      padding: 1rem 2rem;
+      font-size: 1.1rem;
+      font-weight: 600;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-family: 'Heebo', sans-serif;
+      border: none;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent) 0%, var(--primary-light) 100%);
+      color: var(--white);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(49, 130, 206, 0.4);
+    }
+
+    .btn-secondary {
+      background: var(--white);
+      color: var(--primary);
+      border: 2px solid var(--primary);
+    }
+
+    .btn-secondary:hover {
+      background: var(--primary);
+      color: var(--white);
+    }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      padding: 2rem;
+      color: var(--gray);
+    }
+
+    /* Print Styles */
+    @media print {
+      body {
+        background: white;
+      }
+      
+      .actions {
+        display: none;
+      }
+      
+      .category-card {
+        break-inside: avoid;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        padding: 1rem;
+      }
+
+      .report-header {
+        padding: 2rem 1rem;
+      }
+
+      .report-header h1 {
+        font-size: 1.8rem;
+      }
+
+      .total-amount {
+        font-size: 2.5rem;
+      }
+
+      .categories-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .bar-label {
+        width: 100px;
+        font-size: 0.8rem;
+      }
+
+      .actions {
+        flex-direction: column;
+      }
+
+      .btn {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="report-header">
+      <h1>📊 דוח מיפוי הוצאות</h1>
+      <p>ניתוח מפורט של ההוצאות לפי קטגוריות</p>
+      <div class="report-date" id="reportDate"></div>
+    </div>
+
+    <!-- Total Summary -->
+    <div class="total-card">
+      <h2>סך כל ההוצאות</h2>
+      <div class="total-amount" id="totalAmount">0 ₪</div>
+      <div class="total-count" id="totalCount">0 הוצאות נותחו</div>
+    </div>
+
+    <!-- Bar Chart -->
+    <div class="chart-section">
+      <div class="chart-title">📈 התפלגות הוצאות לפי קטגוריה</div>
+      <div class="bar-chart" id="barChart"></div>
+    </div>
+
+    <!-- Categories Grid -->
+    <h2 class="categories-title">פירוט לפי קטגוריות</h2>
+    <div class="categories-grid" id="categoriesGrid"></div>
+
+    <!-- Actions -->
+    <div class="actions">
+      <button class="btn btn-primary" onclick="window.print()">🖨️ הדפס דוח</button>
+      <button class="btn btn-primary" onclick="exportToExcel()">📥 ייצא לאקסל</button>
+      <button class="btn btn-secondary" onclick="window.location.href='index.html'">📤 העלה דוח חדש</button>
+    </div>
+
+    <footer>
+      <p>דוח זה נוצר על ידי מקטרג - כלי מיפוי פיננסי חכם</p>
+    </footer>
+  </div>
+
+  <script>
+    const CATEGORY_ICONS = {
+      'מזון לבית': '🛒',
+      'אוכל בחוץ ובילויים': '🍽️',
+      'פארם': '💊',
+      'דלק וחניה': '⛽',
+      'מתנות לאירועים ולשמחות': '🎁',
+      'ביגוד והנעלה': '👔',
+      'תחב"צ': '🚌',
+      'כבישי אגרה': '🛣️',
+      'תספורת וקוסמטיקה': '💇',
+      'תחביבים': '🎨',
+      'סיגריות': '🚬',
+      'חופשה/טיול': '✈️',
+      'עוזרת/שמרטף': '🏠',
+      'תיקוני רכב': '🔧',
+      'בריאות': '🏥',
+      'בעלי חיים': '🐾',
+      'דמי כיס/ילדים': '👶',
+      'יהדות/חגים': '✡️',
+      'שונות': '📦',
+      'ביט ללא מעקב': '📱',
+      'מזומן ללא מעקב': '💵'
+    };
+
+    let expensesData = [];
+
+    document.addEventListener('DOMContentLoaded', () => {
+      // קבלת הנתונים מ-localStorage
+      const data = localStorage.getItem('expenseResults');
+      
+      if (!data) {
+        alert('לא נמצאו נתונים. מעביר לעמוד ההעלאה...');
+        window.location.href = 'index.html';
+        return;
+      }
+
+      expensesData = JSON.parse(data);
+      renderReport(expensesData);
+    });
+
+    function renderReport(expenses) {
+      // תאריך
+      const now = new Date();
+      document.getElementById('reportDate').textContent = 
+        `נוצר בתאריך: ${now.toLocaleDateString('he-IL')} בשעה ${now.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}`;
+
+      // חישוב סיכומים לפי קטגוריה
+      const grouped = {};
+      let totalAmount = 0;
+
+      expenses.forEach(expense => {
+        const cat = expense.category || 'שונות';
+        if (!grouped[cat]) {
+          grouped[cat] = { items: [], total: 0 };
+        }
+        grouped[cat].items.push(expense);
+        grouped[cat].total += expense.amount;
+        totalAmount += expense.amount;
+      });
+
+      // סיכום כולל
+      document.getElementById('totalAmount').textContent = totalAmount.toLocaleString('he-IL', { maximumFractionDigits: 2 }) + ' ₪';
+      document.getElementById('totalCount').textContent = expenses.length + ' הוצאות נותחו';
+
+      // מיון לפי סכום יורד
+      const sortedCategories = Object.entries(grouped)
+        .sort((a, b) => b[1].total - a[1].total);
+
+      // גרף עמודות
+      const maxAmount = sortedCategories.length > 0 ? sortedCategories[0][1].total : 1;
+      const barChartHTML = sortedCategories.slice(0, 10).map(([category, data]) => {
+        const percentage = (data.total / maxAmount) * 100;
+        const icon = CATEGORY_ICONS[category] || '📦';
+        return `
+          <div class="bar-item">
+            <div class="bar-label">${icon} ${category}</div>
+            <div class="bar-container">
+              <div class="bar-fill" style="width: ${percentage}%"></div>
+            </div>
+            <div class="bar-value">${data.total.toLocaleString('he-IL', { maximumFractionDigits: 0 })} ₪</div>
+          </div>
+        `;
+      }).join('');
+      document.getElementById('barChart').innerHTML = barChartHTML;
+
+      // כרטיסיות קטגוריות
+      const cardsHTML = sortedCategories.map(([category, data]) => {
+        const icon = CATEGORY_ICONS[category] || '📦';
+        const itemsHTML = data.items.map(item => `
+          <div class="expense-item">
+            <span class="expense-name">${item.description}</span>
+            <span class="expense-amount">${item.amount.toLocaleString('he-IL', { maximumFractionDigits: 2 })} ₪</span>
+          </div>
+        `).join('');
+
+        return `
+          <div class="category-card">
+            <div class="category-header">
+              <div class="category-name">
+                <span class="icon">${icon}</span>
+                <span>${category}</span>
+              </div>
+              <div class="category-total">${data.total.toLocaleString('he-IL', { maximumFractionDigits: 2 })} ₪</div>
+            </div>
+            <div class="category-count">${data.items.length} פריטים</div>
+            <div class="expense-list">${itemsHTML}</div>
+          </div>
+        `;
+      }).join('');
+      document.getElementById('categoriesGrid').innerHTML = cardsHTML;
+    }
+
+    function exportToExcel() {
+      let csv = 'קטגוריה,תיאור,סכום\n';
+      
+      expensesData.forEach(expense => {
+        csv += `"${expense.category}","${expense.description}","${expense.amount.toFixed(2)}"\n`;
+      });
+
+      const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'מיפוי_הוצאות_' + new Date().toLocaleDateString('he-IL').replace(/\./g, '-') + '.csv';
+      link.click();
+    }
+  </script>
+</body>
+</html>
+
