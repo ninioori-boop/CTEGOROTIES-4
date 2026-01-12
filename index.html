@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>המקטרג השקעות לצעירים בתכלס</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700&display=swap');
 
@@ -49,11 +50,6 @@
       font-size: 2.5rem;
       font-weight: 700;
       margin-bottom: 0.5rem;
-    }
-
-    header p {
-      font-size: 1.2rem;
-      opacity: 0.9;
     }
 
     .main-card {
@@ -350,8 +346,10 @@
   </div>
 
   <script>
+    // PDF.js worker
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
     let extractedPdfText = '';
-    let currentPdfFile = null;
 
     // Upload handling
     const uploadBox = document.getElementById('uploadBox');
@@ -390,13 +388,11 @@
 
       hideError();
       hideSuccess();
-      currentPdfFile = file;
       
-      showLoading('מעלה את ה-PDF...', 'השרת מחלץ את הטקסט מהדוח');
+      showLoading('קורא את ה-PDF...', 'מחלץ טקסט מהדוח');
 
       try {
-        // Send PDF to Python server for extraction
-        extractedPdfText = await extractTextFromServer(file);
+        extractedPdfText = await extractTextFromPdf(file);
         
         if (extractedPdfText.length < 100) {
           hideLoading();
@@ -424,32 +420,35 @@
       }
     }
 
-    async function extractTextFromServer(file) {
-      // Convert file to base64
+    async function extractTextFromPdf(file) {
       const arrayBuffer = await file.arrayBuffer();
-      const base64 = btoa(
-        new Uint8Array(arrayBuffer)
-          .reduce((data, byte) => data + String.fromCharCode(byte), '')
-      );
+      const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
       
-      // Send to Python API
-      const response = await fetch('/api/extract', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ pdf: base64 })
-      });
+      let fullText = '';
+      const numPages = pdf.numPages;
       
-      const data = await response.json();
-      
-      if (!response.ok || !data.success) {
-        throw new Error(data.error || 'שגיאה בחילוץ טקסט מה-PDF');
+      for (let i = 1; i <= numPages; i++) {
+        const page = await pdf.getPage(i);
+        const textContent = await page.getTextContent();
+        
+        // Extract all text items
+        let pageText = '';
+        for (const item of textContent.items) {
+          pageText += item.str + ' ';
+        }
+        
+        fullText += pageText + '\n';
       }
       
-      return data.text;
+      // Basic cleanup
+      fullText = fullText
+        .replace(/\s{3,}/g, ' ')
+        .replace(/(\d)\s+(\d)/g, '$1$2')
+        .replace(/(\d)\s*,\s*(\d)/g, '$1,$2')
+        .replace(/₪\s+/g, '₪');
+      
+      return fullText.trim();
     }
-    
 
     async function analyzeWithAI() {
       if (!extractedPdfText) {

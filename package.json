@@ -2,8 +2,6 @@
   "name": "mekateg",
   "version": "1.0.0",
   "description": "כלי מיפוי פיננסי ליועצים",
-  "private": true,
-  "dependencies": {
-    "pdf-parse": "^1.1.1"
-  }
+  "private": true
 }
+
