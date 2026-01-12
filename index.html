@@ -436,82 +436,24 @@
         const page = await pdf.getPage(i);
         const textContent = await page.getTextContent();
         
-        // Simple extraction
+        // Simple extraction - just get all text
         for (const item of textContent.items) {
           fullText += item.str + ' ';
         }
         
-        fullText += '\n--- עמוד ' + i + ' ---\n';
+        fullText += '\n';
       }
       
-      // Fix the spaced-out characters issue
-      fullText = fixSpacedText(fullText);
+      // Basic cleanup only - let AI handle the rest
+      fullText = fullText
+        .replace(/\s{3,}/g, ' ')  // Multiple spaces to single
+        .replace(/(\d)\s+(\d)/g, '$1$2')  // Fix spaced numbers
+        .replace(/(\d)\s*,\s*(\d)/g, '$1,$2')
+        .replace(/₪\s+/g, '₪');
       
       return fullText.trim();
     }
     
-    function fixSpacedText(text) {
-      // First, fix spaced-out Hebrew text (letters with spaces between them)
-      text = text.replace(/([\u0590-\u05FF](\s+[\u0590-\u05FF])+)/g, function(match) {
-        const letters = match.replace(/\s+/g, '');
-        return letters.split('').reverse().join('');
-      });
-      
-      // Fix spaced-out English text
-      text = text.replace(/([A-Za-z](\s+[A-Za-z])+)/g, function(match) {
-        const parts = match.trim().split(/\s+/);
-        if (parts.every(p => p.length === 1)) {
-          return parts.join('');
-        }
-        return match;
-      });
-      
-      // REVERSE long Hebrew sequences (more than 3 characters together)
-      text = text.replace(/([\u0590-\u05FF]{4,})/g, function(match) {
-        return match.split('').reverse().join('');
-      });
-      
-      // Fix reversed English words/brands
-      const reversedBrands = {
-        'yaPGOOGLE': 'Google Pay',
-        'yaPelgooG': 'Google Pay', 
-        'ELGOOG': 'GOOGLE',
-        'elgooG': 'Google',
-        'yrekabeht': 'the bakery',
-        'eroM&eniW': 'Wine & More',
-        'eroM & eniW': 'Wine & More',
-        'TLOW': 'WOLT',
-        'tteG': 'Gett',
-        'TIB': 'BIT',
-        'elibomTOH': 'HOT mobile',
-        'TOHYBVTTXEN': 'NEXT TV BY HOT',
-        'XILFTNE': 'NETFLIX',
-        'YFITOPS': 'SPOTIFY',
-        'NOZAMA': 'AMAZON',
-        'PMMA': 'AMPM',
-        'MPMA': 'AMPM',
-        'mwbסולפיויטירפ': 'פריטי פלוס בעמ',
-        'mwברוואטיימ': 'מיי טאוור בעמ',
-        'mwb102וצוצ': 'צוצו 102 בעמ'
-      };
-      
-      for (const [wrong, right] of Object.entries(reversedBrands)) {
-        text = text.replace(new RegExp(wrong.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), right);
-      }
-      
-      // Fix numbers with spaces
-      text = text.replace(/(\d)\s+(\d)/g, '$1$2');
-      text = text.replace(/(\d)\s*,\s*(\d)/g, '$1,$2');
-      text = text.replace(/(\d)\s*\.\s*(\d)/g, '$1.$2');
-      
-      // Fix dates
-      text = text.replace(/(\d{2})\s*\/\s*(\d{2})\s*\/\s*(\d{2,4})/g, '$1/$2/$3');
-      
-      // Clean up multiple spaces
-      text = text.replace(/\s{2,}/g, ' ');
-      
-      return text;
-    }
 
     async function analyzeWithAI() {
       if (!extractedPdfText) {

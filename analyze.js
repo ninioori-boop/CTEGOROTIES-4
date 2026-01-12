@@ -31,9 +31,25 @@ module.exports = async (req, res) => {
     .replace(/"/g, "'")
     .substring(0, 12000);
 
-  const systemMessage = 'You are an Israeli credit card expense analyzer. Return ONLY valid JSON with format: {"expenses": [{"description": "merchant name", "amount": 123.45, "category": "category"}]}. NEVER include credit limits, points, refunds, balances, or summaries. ONLY real purchase transactions.';
+  const systemMessage = 'You are an Israeli credit card expense analyzer. The text may be REVERSED (Hebrew reads right-to-left but was extracted left-to-right, so words appear backwards like ןוזמ instead of מזון). You must understand and correct this. Return ONLY valid JSON: {"expenses": [{"description": "merchant name in CORRECT Hebrew/English", "amount": 123.45, "category": "category"}]}. NEVER include: credit limits (מסגרת), points (נקודות), refunds (זיכוי/החזר), balances, summaries. ONLY real purchases.';
 
-  const userPrompt = 'נתח את דוח האשראי הבא וחלץ רק עסקאות קנייה אמיתיות. התעלם ממסגרת אשראי, נקודות, זיכויים, החזרים, יתרות וסיכומים. שמור את שם בית העסק המדויק. קטגוריות אפשריות: מזון לבית, אוכל בחוץ ובילויים, פארם, דלק וחניה, מתנות, ביגוד והנעלה, תחבצ, כבישי אגרה, תספורת וקוסמטיקה, תחביבים, סיגריות, חופשה וטיול, עוזרת ושמרטף, תיקוני רכב, בריאות, בעלי חיים, דמי כיס וילדים, יהדות וחגים, שונות, ביט ללא מעקב, מזומן ללא מעקב, תקשורת, ביטוח. כללים: BIT/ביט=ביט ללא מעקב, SPOTIFY/NETFLIX/אמזון=תחביבים, סופרמרקט/מאפיה=מזון לבית, מסעדה/קפה/WOLT=אוכל בחוץ ובילויים, HOT/סלקום=תקשורת, מכבי/כללית/מכבידנט=בריאות, סונול/פז/דלק=דלק וחניה. הדוח: ' + cleanText;
+  const userPrompt = `IMPORTANT: The Hebrew text in this document is REVERSED (extracted backwards). For example:
+- "ןוזמ" = "מזון" (food)
+- "תודעסמ" = "מסעדות" (restaurants)
+- "סיטרכ" = "כרטיס" (card)
+- "yaPGOOGLE" = "Google Pay"
+- "TLOW" = "WOLT"
+- "tteG" = "Gett"
+
+Extract ONLY real purchase transactions. Write merchant names CORRECTLY (not reversed).
+IGNORE: credit limits, points, refunds, balances, summaries, fees.
+
+Categories: מזון לבית, אוכל בחוץ ובילויים, פארם, דלק וחניה, מתנות, ביגוד והנעלה, תחבצ, כבישי אגרה, תספורת וקוסמטיקה, תחביבים, סיגריות, חופשה וטיול, עוזרת ושמרטף, תיקוני רכב, בריאות, בעלי חיים, דמי כיס וילדים, יהדות וחגים, שונות, ביט ללא מעקב, מזומן ללא מעקב, תקשורת, ביטוח.
+
+Rules: BIT/TIB=ביט ללא מעקב, WOLT/TLOW=אוכל בחוץ, Gett/tteG=תחבצ, HOT mobile=תקשורת, Google Pay=תחביבים, AMPM/MPMA=מזון לבית, ביטוח לאומי=ביטוח, הראל ביטוח=ביטוח, מכבידנט=בריאות.
+
+Document text:
+${cleanText}`;
 
   try {
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
