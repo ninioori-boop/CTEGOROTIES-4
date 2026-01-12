@@ -29,27 +29,53 @@ module.exports = async (req, res) => {
     .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, ' ')
     .replace(/\\/g, ' ')
     .replace(/"/g, "'")
-    .substring(0, 12000);
+    .substring(0, 15000);
 
-  const systemMessage = 'You are an Israeli credit card expense analyzer. The text may be REVERSED (Hebrew reads right-to-left but was extracted left-to-right, so words appear backwards like ןוזמ instead of מזון). You must understand and correct this. Return ONLY valid JSON: {"expenses": [{"description": "merchant name in CORRECT Hebrew/English", "amount": 123.45, "category": "category"}]}. NEVER include: credit limits (מסגרת), points (נקודות), refunds (זיכוי/החזר), balances, summaries. ONLY real purchases.';
+  const systemMessage = `You are an Israeli credit card expense analyzer. You receive data from Excel/CSV files exported from Israeli credit card companies.
 
-  const userPrompt = `IMPORTANT: The Hebrew text in this document is REVERSED (extracted backwards). For example:
-- "ןוזמ" = "מזון" (food)
-- "תודעסמ" = "מסעדות" (restaurants)
-- "סיטרכ" = "כרטיס" (card)
-- "yaPGOOGLE" = "Google Pay"
-- "TLOW" = "WOLT"
-- "tteG" = "Gett"
+Your job is to categorize each transaction into the correct expense category.
 
-Extract ONLY real purchase transactions. Write merchant names CORRECTLY (not reversed).
-IGNORE: credit limits, points, refunds, balances, summaries, fees.
+Return ONLY valid JSON in this exact format:
+{"expenses": [{"description": "merchant name", "amount": 123.45, "category": "category name"}]}
 
-Categories: מזון לבית, אוכל בחוץ ובילויים, פארם, דלק וחניה, מתנות, ביגוד והנעלה, תחבצ, כבישי אגרה, תספורת וקוסמטיקה, תחביבים, סיגריות, חופשה וטיול, עוזרת ושמרטף, תיקוני רכב, בריאות, בעלי חיים, דמי כיס וילדים, יהדות וחגים, שונות, ביט ללא מעקב, מזומן ללא מעקב, תקשורת, ביטוח.
+IMPORTANT RULES:
+- Extract the merchant/business name (שם בית עסק)
+- Extract the transaction amount in ILS (סכום)
+- Assign each transaction to ONE category
+- IGNORE: credit limits, points, refunds, credits, balances, summaries, fees
+- ONLY include actual purchases/payments`;
 
-Rules: BIT/TIB=ביט ללא מעקב, WOLT/TLOW=אוכל בחוץ, Gett/tteG=תחבצ, HOT mobile=תקשורת, Google Pay=תחביבים, AMPM/MPMA=מזון לבית, ביטוח לאומי=ביטוח, הראל ביטוח=ביטוח, מכבידנט=בריאות.
+  const userPrompt = `Analyze this credit card data from an Israeli Excel export and categorize each transaction.
 
-Document text:
-${cleanText}`;
+CATEGORIES (choose exactly one per transaction):
+- מזון לבית (supermarkets: רמי לוי, שופרסל, ויקטורי, מגה, יוחננוף, AM:PM, Yellow)
+- אוכל בחוץ ובילויים (restaurants, cafes, bars, WOLT, Gett Delivery, וולט, מסעדות)
+- תחביבים (SPOTIFY, NETFLIX, Google, Amazon, חוגים, חדר כושר, ספוטיפיי)
+- תקשורת (HOT, YES, סלקום, פרטנר, 012, בזק, אינטרנט)
+- ביטוח (ביטוח לאומי, הראל, מגדל, כלל, הפניקס, איילון)
+- בריאות (מכבי, כללית, מאוחדת, לאומית, בית מרקחת, סופר פארם, Be)
+- דלק וחניה (סונול, פז, דלק, Ten, Yellow, חניון, אחוזת החוף)
+- תחבצ (Gett, מונית, רכבת, אוטובוס, רב קו, Bubble)
+- ביגוד והנעלה (H&M, זארה, NEXT, FOX, גולף, קסטרו, רנואר)
+- פארם (סופר פארם, Be, גוד פארם, אופטיקה, קוסמטיקה)
+- תספורת וקוסמטיקה (מספרה, ספר, מניקור, פדיקור, עיצוב)
+- מתנות (חנות מתנות, פרחים, צעצועים)
+- כבישי אגרה (כביש 6, דרך ארץ, נתיבי איילון)
+- חופשה וטיול (מלון, Booking, Airbnb, טיסות)
+- עוזרת ושמרטף (עוזרת בית, שמרטפות, מטפלת)
+- תיקוני רכב (מוסך, טסט, טיפול רכב, צמיגים)
+- בעלי חיים (וטרינר, מזון לחיות, חנות חיות)
+- דמי כיס וילדים (דמי כיס, קניות ילדים)
+- יהדות וחגים (יודאיקה, קניות לחג)
+- סיגריות (טבק, סיגריות)
+- ביט ללא מעקב (BIT, ביט, Bit - העברות כסף)
+- מזומן ללא מעקב (משיכת מזומן, כספומט)
+- שונות (כל השאר)
+
+DATA FROM EXCEL:
+${cleanText}
+
+Return JSON with all transactions categorized.`;
 
   try {
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -98,8 +124,10 @@ ${cleanText}`;
       // Filter out entries that look like limits/points/summaries
       result.expenses = result.expenses.filter(exp => {
         if (!exp.description || !exp.amount) return false;
+        if (typeof exp.amount !== 'number' || exp.amount <= 0) return false;
+        
         const desc = exp.description.toLowerCase();
-        const badWords = ['מסגרת', 'נקודות', 'יתרה', 'סיכום', 'התחייבות', 'זיכוי', 'החזר', 'עמלה'];
+        const badWords = ['מסגרת', 'נקודות', 'יתרה', 'סיכום', 'התחייבות', 'זיכוי', 'החזר', 'עמלה', 'סה"כ', 'total'];
         return !badWords.some(word => desc.includes(word));
       });
       

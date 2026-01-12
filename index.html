@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>המקטרג השקעות לצעירים בתכלס</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700&display=swap');
 
@@ -107,7 +107,7 @@
     .upload-box {
       border: 3px dashed #cbd5e0;
       border-radius: 20px;
-      padding: 4rem 2rem;
+      padding: 3rem 2rem;
       text-align: center;
       cursor: pointer;
       transition: all 0.3s ease;
@@ -132,19 +132,19 @@
     }
 
     .upload-box .icon {
-      font-size: 5rem;
+      font-size: 4rem;
       margin-bottom: 1rem;
     }
 
     .upload-box h4 {
       color: var(--blue-dark);
-      font-size: 1.4rem;
+      font-size: 1.3rem;
       margin-bottom: 0.5rem;
     }
 
     .upload-box p {
       color: var(--gray);
-      font-size: 1rem;
+      font-size: 0.95rem;
     }
 
     .upload-box input[type="file"] {
@@ -262,12 +262,39 @@
       border-radius: 12px;
       padding: 1.5rem;
       margin-bottom: 2rem;
+    }
+
+    .instructions h3 {
+      color: var(--blue-dark);
+      font-size: 1.1rem;
+      margin-bottom: 1rem;
       text-align: center;
     }
 
-    .instructions p {
+    .instructions-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+    }
+
+    .instruction-card {
+      background: var(--white);
+      border-radius: 10px;
+      padding: 1rem;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .instruction-card .company {
+      font-weight: 600;
       color: var(--blue-dark);
-      font-size: 1.1rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .instruction-card .steps {
+      font-size: 0.85rem;
+      color: var(--gray);
+      text-align: right;
     }
 
     footer {
@@ -277,13 +304,47 @@
       opacity: 0.8;
     }
 
+    .stats {
+      display: none;
+      background: #f0fff4;
+      border-radius: 12px;
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+      text-align: center;
+    }
+
+    .stats.active {
+      display: block;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+    }
+
+    .stat-item {
+      padding: 0.5rem;
+    }
+
+    .stat-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--green);
+    }
+
+    .stat-label {
+      font-size: 0.8rem;
+      color: var(--gray);
+    }
+
     @media (max-width: 768px) {
       .container {
         padding: 1rem;
       }
 
       header h1 {
-        font-size: 2rem;
+        font-size: 1.8rem;
       }
 
       .main-card {
@@ -295,7 +356,15 @@
       }
 
       .upload-box .icon {
-        font-size: 3.5rem;
+        font-size: 3rem;
+      }
+
+      .instructions-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .stats-grid {
+        grid-template-columns: 1fr;
       }
     }
   </style>
@@ -314,25 +383,62 @@
 
     <div class="main-card">
       <div class="instructions">
-        <p>העלה PDF של דוח הוצאות והמערכת תנתח ותקטלג אותו אוטומטית</p>
+        <h3>📥 איך להוריד את קובץ ההוצאות?</h3>
+        <div class="instructions-grid">
+          <div class="instruction-card">
+            <div class="company">כאל / MAX</div>
+            <div class="steps">
+              אזור אישי → פירוט עסקאות → ייצוא לאקסל
+            </div>
+          </div>
+          <div class="instruction-card">
+            <div class="company">ישראכרט</div>
+            <div class="steps">
+              אזור אישי → דוח עסקאות → הורדה כ-Excel
+            </div>
+          </div>
+          <div class="instruction-card">
+            <div class="company">לאומי קארד</div>
+            <div class="steps">
+              אזור אישי → פירוט חיובים → ייצוא
+            </div>
+          </div>
+        </div>
       </div>
 
-      <h2 class="section-title">העלאת דוח הוצאות</h2>
+      <h2 class="section-title">העלאת קובץ הוצאות</h2>
       
       <div class="upload-box" id="uploadBox">
-        <div class="icon" id="uploadIcon">📄</div>
-        <h4 id="uploadTitle">גרור קובץ PDF לכאן או לחץ לבחירה</h4>
-        <p id="uploadDesc">קבצי PDF של דוחות הוצאות</p>
-        <input type="file" id="fileInput" accept=".pdf">
+        <div class="icon" id="uploadIcon">📊</div>
+        <h4 id="uploadTitle">גרור קובץ Excel/CSV לכאן או לחץ לבחירה</h4>
+        <p id="uploadDesc">קבצי Excel (.xlsx, .xls) או CSV</p>
+        <input type="file" id="fileInput" accept=".xlsx,.xls,.csv">
       </div>
 
       <div class="success-message" id="successMessage"></div>
       <div class="error-message" id="errorMessage"></div>
 
+      <div class="stats" id="statsSection">
+        <div class="stats-grid">
+          <div class="stat-item">
+            <div class="stat-value" id="rowCount">0</div>
+            <div class="stat-label">שורות נקראו</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" id="transactionCount">0</div>
+            <div class="stat-label">עסקאות זוהו</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" id="totalAmount">0</div>
+            <div class="stat-label">סה"כ ₪</div>
+          </div>
+        </div>
+      </div>
+
       <div class="extracted-text" id="extractedTextSection">
-        <h3>טקסט שחולץ מהדוח:</h3>
+        <h3>נתונים שנקראו מהקובץ:</h3>
         <textarea id="extractedText" readonly></textarea>
-        <p>זהו הטקסט שנשלח לניתוח. אם חסר משהו, וודא שה-PDF מכיל טקסט ולא סריקה.</p>
+        <p>אלה הנתונים שנשלחים לניתוח</p>
       </div>
 
       <button class="btn btn-green" onclick="analyzeWithAI()" id="analyzeBtn" disabled>
@@ -346,10 +452,8 @@
   </div>
 
   <script>
-    // PDF.js worker
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-
-    let extractedPdfText = '';
+    let extractedData = '';
+    let parsedTransactions = [];
 
     // Upload handling
     const uploadBox = document.getElementById('uploadBox');
@@ -381,23 +485,52 @@
     });
 
     async function handleFile(file) {
-      if (file.type !== 'application/pdf') {
-        showError('נא להעלות קובץ PDF בלבד');
+      const validTypes = [
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'application/vnd.ms-excel',
+        'text/csv',
+        'application/csv'
+      ];
+      
+      const ext = file.name.split('.').pop().toLowerCase();
+      if (!['xlsx', 'xls', 'csv'].includes(ext)) {
+        showError('נא להעלות קובץ Excel או CSV בלבד');
         return;
       }
 
       hideError();
       hideSuccess();
       
-      showLoading('קורא את ה-PDF...', 'מחלץ טקסט מהדוח');
+      showLoading('קורא את הקובץ...', 'מעבד את הנתונים');
 
       try {
-        extractedPdfText = await extractTextFromPdf(file);
+        const data = await readExcelFile(file);
         
-        if (extractedPdfText.length < 100) {
+        if (!data || data.length < 2) {
           hideLoading();
-          showError('לא נמצא מספיק טקסט ב-PDF. ייתכן שזו סריקה ולא PDF עם טקסט.');
+          showError('לא נמצאו מספיק נתונים בקובץ');
           return;
+        }
+
+        // Process and format the data
+        extractedData = formatDataForAI(data);
+        
+        // Count transactions and total
+        let total = 0;
+        let transCount = 0;
+        for (let i = 1; i < data.length; i++) {
+          const row = data[i];
+          if (row && row.length > 0) {
+            transCount++;
+            // Try to find amount column
+            for (const cell of row) {
+              const num = parseFloat(String(cell).replace(/[^\d.-]/g, ''));
+              if (!isNaN(num) && num > 0 && num < 100000) {
+                total += num;
+                break;
+              }
+            }
+          }
         }
 
         uploadBox.classList.add('has-file');
@@ -405,54 +538,73 @@
         document.getElementById('uploadTitle').textContent = 'קובץ נטען בהצלחה!';
         document.getElementById('uploadDesc').textContent = file.name;
 
-        document.getElementById('extractedText').value = extractedPdfText;
+        // Show stats
+        document.getElementById('rowCount').textContent = data.length;
+        document.getElementById('transactionCount').textContent = transCount;
+        document.getElementById('totalAmount').textContent = Math.round(total).toLocaleString();
+        document.getElementById('statsSection').classList.add('active');
+
+        document.getElementById('extractedText').value = extractedData;
         document.getElementById('extractedTextSection').classList.add('active');
         
         document.getElementById('analyzeBtn').disabled = false;
         
         hideLoading();
-        showSuccess('✅ חולצו ' + extractedPdfText.length + ' תווים מה-PDF');
+        showSuccess('✅ נקראו ' + transCount + ' עסקאות מהקובץ');
 
       } catch (error) {
-        console.error('PDF Error:', error);
+        console.error('File Error:', error);
         hideLoading();
-        showError('שגיאה בקריאת ה-PDF: ' + error.message);
+        showError('שגיאה בקריאת הקובץ: ' + error.message);
       }
     }
 
-    async function extractTextFromPdf(file) {
-      const arrayBuffer = await file.arrayBuffer();
-      const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
-      
-      let fullText = '';
-      const numPages = pdf.numPages;
-      
-      for (let i = 1; i <= numPages; i++) {
-        const page = await pdf.getPage(i);
-        const textContent = await page.getTextContent();
+    async function readExcelFile(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
         
-        // Extract all text items
-        let pageText = '';
-        for (const item of textContent.items) {
-          pageText += item.str + ' ';
+        reader.onload = (e) => {
+          try {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            
+            // Get first sheet
+            const sheetName = workbook.SheetNames[0];
+            const sheet = workbook.Sheets[sheetName];
+            
+            // Convert to array
+            const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+            resolve(jsonData);
+          } catch (err) {
+            reject(err);
+          }
+        };
+        
+        reader.onerror = () => reject(new Error('שגיאה בקריאת הקובץ'));
+        reader.readAsArrayBuffer(file);
+      });
+    }
+
+    function formatDataForAI(data) {
+      // Get headers from first row
+      const headers = data[0] || [];
+      
+      let formatted = 'כותרות: ' + headers.join(' | ') + '\n\n';
+      formatted += 'עסקאות:\n';
+      
+      for (let i = 1; i < data.length; i++) {
+        const row = data[i];
+        if (row && row.length > 0 && row.some(cell => cell !== null && cell !== '')) {
+          formatted += row.join(' | ') + '\n';
         }
-        
-        fullText += pageText + '\n';
       }
       
-      // Basic cleanup
-      fullText = fullText
-        .replace(/\s{3,}/g, ' ')
-        .replace(/(\d)\s+(\d)/g, '$1$2')
-        .replace(/(\d)\s*,\s*(\d)/g, '$1,$2')
-        .replace(/₪\s+/g, '₪');
-      
-      return fullText.trim();
+      return formatted;
     }
 
     async function analyzeWithAI() {
-      if (!extractedPdfText) {
-        showError('נא להעלות קובץ PDF קודם');
+      if (!extractedData) {
+        showError('נא להעלות קובץ קודם');
         return;
       }
 
@@ -465,7 +617,7 @@
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ text: extractedPdfText })
+          body: JSON.stringify({ text: extractedData })
         });
 
         const data = await response.json();
