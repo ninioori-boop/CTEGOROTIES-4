@@ -400,6 +400,7 @@
       'פארם': '💊',
       'דלק וחניה': '⛽',
       'מתנות לאירועים ולשמחות': '🎁',
+      'מתנות': '🎁',
       'ביגוד והנעלה': '👔',
       'תחב"צ': '🚌',
       'תחבצ': '🚌',
@@ -422,7 +423,10 @@
       'ביט ללא מעקב': '📱',
       'מזומן ללא מעקב': '💵',
       'תקשורת': '📡',
-      'ביטוח': '🛡️'
+      'ביטוח': '🛡️',
+      'מיסים': '🏛️',
+      'דמי ניהול בניין': '🏢',
+      'עמלות בנק ואשראי': '🏦'
     };
 
     let expensesData = [];
@@ -489,12 +493,18 @@
       // כרטיסיות קטגוריות
       const cardsHTML = sortedCategories.map(([category, data]) => {
         const icon = CATEGORY_ICONS[category] || '📦';
-        const itemsHTML = data.items.map(item => `
-          <div class="expense-item">
-            <span class="expense-name">${item.description}</span>
-            <span class="expense-amount">${item.amount.toLocaleString('he-IL', { maximumFractionDigits: 2 })} ₪</span>
-          </div>
-        `).join('');
+        const itemsHTML = data.items.map(item => {
+          let installmentInfo = '';
+          if (item.installment_current && item.installment_total) {
+            installmentInfo = `<span style="font-size:0.75rem;color:#718096;display:block;">תשלום ${item.installment_current}/${item.installment_total}${item.total_amount ? ` (סה"כ: ${item.total_amount.toLocaleString('he-IL')}₪)` : ''}</span>`;
+          }
+          return `
+            <div class="expense-item">
+              <span class="expense-name">${item.description}${installmentInfo}</span>
+              <span class="expense-amount">${item.amount.toLocaleString('he-IL', { maximumFractionDigits: 2 })} ₪</span>
+            </div>
+          `;
+        }).join('');
 
         return `
           <div class="category-card">
@@ -514,10 +524,13 @@
     }
 
     function exportToExcel() {
-      let csv = 'קטגוריה,תיאור,סכום\n';
+      let csv = 'קטגוריה,תיאור,סכום,תשלום נוכחי,סה"כ תשלומים,סכום מקורי\n';
       
       expensesData.forEach(expense => {
-        csv += `"${expense.category}","${expense.description}","${expense.amount.toFixed(2)}"\n`;
+        const installCurrent = expense.installment_current || '';
+        const installTotal = expense.installment_total || '';
+        const totalAmount = expense.total_amount || '';
+        csv += `"${expense.category}","${expense.description}","${expense.amount.toFixed(2)}","${installCurrent}","${installTotal}","${totalAmount}"\n`;
       });
 
       const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
