@@ -2,30 +2,16 @@
   "version": 2,
   "builds": [
     {
-      "src": "api/*.py",
+      "src": "api/extract.py",
       "use": "@vercel/python"
     },
     {
-      "src": "api/*.js",
+      "src": "api/analyze.js",
       "use": "@vercel/node"
     },
     {
-      "src": "*.html",
-      "use": "@vercel/static"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/api/extract",
-      "dest": "/api/extract.py"
-    },
-    {
-      "src": "/api/analyze",
-      "dest": "/api/analyze.js"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/$1"
+      "src": "api/test.js",
+      "use": "@vercel/node"
     }
   ]
 }
