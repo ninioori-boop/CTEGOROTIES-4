@@ -38,25 +38,42 @@ Your job is to categorize each transaction into the correct expense category.
 Return ONLY valid JSON in this exact format:
 {"expenses": [{"description": "merchant name", "amount": 123.45, "category": "category name"}]}
 
+For INSTALLMENT payments (תשלומים), add extra fields:
+{"description": "מכבידנט", "amount": 1116.00, "category": "בריאות", "installment_current": 10, "installment_total": 12, "total_amount": 13403.40}
+
 IMPORTANT RULES:
 - Extract the merchant/business name (שם בית עסק)
 - Extract the transaction amount in ILS (סכום)
 - Assign each transaction to ONE category
-- IGNORE: credit limits, points, refunds, credits, balances, summaries, fees
+- ALL BIT/ביט transfers = "ביט ללא מעקב"
+- מיי טאוור = "דמי ניהול בניין" (building management)
+- מס הכנסה/מע"מ = "מיסים" (NOT ביטוח)
+- דמי כרטיס = "עמלות בנק ואשראי"
+- רשת כוורת = "מזון לבית"
+- Look for installment indicators: "תשלום X מתוך Y", "X/Y", "מ-X"
+- IGNORE: credit limits, points, refunds, credits, balances, summaries
 - ONLY include actual purchases/payments`;
 
   const userPrompt = `Analyze this credit card data from an Israeli Excel export and categorize each transaction.
 
+IMPORTANT - INSTALLMENT PAYMENTS (תשלומים):
+If you see text like "תשלום X מתוך Y" or "X/Y" or "תשלום מ-X", this is an installment payment.
+For installment payments, add these fields:
+- "installment_current": current payment number
+- "installment_total": total number of payments  
+- "total_amount": the full transaction amount (before splitting)
+Example: "מכבידנט תשלום 10 מ-12 סכום 1,116" means installment 10 of 12, total was 13,403.40
+
 CATEGORIES (choose exactly one per transaction):
-- מזון לבית (supermarkets: רמי לוי, שופרסל, ויקטורי, מגה, יוחננוף, AM:PM, Yellow)
-- אוכל בחוץ ובילויים (restaurants, cafes, bars, WOLT, Gett Delivery, וולט, מסעדות)
-- תחביבים (SPOTIFY, NETFLIX, Google, Amazon, חוגים, חדר כושר, ספוטיפיי)
-- תקשורת (HOT, YES, סלקום, פרטנר, 012, בזק, אינטרנט)
-- ביטוח (ביטוח לאומי, הראל, מגדל, כלל, הפניקס, איילון)
-- בריאות (מכבי, כללית, מאוחדת, לאומית, בית מרקחת, סופר פארם, Be)
-- דלק וחניה (סונול, פז, דלק, Ten, Yellow, חניון, אחוזת החוף)
+- מזון לבית (supermarkets: רמי לוי, שופרסל, ויקטורי, מגה, יוחננוף, AM:PM, Yellow, רשת כוורת, קליית בראשית, Wine&More)
+- אוכל בחוץ ובילויים (restaurants, cafes, bars, WOLT, Gett Delivery, וולט, מסעדות, קפה)
+- תחביבים (SPOTIFY, NETFLIX, Google, Amazon, חוגים, חדר כושר, ספוטיפיי, NEXT TV BY HOT)
+- תקשורת (HOT mobile, YES, סלקום, פרטנר, 012, בזק, אינטרנט, פרי טיוי פלוס)
+- ביטוח (ביטוח לאומי, הראל, מגדל, כלל, הפניקס, איילון - NOT מס הכנסה)
+- בריאות (מכבי, כללית, מאוחדת, לאומית, בית מרקחת, סופר פארם, Be, מכבידנט, רופא שיניים)
+- דלק וחניה (סונול, פז, דלק, Ten, Yellow, חניון, אחוזת החוף, דור אלון)
 - תחבצ (Gett, מונית, רכבת, אוטובוס, רב קו, Bubble)
-- ביגוד והנעלה (H&M, זארה, NEXT, FOX, גולף, קסטרו, רנואר)
+- ביגוד והנעלה (H&M, זארה, NEXT, FOX, גולף, קסטרו, רנואר, ללין)
 - פארם (סופר פארם, Be, גוד פארם, אופטיקה, קוסמטיקה)
 - תספורת וקוסמטיקה (מספרה, ספר, מניקור, פדיקור, עיצוב)
 - מתנות (חנות מתנות, פרחים, צעצועים)
@@ -68,9 +85,12 @@ CATEGORIES (choose exactly one per transaction):
 - דמי כיס וילדים (דמי כיס, קניות ילדים)
 - יהדות וחגים (יודאיקה, קניות לחג)
 - סיגריות (טבק, סיגריות)
-- ביט ללא מעקב (BIT, ביט, Bit - העברות כסף)
+- ביט ללא מעקב (BIT, ביט, Bit, העברה ב-BIT, העברה בביט - ALL BIT transfers go here)
 - מזומן ללא מעקב (משיכת מזומן, כספומט)
-- שונות (כל השאר)
+- מיסים (מס הכנסה, נציבות מס הכנסה, מע"מ, גביית מעמ, רשות המיסים)
+- דמי ניהול בניין (מיי טאוור, ועד בית, חברת ניהול, דמי ניהול בניין)
+- עמלות בנק ואשראי (דמי כרטיס, עמלה, דמי ניהול חשבון, עמלת עו"ש)
+- שונות (anything that doesn't fit above)
 
 DATA FROM EXCEL:
 ${cleanText}
