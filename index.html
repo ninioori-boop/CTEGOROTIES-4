@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>המקטרג השקעות לצעירים בתכלס</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700&display=swap');
 
@@ -351,10 +350,8 @@
   </div>
 
   <script>
-    // PDF.js worker
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-
     let extractedPdfText = '';
+    let currentPdfFile = null;
 
     // Upload handling
     const uploadBox = document.getElementById('uploadBox');
@@ -393,11 +390,13 @@
 
       hideError();
       hideSuccess();
+      currentPdfFile = file;
       
-      showLoading('קורא את ה-PDF...', 'מחלץ טקסט מהדוח');
+      showLoading('מעלה את ה-PDF...', 'השרת מחלץ את הטקסט מהדוח');
 
       try {
-        extractedPdfText = await extractTextFromPdf(file);
+        // Send PDF to Python server for extraction
+        extractedPdfText = await extractTextFromServer(file);
         
         if (extractedPdfText.length < 100) {
           hideLoading();
@@ -425,33 +424,30 @@
       }
     }
 
-    async function extractTextFromPdf(file) {
+    async function extractTextFromServer(file) {
+      // Convert file to base64
       const arrayBuffer = await file.arrayBuffer();
-      const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+      const base64 = btoa(
+        new Uint8Array(arrayBuffer)
+          .reduce((data, byte) => data + String.fromCharCode(byte), '')
+      );
       
-      let fullText = '';
-      const numPages = pdf.numPages;
+      // Send to Python API
+      const response = await fetch('/api/extract', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ pdf: base64 })
+      });
       
-      for (let i = 1; i <= numPages; i++) {
-        const page = await pdf.getPage(i);
-        const textContent = await page.getTextContent();
-        
-        // Simple extraction - just get all text
-        for (const item of textContent.items) {
-          fullText += item.str + ' ';
-        }
-        
-        fullText += '\n';
+      const data = await response.json();
+      
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'שגיאה בחילוץ טקסט מה-PDF');
       }
       
-      // Basic cleanup only - let AI handle the rest
-      fullText = fullText
-        .replace(/\s{3,}/g, ' ')  // Multiple spaces to single
-        .replace(/(\d)\s+(\d)/g, '$1$2')  // Fix spaced numbers
-        .replace(/(\d)\s*,\s*(\d)/g, '$1,$2')
-        .replace(/₪\s+/g, '₪');
-      
-      return fullText.trim();
+      return data.text;
     }
     
 
