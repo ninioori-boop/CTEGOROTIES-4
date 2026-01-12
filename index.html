@@ -436,28 +436,42 @@
         const page = await pdf.getPage(i);
         const textContent = await page.getTextContent();
         
-        const items = textContent.items.sort((a, b) => {
-          const yDiff = b.transform[5] - a.transform[5];
-          if (Math.abs(yDiff) > 5) return yDiff;
-          return b.transform[4] - a.transform[4];
-        });
+        // Group items by line (Y position)
+        const lines = {};
+        for (const item of textContent.items) {
+          const y = Math.round(item.transform[5]);
+          if (!lines[y]) lines[y] = [];
+          lines[y].push({
+            text: item.str,
+            x: item.transform[4]
+          });
+        }
         
-        let lastY = null;
-        for (const item of items) {
-          const currentY = Math.round(item.transform[5]);
-          
-          if (lastY !== null && Math.abs(currentY - lastY) > 5) {
-            fullText += '\n';
-          } else if (lastY !== null) {
-            fullText += ' ';
-          }
-          
-          fullText += item.str;
-          lastY = currentY;
+        // Sort lines by Y (top to bottom) and items within line by X (left to right for proper reading)
+        const sortedYs = Object.keys(lines).map(Number).sort((a, b) => b - a);
+        
+        for (const y of sortedYs) {
+          // Sort items in each line from LEFT to RIGHT (ascending X)
+          // This preserves the correct reading order for English text
+          const lineItems = lines[y].sort((a, b) => a.x - b.x);
+          const lineText = lineItems.map(item => item.text).join(' ');
+          fullText += lineText + '\n';
         }
         
         fullText += '\n--- עמוד ' + i + ' ---\n';
       }
+      
+      // Fix common reversed English words in Hebrew PDFs
+      fullText = fullText
+        .replace(/e l i b o m\s*T O H/gi, 'HOT mobile')
+        .replace(/T O H/g, 'HOT')
+        .replace(/T L O W/gi, 'WOLT')
+        .replace(/t t e G/gi, 'Gett')
+        .replace(/T I B/gi, 'BIT')
+        .replace(/X I L F T E N/gi, 'NETFLIX')
+        .replace(/Y F I T O P S/gi, 'SPOTIFY')
+        .replace(/E L G O O G/gi, 'GOOGLE')
+        .replace(/N O Z A M A/gi, 'AMAZON');
       
       return fullText.trim();
     }

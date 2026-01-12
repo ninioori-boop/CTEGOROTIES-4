@@ -28,71 +28,29 @@ module.exports = async (req, res) => {
   const cleanText = text
     .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, ' ')
     .replace(/\\/g, ' ')
-    .substring(0, 15000); // Limit text length
+    .replace(/"/g, "'")
+    .substring(0, 12000);
 
-  const prompt = `אתה מומחה בניתוח דוחות אשראי ישראליים. נתח את הטקסט וחלץ רק הוצאות אמיתיות.
+  const systemMessage = 'You are an Israeli credit card expense analyzer. Return ONLY valid JSON with format: {"expenses": [{"description": "merchant name", "amount": 123.45, "category": "category"}]}. NEVER include credit limits, points, refunds, balances, or summaries. ONLY real purchase transactions.';
 
-טקסט הדוח:
-${cleanText}
-
-⚠️ התעלם לחלוטין מהדברים הבאים (אלה לא הוצאות!):
-- מסגרת אשראי / מסגרת כרטיס / סך מסגרת
-- נקודות / צבירת נקודות / ניצול נקודות / פירוט נקודות
-- זיכויים / החזרים / זיכוי
-- יתרה / יתרת חובה / יתרת זכות
-- סיכומים כלליים / סך התחייבויות
-- עמלות בנק / דמי כרטיס (אלא אם זו הוצאה בפועל)
-- כל מספר שמופיע כחלק ממידע על החשבון ולא כעסקה
-
-✅ חלץ רק עסקאות קנייה אמיתיות עם:
-- שם בית העסק המדויק (לא לכתוב "שימוש במסעדה" אלא השם האמיתי!)
-- סכום העסקה בש"ח
-
-קטגוריות: מזון לבית, אוכל בחוץ ובילויים, פארם, דלק וחניה, מתנות לאירועים ולשמחות, ביגוד והנעלה, תחבצ, כבישי אגרה, תספורת וקוסמטיקה, תחביבים, סיגריות, חופשה וטיול, עוזרת ושמרטף, תיקוני רכב, בריאות, בעלי חיים, דמי כיס וילדים, יהדות וחגים, שונות, ביט ללא מעקב, מזומן ללא מעקב, תקשורת, ביטוח
-
-כללים לקיטלוג:
-- BIT / ביט / העברת ביט = ביט ללא מעקב
-- SPOTIFY, NETFLIX, GOOGLE PLAY, חדר כושר, אמזון = תחביבים  
-- רמי לוי, שופרסל, יוחננוף, ויקטורי, מאפיה, מעדניה, AM:PM = מזון לבית
-- מסעדה, בר, קפה, פיצה, WOLT, תן ביס, המבורגר = אוכל בחוץ ובילויים
-- משיכת מזומן / כספומט = מזומן ללא מעקב
-- HOT, YES, סלקום, פרטנר, הוט מובייל = תקשורת
-- מכבי, כללית, לאומית, מאוחדת, רפואה, שיניים, מכבידנט = בריאות
-- ביטוח לאומי, ביטוח = ביטוח
-- סונול, פז, דלק, yellow, פנגו, חניון = דלק וחניה
-- פוקס, קסטרו, H&M, זארה, רנואר = ביגוד והנעלה
-- סופר פארם, BE, בי = פארם
-
-החזר JSON בפורמט הזה בלבד:`;
+  const userPrompt = 'נתח את דוח האשראי הבא וחלץ רק עסקאות קנייה אמיתיות. התעלם ממסגרת אשראי, נקודות, זיכויים, החזרים, יתרות וסיכומים. שמור את שם בית העסק המדויק. קטגוריות אפשריות: מזון לבית, אוכל בחוץ ובילויים, פארם, דלק וחניה, מתנות, ביגוד והנעלה, תחבצ, כבישי אגרה, תספורת וקוסמטיקה, תחביבים, סיגריות, חופשה וטיול, עוזרת ושמרטף, תיקוני רכב, בריאות, בעלי חיים, דמי כיס וילדים, יהדות וחגים, שונות, ביט ללא מעקב, מזומן ללא מעקב, תקשורת, ביטוח. כללים: BIT/ביט=ביט ללא מעקב, SPOTIFY/NETFLIX/אמזון=תחביבים, סופרמרקט/מאפיה=מזון לבית, מסעדה/קפה/WOLT=אוכל בחוץ ובילויים, HOT/סלקום=תקשורת, מכבי/כללית/מכבידנט=בריאות, סונול/פז/דלק=דלק וחניה. הדוח: ' + cleanText;
 
   try {
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${API_KEY}`
+        'Authorization': 'Bearer ' + API_KEY
       },
       body: JSON.stringify({
         model: 'gpt-4o-mini',
         messages: [
-          { 
-            role: 'system', 
-            content: `You are an expert Israeli credit card expense analyzer. Return ONLY valid JSON.
-
-CRITICAL RULES:
-1. ONLY extract ACTUAL purchases/transactions from merchants
-2. NEVER include: credit limits, points, balances, summaries, refunds (זיכוי/החזר), fees info
-3. Use the EXACT merchant name from the document (e.g. "אורלי מרדכי the bakery" not "מאפיה")
-4. Amount must be the transaction amount in ILS (שקלים)
-5. If unsure whether something is an expense, DO NOT include it
-
-Format: {"expenses": [{"description": "exact merchant name", "amount": 123.45, "category": "category"}]}`
-          },
-          { role: 'user', content: prompt }
+          { role: 'system', content: systemMessage },
+          { role: 'user', content: userPrompt }
         ],
         max_tokens: 4096,
         temperature: 0,
-        response_format: { type: "json_object" }
+        response_format: { type: 'json_object' }
       })
     });
 
@@ -106,22 +64,39 @@ Format: {"expenses": [{"description": "exact merchant name", "amount": 123.45, "
     const data = await response.json();
     const content = data.choices[0].message.content;
 
+    // Clean the content before parsing
+    let cleanContent = content
+      .replace(/[\u0000-\u001F]+/g, ' ')
+      .replace(/,\s*}/g, '}')
+      .replace(/,\s*]/g, ']')
+      .trim();
+
     try {
-      const result = JSON.parse(content);
+      const result = JSON.parse(cleanContent);
       
-      // Ensure expenses array exists
+      // Ensure expenses array exists and filter out bad entries
       if (!result.expenses) {
         result.expenses = [];
       }
       
+      // Filter out entries that look like limits/points/summaries
+      result.expenses = result.expenses.filter(exp => {
+        if (!exp.description || !exp.amount) return false;
+        const desc = exp.description.toLowerCase();
+        const badWords = ['מסגרת', 'נקודות', 'יתרה', 'סיכום', 'התחייבות', 'זיכוי', 'החזר', 'עמלה'];
+        return !badWords.some(word => desc.includes(word));
+      });
+      
       return res.status(200).json(result);
     } catch (parseError) {
       // Try to extract JSON from response
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      const jsonMatch = cleanContent.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         try {
           const result = JSON.parse(jsonMatch[0]);
-          return res.status(200).json(result);
+          if (result.expenses) {
+            return res.status(200).json(result);
+          }
         } catch (e) {
           // ignore
         }
@@ -129,7 +104,8 @@ Format: {"expenses": [{"description": "exact merchant name", "amount": 123.45, "
       
       return res.status(500).json({ 
         error: 'שגיאה בניתוח התשובה. נסה שוב.',
-        details: parseError.message
+        details: parseError.message,
+        raw: cleanContent.substring(0, 200)
       });
     }
 
