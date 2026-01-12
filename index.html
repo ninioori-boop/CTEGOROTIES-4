@@ -452,52 +452,59 @@
     
     function fixSpacedText(text) {
       // First, fix spaced-out Hebrew text (letters with spaces between them)
-      // Match sequences of single Hebrew letters separated by spaces
       text = text.replace(/([\u0590-\u05FF](\s+[\u0590-\u05FF])+)/g, function(match) {
-        // Remove spaces and reverse (Hebrew was extracted backwards)
         const letters = match.replace(/\s+/g, '');
         return letters.split('').reverse().join('');
       });
       
       // Fix spaced-out English text
       text = text.replace(/([A-Za-z](\s+[A-Za-z])+)/g, function(match) {
-        // Check if it looks like spaced-out text (single letters with spaces)
         const parts = match.trim().split(/\s+/);
         if (parts.every(p => p.length === 1)) {
-          // Single letters - join them
           return parts.join('');
         }
         return match;
       });
       
-      // Fix common reversed/spaced English brand names
-      const brandFixes = {
-        'HOTmobile': 'HOT mobile',
-        'elibomTOH': 'HOT mobile', 
+      // REVERSE long Hebrew sequences (more than 3 characters together)
+      text = text.replace(/([\u0590-\u05FF]{4,})/g, function(match) {
+        return match.split('').reverse().join('');
+      });
+      
+      // Fix reversed English words/brands
+      const reversedBrands = {
+        'yaPGOOGLE': 'Google Pay',
+        'yaPelgooG': 'Google Pay', 
+        'ELGOOG': 'GOOGLE',
+        'elgooG': 'Google',
+        'yrekabeht': 'the bakery',
+        'eroM&eniW': 'Wine & More',
+        'eroM & eniW': 'Wine & More',
         'TLOW': 'WOLT',
         'tteG': 'Gett',
-        'Gett': 'Gett',
         'TIB': 'BIT',
+        'elibomTOH': 'HOT mobile',
+        'TOHYBVTTXEN': 'NEXT TV BY HOT',
         'XILFTNE': 'NETFLIX',
         'YFITOPS': 'SPOTIFY',
-        'ELGOOG': 'GOOGLE',
         'NOZAMA': 'AMAZON',
-        'yaPelgooG': 'Google Pay',
-        'NEXTTYBYHOT': 'NEXT TV BY HOT',
         'PMMA': 'AMPM',
-        'MPMA': 'AMPM'
+        'MPMA': 'AMPM',
+        'mwbסולפיויטירפ': 'פריטי פלוס בעמ',
+        'mwברוואטיימ': 'מיי טאוור בעמ',
+        'mwb102וצוצ': 'צוצו 102 בעמ'
       };
       
-      for (const [wrong, right] of Object.entries(brandFixes)) {
-        text = text.replace(new RegExp(wrong, 'gi'), right);
+      for (const [wrong, right] of Object.entries(reversedBrands)) {
+        text = text.replace(new RegExp(wrong.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), right);
       }
       
-      // Fix numbers with spaces (like "4 5 , 0 0 0" -> "45,000")
+      // Fix numbers with spaces
       text = text.replace(/(\d)\s+(\d)/g, '$1$2');
       text = text.replace(/(\d)\s*,\s*(\d)/g, '$1,$2');
       text = text.replace(/(\d)\s*\.\s*(\d)/g, '$1.$2');
       
-      // Fix dates with spaces
+      // Fix dates
       text = text.replace(/(\d{2})\s*\/\s*(\d{2})\s*\/\s*(\d{2,4})/g, '$1/$2/$3');
       
       // Clean up multiple spaces
