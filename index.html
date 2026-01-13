@@ -613,8 +613,8 @@
           <div class="upload-area" id="uploadBank" onclick="document.getElementById('fileBank').click()">
             <div class="icon">🏦</div>
             <h4>גרור קובץ או לחץ לבחירה</h4>
-            <p>Excel / CSV / PDF</p>
-            <input type="file" id="fileBank" accept=".xlsx,.xls,.csv,.pdf" onchange="handleBankFile(this.files[0])">
+            <p>Excel / CSV</p>
+            <input type="file" id="fileBank" accept=".xlsx,.xls,.csv" onchange="handleBankFile(this.files[0])">
           </div>
           <div class="file-info" id="fileBankInfo">
             <div class="file-name" id="fileBankName"></div>
@@ -655,7 +655,6 @@
     </footer>
   </div>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script>
     // Store data for each card
     const cardData = {
@@ -669,8 +668,6 @@
     let bankData = {
       name: '',
       data: null,
-      isPdf: false,
-      pdfBase64: null,
       fileName: ''
     };
 
@@ -793,7 +790,7 @@
       }
       
       // Check if bank data exists
-      const hasBankData = bankData.data || bankData.pdfBase64;
+      const hasBankData = bankData.data;
       
       if (totalCards > 0 || hasBankData) {
         document.getElementById('summaryBox').style.display = 'block';
@@ -859,7 +856,7 @@
         }
       }
       
-      const hasBankData = bankData.data || bankData.pdfBase64;
+      const hasBankData = bankData.data;
       
       if (cardsToAnalyze.length === 0 && !hasBankData) {
         showError('נא להעלות לפחות קובץ אחד');
@@ -902,30 +899,15 @@
         if (hasBankData) {
           updateLoading('מנתח עו"ש ' + bankData.name + '...', 'ניתוח חשבון בנק');
           
-          let response;
-          
-          if (bankData.isPdf) {
-            // Send PDF to Vision API
-            response = await fetch('/api/analyze-bank', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ 
-                pdfBase64: bankData.pdfBase64,
-                bankName: bankData.name
-              })
-            });
-          } else {
-            // Send Excel data
-            const textData = formatDataForAI(bankData.data);
-            response = await fetch('/api/analyze-bank', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ 
-                text: textData,
-                bankName: bankData.name
-              })
-            });
-          }
+          const textData = formatDataForAI(bankData.data);
+          const response = await fetch('/api/analyze-bank', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              text: textData,
+              bankName: bankData.name
+            })
+          });
 
           const data = await response.json();
 
@@ -987,33 +969,20 @@
         return;
       }
       
-      if (!['xlsx', 'xls', 'csv', 'pdf'].includes(ext)) {
-        showError('נא להעלות קובץ Excel, CSV או PDF');
+      if (!['xlsx', 'xls', 'csv'].includes(ext)) {
+        showError('נא להעלות קובץ Excel או CSV בלבד');
         return;
       }
 
       try {
         bankData.name = bankName;
         bankData.fileName = file.name;
-        bankData.isPdf = (ext === 'pdf');
 
-        if (ext === 'pdf') {
-          // Convert PDF to base64 for Vision API
-          const base64 = await fileToBase64(file);
-          bankData.pdfBase64 = base64;
-          bankData.data = null;
-          
-          // Update UI
-          updateBankUI('📄 PDF נטען - יישלח ל-AI Vision');
-        } else {
-          // Excel/CSV - read normally
-          const data = await readExcelFile(file);
-          bankData.data = data;
-          bankData.pdfBase64 = null;
-          
-          let transCount = data.length - 1;
-          updateBankUI(transCount + ' שורות נקראו');
-        }
+        const data = await readExcelFile(file);
+        bankData.data = data;
+        
+        let transCount = data.length - 1;
+        updateBankUI(transCount + ' שורות נקראו');
 
         hideError();
         updateSummary();
@@ -1037,7 +1006,7 @@
     }
 
     function removeBankFile() {
-      bankData = { name: '', data: null, isPdf: false, pdfBase64: null, fileName: '' };
+      bankData = { name: '', data: null, fileName: '' };
       
       const uploadArea = document.getElementById('uploadBank');
       uploadArea.classList.remove('has-file');
@@ -1051,15 +1020,6 @@
       updateSummary();
     }
 
-    function fileToBase64(file) {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result.split(',')[1]);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
-    }
-
     // Drag and drop for bank upload
     const bankUploadArea = document.getElementById('uploadBank');
     bankUploadArea.addEventListener('dragover', (e) => {
@@ -1068,7 +1028,7 @@
       bankUploadArea.style.background = '#faf5ff';
     });
     bankUploadArea.addEventListener('dragleave', () => {
-      if (!bankData.data && !bankData.pdfBase64) {
+      if (!bankData.data) {
         bankUploadArea.style.borderColor = '#9f7aea';
         bankUploadArea.style.background = 'linear-gradient(135deg, #faf5ff 0%, #f0fff4 100%)';
       }
