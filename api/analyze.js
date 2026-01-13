@@ -24,16 +24,18 @@ module.exports = async (req, res) => {
     return res.status(500).json({ error: 'API key not configured on server' });
   }
 
-  // Clean the text from problematic characters
+  // Clean the text from problematic characters - increased limit for more transactions
   const cleanText = text
     .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, ' ')
     .replace(/\\/g, ' ')
     .replace(/"/g, "'")
-    .substring(0, 15000);
+    .substring(0, 60000);
 
   const systemMessage = `You are an Israeli credit card expense analyzer. You receive data from Excel/CSV files exported from Israeli credit card companies.
 
-Your job is to categorize each transaction into the correct expense category.
+Your job is to categorize EVERY SINGLE transaction into the correct expense category.
+
+CRITICAL: You MUST process ALL transactions in the data. Do not skip any rows. Every transaction must appear in your output.
 
 Return ONLY valid JSON in this exact format:
 {"expenses": [{"description": "merchant name", "amount": 123.45, "category": "category name"}]}
@@ -42,6 +44,7 @@ For INSTALLMENT payments (תשלומים), add extra fields:
 {"description": "מכבידנט", "amount": 1116.00, "category": "בריאות", "installment_current": 10, "installment_total": 12, "total_amount": 13403.40}
 
 IMPORTANT RULES:
+- Process EVERY transaction row - do not skip any!
 - Extract the merchant/business name (שם בית עסק)
 - Extract the transaction amount in ILS (סכום)
 - Assign each transaction to ONE category
@@ -51,12 +54,14 @@ IMPORTANT RULES:
 - דמי כרטיס = "עמלות בנק ואשראי"
 - רשת כוורת = "מזון לבית"
 - Look for installment indicators: "תשלום X מתוך Y", "X/Y", "מ-X"
-- IGNORE: credit limits, points, refunds, credits, balances, summaries
-- ONLY include actual purchases/payments`;
+- ONLY IGNORE: credit limit lines, total/summary lines at end
+- Include ALL actual purchases/payments/transfers`;
 
-  const userPrompt = `Analyze this credit card data from an Israeli Excel export and categorize each transaction.
+  const userPrompt = `Analyze this credit card data from an Israeli Excel export and categorize EVERY transaction.
 
-IMPORTANT - INSTALLMENT PAYMENTS (תשלומים):
+CRITICAL: Process ALL rows in the data. Every transaction must be included in your response. Do not skip any!
+
+INSTALLMENT PAYMENTS (תשלומים):
 If you see text like "תשלום X מתוך Y" or "X/Y" or "תשלום מ-X", this is an installment payment.
 For installment payments, add these fields:
 - "installment_current": current payment number
@@ -110,7 +115,7 @@ Return JSON with all transactions categorized.`;
           { role: 'system', content: systemMessage },
           { role: 'user', content: userPrompt }
         ],
-        max_tokens: 4096,
+        max_tokens: 16000,
         temperature: 0,
         response_format: { type: 'json_object' }
       })
@@ -141,14 +146,15 @@ Return JSON with all transactions categorized.`;
         result.expenses = [];
       }
       
-      // Filter out entries that look like limits/points/summaries
+      // Filter out entries that are NOT actual transactions (only obvious non-expenses)
       result.expenses = result.expenses.filter(exp => {
         if (!exp.description || !exp.amount) return false;
         if (typeof exp.amount !== 'number' || exp.amount <= 0) return false;
         
         const desc = exp.description.toLowerCase();
-        const badWords = ['מסגרת', 'נקודות', 'יתרה', 'סיכום', 'התחייבות', 'זיכוי', 'החזר', 'עמלה', 'סה"כ', 'total'];
-        return !badWords.some(word => desc.includes(word));
+        // Only filter out clear non-transactions - be very conservative
+        const badPhrases = ['מסגרת אשראי', 'יתרת זכות', 'סה"כ לחיוב', 'סה"כ חיוב', 'total balance', 'credit limit'];
+        return !badPhrases.some(phrase => desc.includes(phrase));
       });
       
       return res.status(200).json(result);
