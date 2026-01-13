@@ -157,6 +157,34 @@
     .card-3 .card-number { background: var(--purple); }
     .card-4 .card-number { background: var(--teal); }
 
+    /* Bank Account Section */
+    .bank-section {
+      margin-top: 2rem;
+      padding-top: 2rem;
+      border-top: 2px dashed #e2e8f0;
+    }
+
+    .bank-upload {
+      background: linear-gradient(135deg, #faf5ff 0%, #f0fff4 100%);
+      border: 2px solid #9f7aea;
+      border-radius: 16px;
+      padding: 1.5rem;
+      transition: all 0.3s ease;
+    }
+
+    .bank-upload.has-file {
+      border-color: var(--green);
+      background: #f0fff4;
+    }
+
+    .bank-upload .card-number {
+      background: linear-gradient(135deg, #9f7aea 0%, #667eea 100%);
+    }
+
+    .bank-upload .upload-area p {
+      color: var(--purple);
+    }
+
     .card-select {
       flex: 1;
       padding: 0.6rem 1rem;
@@ -562,6 +590,40 @@
         </div>
       </div>
 
+      <!-- Bank Account Section -->
+      <div class="bank-section">
+        <h2 class="section-title">🏦 ריכוז עו"ש (אופציונלי)</h2>
+        <p style="text-align:center; color:#718096; margin-bottom:1rem; font-size:0.9rem;">
+          להוספת הוצאות שלא עוברות באשראי: שכר דירה, הוראות קבע, משכנתא
+        </p>
+        
+        <div class="bank-upload" id="bankUpload">
+          <div class="card-header">
+            <div class="card-number">🏦</div>
+            <select class="card-select" id="bankName">
+              <option value="">-- בחר בנק --</option>
+              <option value="יהב">בנק יהב</option>
+              <option value="לאומי">בנק לאומי</option>
+              <option value="הפועלים">בנק הפועלים</option>
+              <option value="דיסקונט">בנק דיסקונט</option>
+              <option value="מזרחי">בנק מזרחי</option>
+              <option value="אחר">בנק אחר</option>
+            </select>
+          </div>
+          <div class="upload-area" id="uploadBank" onclick="document.getElementById('fileBank').click()">
+            <div class="icon">🏦</div>
+            <h4>גרור קובץ או לחץ לבחירה</h4>
+            <p>Excel / CSV / PDF</p>
+            <input type="file" id="fileBank" accept=".xlsx,.xls,.csv,.pdf" onchange="handleBankFile(this.files[0])">
+          </div>
+          <div class="file-info" id="fileBankInfo">
+            <div class="file-name" id="fileBankName"></div>
+            <div class="file-stats" id="fileBankStats"></div>
+            <span class="remove-btn" onclick="removeBankFile()">❌ הסר קובץ</span>
+          </div>
+        </div>
+      </div>
+
       <!-- Summary -->
       <div class="summary-box" id="summaryBox" style="display:none;">
         <div class="summary-title">📊 סיכום הקבצים שהועלו</div>
@@ -593,6 +655,7 @@
     </footer>
   </div>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script>
     // Store data for each card
     const cardData = {
@@ -600,6 +663,15 @@
       2: { name: '', data: null, transactions: 0, total: 0 },
       3: { name: '', data: null, transactions: 0, total: 0 },
       4: { name: '', data: null, transactions: 0, total: 0 }
+    };
+
+    // Store bank account data
+    let bankData = {
+      name: '',
+      data: null,
+      isPdf: false,
+      pdfBase64: null,
+      fileName: ''
     };
 
     // Drag and drop for each upload area
@@ -720,9 +792,12 @@
         }
       }
       
-      if (totalCards > 0) {
+      // Check if bank data exists
+      const hasBankData = bankData.data || bankData.pdfBase64;
+      
+      if (totalCards > 0 || hasBankData) {
         document.getElementById('summaryBox').style.display = 'block';
-        document.getElementById('totalCards').textContent = totalCards;
+        document.getElementById('totalCards').textContent = totalCards + (hasBankData ? ' + עו"ש' : '');
         document.getElementById('totalTransactions').textContent = totalTrans;
         document.getElementById('totalSum').textContent = Math.round(totalAmount).toLocaleString();
         document.getElementById('analyzeBtn').disabled = false;
@@ -784,19 +859,23 @@
         }
       }
       
-      if (cardsToAnalyze.length === 0) {
+      const hasBankData = bankData.data || bankData.pdfBase64;
+      
+      if (cardsToAnalyze.length === 0 && !hasBankData) {
         showError('נא להעלות לפחות קובץ אחד');
         return;
       }
 
-      showLoading('מנתח את הדוחות...', 'מעבד ' + cardsToAnalyze.length + ' כרטיסים');
+      const totalItems = cardsToAnalyze.length + (hasBankData ? 1 : 0);
+      showLoading('מנתח את הדוחות...', 'מעבד ' + totalItems + ' דוחות');
       
       const allResults = {};
       
       try {
+        // Analyze credit cards
         for (let i = 0; i < cardsToAnalyze.length; i++) {
           const card = cardsToAnalyze[i];
-          updateLoading('מנתח ' + card.name + '...', 'כרטיס ' + (i + 1) + ' מתוך ' + cardsToAnalyze.length);
+          updateLoading('מנתח ' + card.name + '...', 'כרטיס ' + (i + 1) + ' מתוך ' + totalItems);
           
           const textData = formatDataForAI(card.data);
           
@@ -814,7 +893,49 @@
 
           allResults[card.name] = {
             expenses: data.expenses || [],
-            cardNum: card.cardNum
+            cardNum: card.cardNum,
+            type: 'credit'
+          };
+        }
+        
+        // Analyze bank account if exists
+        if (hasBankData) {
+          updateLoading('מנתח עו"ש ' + bankData.name + '...', 'ניתוח חשבון בנק');
+          
+          let response;
+          
+          if (bankData.isPdf) {
+            // Send PDF to Vision API
+            response = await fetch('/api/analyze-bank', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ 
+                pdfBase64: bankData.pdfBase64,
+                bankName: bankData.name
+              })
+            });
+          } else {
+            // Send Excel data
+            const textData = formatDataForAI(bankData.data);
+            response = await fetch('/api/analyze-bank', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ 
+                text: textData,
+                bankName: bankData.name
+              })
+            });
+          }
+
+          const data = await response.json();
+
+          if (!response.ok) {
+            throw new Error(data.error || 'שגיאה בניתוח עו"ש');
+          }
+
+          allResults['עו"ש ' + bankData.name] = {
+            expenses: data.expenses || [],
+            type: 'bank'
           };
         }
         
@@ -853,6 +974,111 @@
     function hideError() {
       document.getElementById('errorMessage').classList.remove('active');
     }
+
+    // Bank file handling
+    async function handleBankFile(file) {
+      if (!file) return;
+      
+      const ext = file.name.split('.').pop().toLowerCase();
+      const bankName = document.getElementById('bankName').value;
+      
+      if (!bankName) {
+        showError('נא לבחור בנק קודם');
+        return;
+      }
+      
+      if (!['xlsx', 'xls', 'csv', 'pdf'].includes(ext)) {
+        showError('נא להעלות קובץ Excel, CSV או PDF');
+        return;
+      }
+
+      try {
+        bankData.name = bankName;
+        bankData.fileName = file.name;
+        bankData.isPdf = (ext === 'pdf');
+
+        if (ext === 'pdf') {
+          // Convert PDF to base64 for Vision API
+          const base64 = await fileToBase64(file);
+          bankData.pdfBase64 = base64;
+          bankData.data = null;
+          
+          // Update UI
+          updateBankUI('📄 PDF נטען - יישלח ל-AI Vision');
+        } else {
+          // Excel/CSV - read normally
+          const data = await readExcelFile(file);
+          bankData.data = data;
+          bankData.pdfBase64 = null;
+          
+          let transCount = data.length - 1;
+          updateBankUI(transCount + ' שורות נקראו');
+        }
+
+        hideError();
+        updateSummary();
+
+      } catch (error) {
+        console.error('Bank File Error:', error);
+        showError('שגיאה בקריאת הקובץ: ' + error.message);
+      }
+    }
+
+    function updateBankUI(stats) {
+      const uploadArea = document.getElementById('uploadBank');
+      uploadArea.classList.add('has-file');
+      uploadArea.querySelector('.icon').textContent = '✅';
+      uploadArea.querySelector('h4').textContent = 'קובץ נטען!';
+      
+      document.getElementById('bankUpload').classList.add('has-file');
+      document.getElementById('fileBankInfo').classList.add('active');
+      document.getElementById('fileBankName').textContent = bankData.fileName;
+      document.getElementById('fileBankStats').textContent = stats;
+    }
+
+    function removeBankFile() {
+      bankData = { name: '', data: null, isPdf: false, pdfBase64: null, fileName: '' };
+      
+      const uploadArea = document.getElementById('uploadBank');
+      uploadArea.classList.remove('has-file');
+      uploadArea.querySelector('.icon').textContent = '🏦';
+      uploadArea.querySelector('h4').textContent = 'גרור קובץ או לחץ לבחירה';
+      
+      document.getElementById('bankUpload').classList.remove('has-file');
+      document.getElementById('fileBankInfo').classList.remove('active');
+      document.getElementById('fileBank').value = '';
+      
+      updateSummary();
+    }
+
+    function fileToBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result.split(',')[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    // Drag and drop for bank upload
+    const bankUploadArea = document.getElementById('uploadBank');
+    bankUploadArea.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      bankUploadArea.style.borderColor = '#9f7aea';
+      bankUploadArea.style.background = '#faf5ff';
+    });
+    bankUploadArea.addEventListener('dragleave', () => {
+      if (!bankData.data && !bankData.pdfBase64) {
+        bankUploadArea.style.borderColor = '#9f7aea';
+        bankUploadArea.style.background = 'linear-gradient(135deg, #faf5ff 0%, #f0fff4 100%)';
+      }
+    });
+    bankUploadArea.addEventListener('drop', (e) => {
+      e.preventDefault();
+      if (e.dataTransfer.files.length > 0) {
+        handleBankFile(e.dataTransfer.files[0]);
+      }
+    });
   </script>
 </body>
 </html>

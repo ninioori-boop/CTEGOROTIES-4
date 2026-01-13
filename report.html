@@ -525,6 +525,7 @@
 
   <script>
     const CATEGORY_ICONS = {
+      // Credit card categories
       'מזון לבית': '🛒', 'אוכל בחוץ ובילויים': '🍽️', 'פארם': '💊',
       'דלק וחניה': '⛽', 'מתנות': '🎁', 'ביגוד והנעלה': '👔',
       'תחבצ': '🚌', 'כבישי אגרה': '🛣️', 'תספורת וקוסמטיקה': '💇',
@@ -533,7 +534,13 @@
       'בעלי חיים': '🐾', 'דמי כיס וילדים': '👶', 'יהדות וחגים': '✡️',
       'שונות': '📦', 'ביט ללא מעקב': '📱', 'מזומן ללא מעקב': '💵',
       'תקשורת': '📡', 'ביטוח': '🛡️', 'מיסים': '🏛️',
-      'דמי ניהול בניין': '🏢', 'עמלות בנק ואשראי': '🏦'
+      'דמי ניהול בניין': '🏢', 'עמלות בנק ואשראי': '🏦',
+      // Bank account categories
+      'שכר דירה': '🏠', 'משכנתא': '🏡', 'חשמל': '⚡',
+      'גז': '🔥', 'מים': '💧', 'ארנונה': '🏛️',
+      'ועד בית': '🏢', 'הלוואות': '💳', 'ביטוח לאומי': '🛡️',
+      'מס הכנסה': '🏛️', 'העברות בנקאיות': '🔄', 'חיסכון': '🐷',
+      'חשבונות בית': '🏠'
     };
 
     let allData = {};
@@ -607,14 +614,18 @@
 
       // Cards Summary
       const summaryHTML = cardNames.map((name, idx) => {
-        const expenses = allData[name].expenses || [];
+        const card = allData[name];
+        const expenses = card.expenses || [];
         const total = expenses.reduce((sum, e) => sum + e.amount, 0);
+        const isBank = card.type === 'bank' || name.includes('עו"ש');
+        const icon = isBank ? '🏦' : '💳';
+        const iconStyle = isBank ? 'background:linear-gradient(135deg, #9f7aea 0%, #667eea 100%);' : '';
         return `
           <div class="card-summary-item ${idx === 0 ? 'active' : ''}" onclick="switchCard('${name}')">
-            <div class="card-icon">💳</div>
+            <div class="card-icon" style="${iconStyle}">${icon}</div>
             <div class="card-name">${name}</div>
             <div class="card-total">${total.toLocaleString('he-IL', { maximumFractionDigits: 0 })} ₪</div>
-            <div class="card-trans">${expenses.length} עסקאות</div>
+            <div class="card-trans">${expenses.length} ${isBank ? 'פעולות' : 'עסקאות'}</div>
           </div>
         `;
       }).join('');
