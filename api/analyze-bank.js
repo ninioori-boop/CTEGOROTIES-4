@@ -12,9 +12,9 @@ module.exports = async (req, res) => {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { text, pdfBase64, bankName } = req.body || {};
+  const { text, bankName } = req.body || {};
 
-  if (!text && !pdfBase64) {
+  if (!text) {
     return res.status(400).json({ error: 'No data provided' });
   }
 
@@ -23,6 +23,12 @@ module.exports = async (req, res) => {
   if (!API_KEY) {
     return res.status(500).json({ error: 'API key not configured on server' });
   }
+
+  const cleanText = text
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, ' ')
+    .replace(/\\/g, ' ')
+    .replace(/"/g, "'")
+    .substring(0, 60000);
 
   const systemMessage = `You are an Israeli bank account (עו"ש) statement analyzer. You receive data from bank statements.
 
@@ -56,64 +62,16 @@ IMPORTANT RULES:
 - For ATM withdrawals, use "מזומן ללא מעקב"
 - For unclear transfers, use "העברות בנקאיות"`;
 
-  try {
-    let messages;
-    let model = 'gpt-4o-mini';
-
-    if (pdfBase64) {
-      // Use GPT-4o with Vision for PDF
-      model = 'gpt-4o';
-      messages = [
-        { role: 'system', content: systemMessage },
-        { 
-          role: 'user', 
-          content: [
-            {
-              type: 'text',
-              text: `Analyze this Israeli bank statement (עו"ש) from ${bankName || 'the bank'}.
-              
-Extract ALL transactions and categorize them. Look for:
-- Date (תאריך)
-- Description/Payee (תיאור/לטובת)
-- Amount (סכום)
-- Debit/Credit indicator
-
-Return JSON with all expenses categorized.`
-            },
-            {
-              type: 'image_url',
-              image_url: {
-                url: `data:application/pdf;base64,${pdfBase64}`,
-                detail: 'high'
-              }
-            }
-          ]
-        }
-      ];
-    } else {
-      // Use text-based analysis for Excel
-      const cleanText = text
-        .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, ' ')
-        .replace(/\\/g, ' ')
-        .replace(/"/g, "'")
-        .substring(0, 60000);
-
-      messages = [
-        { role: 'system', content: systemMessage },
-        { 
-          role: 'user', 
-          content: `Analyze this Israeli bank statement (עו"ש) from ${bankName || 'the bank'}.
+  const userPrompt = `Analyze this Israeli bank statement (עו"ש) from ${bankName || 'the bank'}.
 
 Extract ALL transactions and categorize them.
 
 DATA:
 ${cleanText}
 
-Return JSON with all expenses categorized.`
-        }
-      ];
-    }
+Return JSON with all expenses categorized.`;
 
+  try {
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -121,8 +79,11 @@ Return JSON with all expenses categorized.`
         'Authorization': 'Bearer ' + API_KEY
       },
       body: JSON.stringify({
-        model: model,
-        messages: messages,
+        model: 'gpt-4o-mini',
+        messages: [
+          { role: 'system', content: systemMessage },
+          { role: 'user', content: userPrompt }
+        ],
         max_tokens: 16000,
         temperature: 0,
         response_format: { type: 'json_object' }
