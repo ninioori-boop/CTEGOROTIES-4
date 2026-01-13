@@ -18,6 +18,9 @@
       --black: #1a202c;
       --green: #38a169;
       --red: #e53e3e;
+      --orange: #dd6b20;
+      --purple: #805ad5;
+      --teal: #319795;
     }
 
     * {
@@ -40,11 +43,10 @@
       padding: 2rem;
     }
 
-    /* Header */
     .report-header {
       background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
       color: var(--white);
-      padding: 3rem 2rem;
+      padding: 2.5rem 2rem;
       border-radius: 20px;
       text-align: center;
       margin-bottom: 2rem;
@@ -52,27 +54,27 @@
     }
 
     .report-header h1 {
-      font-size: 2.5rem;
+      font-size: 2.2rem;
       font-weight: 800;
       margin-bottom: 0.5rem;
     }
 
     .report-header p {
-      font-size: 1.1rem;
+      font-size: 1rem;
       opacity: 0.9;
     }
 
     .report-date {
-      margin-top: 1rem;
-      font-size: 0.95rem;
+      margin-top: 0.8rem;
+      font-size: 0.9rem;
       opacity: 0.8;
     }
 
-    /* Total Summary Card */
+    /* Total Summary */
     .total-card {
       background: linear-gradient(135deg, var(--gold) 0%, #b7791f 100%);
       color: var(--white);
-      padding: 2.5rem;
+      padding: 2rem;
       border-radius: 20px;
       text-align: center;
       margin-bottom: 2rem;
@@ -80,27 +82,141 @@
     }
 
     .total-card h2 {
-      font-size: 1.2rem;
+      font-size: 1.1rem;
       font-weight: 500;
-      margin-bottom: 0.5rem;
+      margin-bottom: 0.3rem;
       opacity: 0.9;
     }
 
     .total-amount {
-      font-size: 4rem;
+      font-size: 3.5rem;
       font-weight: 800;
       line-height: 1;
     }
 
     .total-count {
-      font-size: 1.1rem;
+      font-size: 1rem;
       margin-top: 0.5rem;
       opacity: 0.9;
     }
 
+    /* Cards Summary Grid */
+    .cards-summary {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .card-summary-item {
+      background: var(--white);
+      border-radius: 16px;
+      padding: 1.5rem;
+      text-align: center;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border: 3px solid transparent;
+    }
+
+    .card-summary-item:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+    }
+
+    .card-summary-item.active {
+      border-color: var(--accent);
+    }
+
+    .card-summary-item .card-icon {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      margin: 0 auto 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      color: white;
+    }
+
+    .card-summary-item:nth-child(1) .card-icon { background: var(--accent); }
+    .card-summary-item:nth-child(2) .card-icon { background: var(--orange); }
+    .card-summary-item:nth-child(3) .card-icon { background: var(--purple); }
+    .card-summary-item:nth-child(4) .card-icon { background: var(--teal); }
+    .card-summary-item:nth-child(5) .card-icon { background: var(--gold); }
+
+    .card-summary-item .card-name {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--primary);
+      margin-bottom: 0.3rem;
+    }
+
+    .card-summary-item .card-total {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .card-summary-item .card-trans {
+      font-size: 0.85rem;
+      color: var(--gray);
+    }
+
+    /* Tabs */
+    .tabs-container {
+      display: none;
+      margin-bottom: 2rem;
+    }
+
+    .tabs-container.active {
+      display: block;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .tab {
+      padding: 0.8rem 1.5rem;
+      background: var(--white);
+      border: 2px solid #e2e8f0;
+      border-radius: 30px;
+      cursor: pointer;
+      font-family: 'Heebo', sans-serif;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--gray);
+      transition: all 0.3s ease;
+    }
+
+    .tab:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .tab.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
     /* Categories Grid */
     .categories-title {
-      font-size: 1.5rem;
+      font-size: 1.4rem;
       font-weight: 700;
       color: var(--primary);
       margin-bottom: 1.5rem;
@@ -109,7 +225,7 @@
 
     .categories-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
       gap: 1.5rem;
       margin-bottom: 2rem;
     }
@@ -141,17 +257,17 @@
       display: flex;
       align-items: center;
       gap: 0.5rem;
-      font-size: 1.2rem;
+      font-size: 1.1rem;
       font-weight: 600;
       color: var(--primary);
     }
 
     .category-name .icon {
-      font-size: 1.5rem;
+      font-size: 1.3rem;
     }
 
     .category-total {
-      font-size: 1.5rem;
+      font-size: 1.3rem;
       font-weight: 700;
       color: var(--accent);
     }
@@ -163,7 +279,7 @@
     }
 
     .expense-list {
-      max-height: 200px;
+      max-height: 180px;
       overflow-y: auto;
     }
 
@@ -171,7 +287,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 0.6rem 0;
+      padding: 0.5rem 0;
       border-bottom: 1px dashed #e2e8f0;
     }
 
@@ -181,7 +297,7 @@
 
     .expense-name {
       color: var(--black);
-      font-size: 0.95rem;
+      font-size: 0.9rem;
     }
 
     .expense-amount {
@@ -194,34 +310,34 @@
     .chart-section {
       background: var(--white);
       border-radius: 20px;
-      padding: 2rem;
+      padding: 1.5rem;
       margin-bottom: 2rem;
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
     }
 
     .chart-title {
-      font-size: 1.3rem;
+      font-size: 1.2rem;
       font-weight: 600;
       color: var(--primary);
-      margin-bottom: 1.5rem;
+      margin-bottom: 1rem;
       text-align: center;
     }
 
     .bar-chart {
       display: flex;
       flex-direction: column;
-      gap: 0.8rem;
+      gap: 0.6rem;
     }
 
     .bar-item {
       display: flex;
       align-items: center;
-      gap: 1rem;
+      gap: 0.8rem;
     }
 
     .bar-label {
-      width: 150px;
-      font-size: 0.9rem;
+      width: 130px;
+      font-size: 0.85rem;
       color: var(--black);
       text-align: left;
       white-space: nowrap;
@@ -231,26 +347,22 @@
 
     .bar-container {
       flex: 1;
-      height: 28px;
+      height: 24px;
       background: var(--gray-light);
-      border-radius: 14px;
+      border-radius: 12px;
       overflow: hidden;
     }
 
     .bar-fill {
       height: 100%;
       background: linear-gradient(90deg, var(--accent) 0%, var(--primary-light) 100%);
-      border-radius: 14px;
-      display: flex;
-      align-items: center;
-      justify-content: flex-start;
-      padding-right: 10px;
+      border-radius: 12px;
       transition: width 0.5s ease;
     }
 
     .bar-value {
-      width: 80px;
-      font-size: 0.9rem;
+      width: 70px;
+      font-size: 0.85rem;
       font-weight: 600;
       color: var(--primary);
       text-align: left;
@@ -260,14 +372,14 @@
     .actions {
       display: flex;
       justify-content: center;
-      gap: 1rem;
+      gap: 0.8rem;
       flex-wrap: wrap;
       margin-bottom: 2rem;
     }
 
     .btn {
-      padding: 1rem 2rem;
-      font-size: 1.1rem;
+      padding: 0.9rem 1.5rem;
+      font-size: 1rem;
       font-weight: 600;
       border-radius: 50px;
       cursor: pointer;
@@ -297,95 +409,113 @@
       color: var(--white);
     }
 
-    /* Footer */
     footer {
       text-align: center;
       padding: 2rem;
       color: var(--gray);
     }
 
-    /* Print Styles */
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: white;
+      padding: 2rem;
+      border-radius: 20px;
+      max-width: 500px;
+      width: 90%;
+      text-align: center;
+    }
+
     @media print {
-      body {
-        background: white;
-      }
-      
-      .actions {
-        display: none;
-      }
-      
-      .category-card {
-        break-inside: avoid;
-      }
+      body { background: white; }
+      .actions, .tabs-container, .cards-summary { display: none !important; }
+      .category-card { break-inside: avoid; }
     }
 
     @media (max-width: 768px) {
-      .container {
-        padding: 1rem;
-      }
-
-      .report-header {
-        padding: 2rem 1rem;
-      }
-
-      .report-header h1 {
-        font-size: 1.8rem;
-      }
-
-      .total-amount {
-        font-size: 2.5rem;
-      }
-
-      .categories-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .bar-label {
-        width: 100px;
-        font-size: 0.8rem;
-      }
-
-      .actions {
-        flex-direction: column;
-      }
-
-      .btn {
-        width: 100%;
-      }
+      .container { padding: 1rem; }
+      .report-header { padding: 1.5rem 1rem; }
+      .report-header h1 { font-size: 1.6rem; }
+      .total-amount { font-size: 2.5rem; }
+      .categories-grid { grid-template-columns: 1fr; }
+      .bar-label { width: 90px; font-size: 0.75rem; }
+      .actions { flex-direction: column; }
+      .btn { width: 100%; }
+      .cards-summary { grid-template-columns: repeat(2, 1fr); }
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <!-- Header -->
     <div class="report-header">
       <h1>📊 דוח מיפוי הוצאות</h1>
-      <p>ניתוח מפורט של ההוצאות לפי קטגוריות</p>
+      <p id="reportSubtitle">ניתוח מפורט של ההוצאות לפי קטגוריות</p>
       <div class="report-date" id="reportDate"></div>
     </div>
 
-    <!-- Total Summary -->
+    <!-- Total Summary (for all cards) -->
     <div class="total-card">
-      <h2>סך כל ההוצאות</h2>
+      <h2 id="totalLabel">סך כל ההוצאות</h2>
       <div class="total-amount" id="totalAmount">0 ₪</div>
       <div class="total-count" id="totalCount">0 הוצאות נותחו</div>
     </div>
 
-    <!-- Bar Chart -->
-    <div class="chart-section">
-      <div class="chart-title">📈 התפלגות הוצאות לפי קטגוריה</div>
-      <div class="bar-chart" id="barChart"></div>
+    <!-- Cards Summary (multi-card mode) -->
+    <div class="cards-summary" id="cardsSummary" style="display:none;"></div>
+
+    <!-- Tabs for multi-card -->
+    <div class="tabs-container" id="tabsContainer">
+      <div class="tabs" id="tabs"></div>
     </div>
 
-    <!-- Categories Grid -->
-    <h2 class="categories-title">פירוט לפי קטגוריות</h2>
-    <div class="categories-grid" id="categoriesGrid"></div>
+    <!-- Report Content (single or tabbed) -->
+    <div id="reportContent">
+      <div class="chart-section">
+        <div class="chart-title">📈 התפלגות הוצאות לפי קטגוריה</div>
+        <div class="bar-chart" id="barChart"></div>
+      </div>
+
+      <h2 class="categories-title">פירוט לפי קטגוריות</h2>
+      <div class="categories-grid" id="categoriesGrid"></div>
+    </div>
 
     <!-- Actions -->
     <div class="actions">
-      <button class="btn btn-primary" onclick="window.print()">🖨️ הדפס דוח</button>
+      <button class="btn btn-primary" onclick="shareReport()">🔗 שתף ללקוח</button>
+      <button class="btn btn-primary" onclick="window.print()">🖨️ הדפס</button>
       <button class="btn btn-primary" onclick="exportToExcel()">📥 ייצא לאקסל</button>
-      <button class="btn btn-secondary" onclick="window.location.href='index.html'">📤 העלה דוח חדש</button>
+      <button class="btn btn-secondary" onclick="window.location.href='index.html'">📤 דוח חדש</button>
+    </div>
+
+    <!-- Share Modal -->
+    <div class="modal" id="shareModal">
+      <div class="modal-content">
+        <h3 style="color:#1a365d; margin-bottom:1rem;">🔗 שתף דוח עם הלקוח</h3>
+        <p style="color:#718096; margin-bottom:1rem;">העתק את הקישור ושלח ללקוח</p>
+        <input type="text" id="shareUrl" readonly style="width:100%; padding:1rem; border:2px solid #e2e8f0; border-radius:10px; font-size:0.9rem; direction:ltr; margin-bottom:1rem;">
+        <div style="display:flex; gap:0.8rem; justify-content:center; flex-wrap:wrap;">
+          <button onclick="copyShareLink()" class="btn btn-primary">📋 העתק</button>
+          <button onclick="shareWhatsApp()" class="btn btn-primary" style="background:linear-gradient(135deg, #25D366 0%, #128C7E 100%);">💬 וואטסאפ</button>
+          <button onclick="closeShareModal()" class="btn btn-secondary">סגור</button>
+        </div>
+        <p id="copySuccess" style="color:#38a169; margin-top:1rem; display:none;">✅ הקישור הועתק!</p>
+      </div>
     </div>
 
     <footer>
@@ -395,87 +525,185 @@
 
   <script>
     const CATEGORY_ICONS = {
-      'מזון לבית': '🛒',
-      'אוכל בחוץ ובילויים': '🍽️',
-      'פארם': '💊',
-      'דלק וחניה': '⛽',
-      'מתנות לאירועים ולשמחות': '🎁',
-      'מתנות': '🎁',
-      'ביגוד והנעלה': '👔',
-      'תחב"צ': '🚌',
-      'תחבצ': '🚌',
-      'כבישי אגרה': '🛣️',
-      'תספורת וקוסמטיקה': '💇',
-      'תחביבים': '🎨',
-      'סיגריות': '🚬',
-      'חופשה/טיול': '✈️',
-      'חופשה וטיול': '✈️',
-      'עוזרת/שמרטף': '🏠',
-      'עוזרת ושמרטף': '🏠',
-      'תיקוני רכב': '🔧',
-      'בריאות': '🏥',
-      'בעלי חיים': '🐾',
-      'דמי כיס/ילדים': '👶',
-      'דמי כיס וילדים': '👶',
-      'יהדות/חגים': '✡️',
-      'יהדות וחגים': '✡️',
-      'שונות': '📦',
-      'ביט ללא מעקב': '📱',
-      'מזומן ללא מעקב': '💵',
-      'תקשורת': '📡',
-      'ביטוח': '🛡️',
-      'מיסים': '🏛️',
-      'דמי ניהול בניין': '🏢',
-      'עמלות בנק ואשראי': '🏦'
+      'מזון לבית': '🛒', 'אוכל בחוץ ובילויים': '🍽️', 'פארם': '💊',
+      'דלק וחניה': '⛽', 'מתנות': '🎁', 'ביגוד והנעלה': '👔',
+      'תחבצ': '🚌', 'כבישי אגרה': '🛣️', 'תספורת וקוסמטיקה': '💇',
+      'תחביבים': '🎨', 'סיגריות': '🚬', 'חופשה וטיול': '✈️',
+      'עוזרת ושמרטף': '🏠', 'תיקוני רכב': '🔧', 'בריאות': '🏥',
+      'בעלי חיים': '🐾', 'דמי כיס וילדים': '👶', 'יהדות וחגים': '✡️',
+      'שונות': '📦', 'ביט ללא מעקב': '📱', 'מזומן ללא מעקב': '💵',
+      'תקשורת': '📡', 'ביטוח': '🛡️', 'מיסים': '🏛️',
+      'דמי ניהול בניין': '🏢', 'עמלות בנק ואשראי': '🏦'
     };
 
-    let expensesData = [];
+    let allData = {};
+    let currentCard = 'all';
+    let isMultiCard = false;
 
     document.addEventListener('DOMContentLoaded', () => {
-      // קבלת הנתונים מ-localStorage
-      const data = localStorage.getItem('expenseResults');
-      
-      if (!data) {
-        alert('לא נמצאו נתונים. מעביר לעמוד ההעלאה...');
-        window.location.href = 'index.html';
+      // Check URL data first
+      const urlData = checkUrlData();
+      if (urlData) {
+        handleData(urlData);
         return;
       }
 
-      expensesData = JSON.parse(data);
-      renderReport(expensesData);
+      // Check multi-card data
+      const multiData = localStorage.getItem('multiCardResults');
+      if (multiData) {
+        const parsed = JSON.parse(multiData);
+        if (Object.keys(parsed).length > 0) {
+          isMultiCard = true;
+          allData = parsed;
+          renderMultiCardReport();
+          return;
+        }
+      }
+
+      // Check single card data
+      const singleData = localStorage.getItem('expenseResults');
+      if (singleData) {
+        handleData(JSON.parse(singleData));
+        return;
+      }
+
+      alert('לא נמצאו נתונים. מעביר לעמוד ההעלאה...');
+      window.location.href = 'index.html';
     });
 
-    function renderReport(expenses) {
-      // תאריך
+    function handleData(data) {
+      if (Array.isArray(data)) {
+        renderSingleReport(data);
+      } else if (typeof data === 'object') {
+        isMultiCard = true;
+        allData = data;
+        renderMultiCardReport();
+      }
+    }
+
+    function renderMultiCardReport() {
       const now = new Date();
       document.getElementById('reportDate').textContent = 
         `נוצר בתאריך: ${now.toLocaleDateString('he-IL')} בשעה ${now.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}`;
 
-      // חישוב סיכומים לפי קטגוריה
-      const grouped = {};
-      let totalAmount = 0;
+      const cardNames = Object.keys(allData);
+      const cardCount = cardNames.length;
+      
+      document.getElementById('reportSubtitle').textContent = `ניתוח ${cardCount} כרטיסי אשראי`;
 
-      expenses.forEach(expense => {
-        const cat = expense.category || 'שונות';
-        if (!grouped[cat]) {
-          grouped[cat] = { items: [], total: 0 };
-        }
-        grouped[cat].items.push(expense);
-        grouped[cat].total += expense.amount;
-        totalAmount += expense.amount;
+      // Calculate totals
+      let grandTotal = 0;
+      let grandCount = 0;
+      
+      cardNames.forEach(name => {
+        const expenses = allData[name].expenses || [];
+        expenses.forEach(e => grandTotal += e.amount);
+        grandCount += expenses.length;
       });
 
-      // סיכום כולל
-      document.getElementById('totalAmount').textContent = totalAmount.toLocaleString('he-IL', { maximumFractionDigits: 2 }) + ' ₪';
+      document.getElementById('totalLabel').textContent = `סך הכל מ-${cardCount} כרטיסים`;
+      document.getElementById('totalAmount').textContent = grandTotal.toLocaleString('he-IL', { maximumFractionDigits: 0 }) + ' ₪';
+      document.getElementById('totalCount').textContent = grandCount + ' הוצאות נותחו';
+
+      // Cards Summary
+      const summaryHTML = cardNames.map((name, idx) => {
+        const expenses = allData[name].expenses || [];
+        const total = expenses.reduce((sum, e) => sum + e.amount, 0);
+        return `
+          <div class="card-summary-item ${idx === 0 ? 'active' : ''}" onclick="switchCard('${name}')">
+            <div class="card-icon">💳</div>
+            <div class="card-name">${name}</div>
+            <div class="card-total">${total.toLocaleString('he-IL', { maximumFractionDigits: 0 })} ₪</div>
+            <div class="card-trans">${expenses.length} עסקאות</div>
+          </div>
+        `;
+      }).join('');
+
+      // Add "All" option
+      const allSummary = `
+        <div class="card-summary-item" onclick="switchCard('all')">
+          <div class="card-icon" style="background:var(--gold);">📊</div>
+          <div class="card-name">סיכום כולל</div>
+          <div class="card-total">${grandTotal.toLocaleString('he-IL', { maximumFractionDigits: 0 })} ₪</div>
+          <div class="card-trans">${grandCount} עסקאות</div>
+        </div>
+      `;
+
+      document.getElementById('cardsSummary').innerHTML = summaryHTML + allSummary;
+      document.getElementById('cardsSummary').style.display = 'grid';
+
+      // Tabs
+      const tabsHTML = cardNames.map((name, idx) => 
+        `<button class="tab ${idx === 0 ? 'active' : ''}" onclick="switchCard('${name}')">${name}</button>`
+      ).join('') + `<button class="tab" onclick="switchCard('all')">📊 כל הכרטיסים</button>`;
+      
+      document.getElementById('tabs').innerHTML = tabsHTML;
+      document.getElementById('tabsContainer').classList.add('active');
+
+      // Render first card
+      switchCard(cardNames[0]);
+    }
+
+    function switchCard(cardName) {
+      currentCard = cardName;
+      
+      // Update active states
+      document.querySelectorAll('.card-summary-item').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+      
+      document.querySelectorAll('.card-summary-item').forEach(el => {
+        if (el.querySelector('.card-name').textContent === cardName || 
+            (cardName === 'all' && el.querySelector('.card-name').textContent === 'סיכום כולל')) {
+          el.classList.add('active');
+        }
+      });
+      
+      document.querySelectorAll('.tab').forEach(el => {
+        if (el.textContent === cardName || (cardName === 'all' && el.textContent.includes('כל הכרטיסים'))) {
+          el.classList.add('active');
+        }
+      });
+
+      // Get expenses
+      let expenses = [];
+      if (cardName === 'all') {
+        Object.values(allData).forEach(card => {
+          expenses = expenses.concat(card.expenses || []);
+        });
+      } else {
+        expenses = allData[cardName]?.expenses || [];
+      }
+
+      renderExpenses(expenses);
+    }
+
+    function renderSingleReport(expenses) {
+      const now = new Date();
+      document.getElementById('reportDate').textContent = 
+        `נוצר בתאריך: ${now.toLocaleDateString('he-IL')} בשעה ${now.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}`;
+
+      const total = expenses.reduce((sum, e) => sum + e.amount, 0);
+      document.getElementById('totalAmount').textContent = total.toLocaleString('he-IL', { maximumFractionDigits: 0 }) + ' ₪';
       document.getElementById('totalCount').textContent = expenses.length + ' הוצאות נותחו';
 
-      // מיון לפי סכום יורד
-      const sortedCategories = Object.entries(grouped)
-        .sort((a, b) => b[1].total - a[1].total);
+      renderExpenses(expenses);
+    }
 
-      // גרף עמודות
+    function renderExpenses(expenses) {
+      // Group by category
+      const grouped = {};
+      expenses.forEach(expense => {
+        const cat = expense.category || 'שונות';
+        if (!grouped[cat]) grouped[cat] = { items: [], total: 0 };
+        grouped[cat].items.push(expense);
+        grouped[cat].total += expense.amount;
+      });
+
+      const sortedCategories = Object.entries(grouped).sort((a, b) => b[1].total - a[1].total);
+
+      // Bar chart
       const maxAmount = sortedCategories.length > 0 ? sortedCategories[0][1].total : 1;
-      const barChartHTML = sortedCategories.slice(0, 10).map(([category, data]) => {
+      const barChartHTML = sortedCategories.slice(0, 8).map(([category, data]) => {
         const percentage = (data.total / maxAmount) * 100;
         const icon = CATEGORY_ICONS[category] || '📦';
         return `
@@ -490,13 +718,13 @@
       }).join('');
       document.getElementById('barChart').innerHTML = barChartHTML;
 
-      // כרטיסיות קטגוריות
+      // Category cards
       const cardsHTML = sortedCategories.map(([category, data]) => {
         const icon = CATEGORY_ICONS[category] || '📦';
         const itemsHTML = data.items.map(item => {
           let installmentInfo = '';
           if (item.installment_current && item.installment_total) {
-            installmentInfo = `<span style="font-size:0.75rem;color:#718096;display:block;">תשלום ${item.installment_current}/${item.installment_total}${item.total_amount ? ` (סה"כ: ${item.total_amount.toLocaleString('he-IL')}₪)` : ''}</span>`;
+            installmentInfo = `<span style="font-size:0.7rem;color:#718096;display:block;">תשלום ${item.installment_current}/${item.installment_total}</span>`;
           }
           return `
             <div class="expense-item">
@@ -513,7 +741,7 @@
                 <span class="icon">${icon}</span>
                 <span>${category}</span>
               </div>
-              <div class="category-total">${data.total.toLocaleString('he-IL', { maximumFractionDigits: 2 })} ₪</div>
+              <div class="category-total">${data.total.toLocaleString('he-IL', { maximumFractionDigits: 0 })} ₪</div>
             </div>
             <div class="category-count">${data.items.length} פריטים</div>
             <div class="expense-list">${itemsHTML}</div>
@@ -524,13 +752,29 @@
     }
 
     function exportToExcel() {
-      let csv = 'קטגוריה,תיאור,סכום,תשלום נוכחי,סה"כ תשלומים,סכום מקורי\n';
+      let expenses = [];
+      if (isMultiCard) {
+        if (currentCard === 'all') {
+          Object.entries(allData).forEach(([cardName, card]) => {
+            (card.expenses || []).forEach(e => {
+              expenses.push({ ...e, cardName });
+            });
+          });
+        } else {
+          expenses = (allData[currentCard]?.expenses || []).map(e => ({ ...e, cardName: currentCard }));
+        }
+      } else {
+        expenses = JSON.parse(localStorage.getItem('expenseResults') || '[]');
+      }
+
+      let csv = isMultiCard ? 'כרטיס,קטגוריה,תיאור,סכום\n' : 'קטגוריה,תיאור,סכום\n';
       
-      expensesData.forEach(expense => {
-        const installCurrent = expense.installment_current || '';
-        const installTotal = expense.installment_total || '';
-        const totalAmount = expense.total_amount || '';
-        csv += `"${expense.category}","${expense.description}","${expense.amount.toFixed(2)}","${installCurrent}","${installTotal}","${totalAmount}"\n`;
+      expenses.forEach(e => {
+        if (isMultiCard) {
+          csv += `"${e.cardName || ''}","${e.category}","${e.description}","${e.amount.toFixed(2)}"\n`;
+        } else {
+          csv += `"${e.category}","${e.description}","${e.amount.toFixed(2)}"\n`;
+        }
       });
 
       const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
@@ -539,7 +783,53 @@
       link.download = 'מיפוי_הוצאות_' + new Date().toLocaleDateString('he-IL').replace(/\./g, '-') + '.csv';
       link.click();
     }
+
+    function shareReport() {
+      let dataToShare;
+      if (isMultiCard) {
+        dataToShare = allData;
+      } else {
+        dataToShare = JSON.parse(localStorage.getItem('expenseResults') || '[]');
+      }
+      
+      const dataStr = JSON.stringify(dataToShare);
+      const compressed = btoa(encodeURIComponent(dataStr));
+      const shareUrl = window.location.origin + '/report.html?data=' + compressed;
+      
+      document.getElementById('shareUrl').value = shareUrl;
+      document.getElementById('shareModal').classList.add('active');
+      document.getElementById('copySuccess').style.display = 'none';
+    }
+
+    function copyShareLink() {
+      const urlInput = document.getElementById('shareUrl');
+      urlInput.select();
+      document.execCommand('copy');
+      navigator.clipboard.writeText(urlInput.value).catch(() => {});
+      document.getElementById('copySuccess').style.display = 'block';
+    }
+
+    function shareWhatsApp() {
+      const url = document.getElementById('shareUrl').value;
+      window.open('https://wa.me/?text=' + encodeURIComponent('היי! הנה הדוח של מיפוי ההוצאות שלך: ' + url), '_blank');
+    }
+
+    function closeShareModal() {
+      document.getElementById('shareModal').classList.remove('active');
+    }
+
+    function checkUrlData() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const dataParam = urlParams.get('data');
+      if (dataParam) {
+        try {
+          return JSON.parse(decodeURIComponent(atob(dataParam)));
+        } catch (e) {
+          console.error('Failed to decode URL data:', e);
+        }
+      }
+      return null;
+    }
   </script>
 </body>
 </html>
-

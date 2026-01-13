@@ -18,6 +18,9 @@
       --gray: #718096;
       --green: #38a169;
       --red: #e53e3e;
+      --orange: #dd6b20;
+      --purple: #805ad5;
+      --teal: #319795;
     }
 
     * {
@@ -35,7 +38,7 @@
     }
 
     .container {
-      max-width: 900px;
+      max-width: 1000px;
       margin: 0 auto;
       padding: 2rem;
     }
@@ -52,10 +55,15 @@
       margin-bottom: 0.5rem;
     }
 
+    header p {
+      opacity: 0.9;
+      font-size: 1.1rem;
+    }
+
     .main-card {
       background: var(--white);
       border-radius: 20px;
-      padding: 2.5rem;
+      padding: 2rem;
       box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
       margin-bottom: 2rem;
     }
@@ -104,83 +112,178 @@
       box-shadow: 0 10px 30px rgba(56, 161, 105, 0.4);
     }
 
-    .upload-box {
-      border: 3px dashed #cbd5e0;
-      border-radius: 20px;
-      padding: 3rem 2rem;
-      text-align: center;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      background: var(--white-soft);
+    /* Cards Grid */
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.5rem;
       margin-bottom: 2rem;
     }
 
-    .upload-box:hover {
-      border-color: var(--blue-light);
-      background: #ebf8ff;
+    .card-upload {
+      background: var(--white-soft);
+      border: 2px solid #e2e8f0;
+      border-radius: 16px;
+      padding: 1.5rem;
+      transition: all 0.3s ease;
     }
 
-    .upload-box.dragover {
-      border-color: var(--blue-light);
-      background: #ebf8ff;
-      transform: scale(1.02);
-    }
-
-    .upload-box.has-file {
+    .card-upload.has-file {
       border-color: var(--green);
       background: #f0fff4;
     }
 
-    .upload-box .icon {
-      font-size: 4rem;
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
       margin-bottom: 1rem;
     }
 
-    .upload-box h4 {
-      color: var(--blue-dark);
-      font-size: 1.3rem;
+    .card-number {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 1.2rem;
+      color: white;
+    }
+
+    .card-1 .card-number { background: var(--blue-light); }
+    .card-2 .card-number { background: var(--orange); }
+    .card-3 .card-number { background: var(--purple); }
+    .card-4 .card-number { background: var(--teal); }
+
+    .card-select {
+      flex: 1;
+      padding: 0.6rem 1rem;
+      border: 2px solid #e2e8f0;
+      border-radius: 10px;
+      font-family: 'Heebo', sans-serif;
+      font-size: 1rem;
+      background: white;
+      cursor: pointer;
+    }
+
+    .card-select:focus {
+      outline: none;
+      border-color: var(--blue-light);
+    }
+
+    .upload-area {
+      border: 2px dashed #cbd5e0;
+      border-radius: 12px;
+      padding: 1.5rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      background: white;
+    }
+
+    .upload-area:hover {
+      border-color: var(--blue-light);
+      background: #ebf8ff;
+    }
+
+    .upload-area.has-file {
+      border-color: var(--green);
+      border-style: solid;
+      background: #f0fff4;
+    }
+
+    .upload-area .icon {
+      font-size: 2.5rem;
       margin-bottom: 0.5rem;
     }
 
-    .upload-box p {
+    .upload-area h4 {
+      color: var(--blue-dark);
+      font-size: 1rem;
+      margin-bottom: 0.3rem;
+    }
+
+    .upload-area p {
       color: var(--gray);
-      font-size: 0.95rem;
+      font-size: 0.85rem;
     }
 
-    .upload-box input[type="file"] {
+    .upload-area input[type="file"] {
       display: none;
     }
 
-    .extracted-text {
+    .file-info {
       display: none;
-      margin-bottom: 2rem;
+      margin-top: 1rem;
+      padding: 0.8rem;
+      background: white;
+      border-radius: 8px;
+      font-size: 0.9rem;
     }
 
-    .extracted-text.active {
+    .file-info.active {
       display: block;
     }
 
-    .extracted-text h3 {
+    .file-info .file-name {
+      font-weight: 600;
       color: var(--blue-dark);
-      margin-bottom: 0.5rem;
     }
 
-    .extracted-text textarea {
-      width: 100%;
-      height: 200px;
-      padding: 1rem;
-      border: 2px solid #e2e8f0;
-      border-radius: 12px;
-      font-family: 'Heebo', sans-serif;
-      font-size: 0.9rem;
-      resize: vertical;
-      direction: rtl;
-    }
-
-    .extracted-text p {
-      font-size: 0.85rem;
+    .file-info .file-stats {
       color: var(--gray);
+      font-size: 0.85rem;
+    }
+
+    .file-info .remove-btn {
+      color: var(--red);
+      cursor: pointer;
+      font-size: 0.85rem;
       margin-top: 0.5rem;
+      display: inline-block;
+    }
+
+    .file-info .remove-btn:hover {
+      text-decoration: underline;
+    }
+
+    /* Summary */
+    .summary-box {
+      background: linear-gradient(135deg, #ebf8ff 0%, #e6fffa 100%);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      text-align: center;
+    }
+
+    .summary-title {
+      font-size: 1.1rem;
+      color: var(--blue-dark);
+      margin-bottom: 1rem;
+    }
+
+    .summary-stats {
+      display: flex;
+      justify-content: center;
+      gap: 3rem;
+      flex-wrap: wrap;
+    }
+
+    .summary-stat {
+      text-align: center;
+    }
+
+    .summary-stat .value {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--blue-dark);
+    }
+
+    .summary-stat .label {
+      font-size: 0.9rem;
+      color: var(--gray);
     }
 
     .loading-overlay {
@@ -242,59 +345,44 @@
       display: block;
     }
 
-    .success-message {
-      background: #c6f6d5;
-      border: 2px solid #68d391;
-      color: #276749;
-      padding: 1rem 1.5rem;
-      border-radius: 12px;
-      margin-bottom: 1.5rem;
-      display: none;
-      text-align: center;
-    }
-
-    .success-message.active {
-      display: block;
-    }
-
     .instructions {
       background: #ebf8ff;
       border-radius: 12px;
-      padding: 1.5rem;
-      margin-bottom: 2rem;
+      padding: 1.2rem;
+      margin-bottom: 1.5rem;
     }
 
     .instructions h3 {
       color: var(--blue-dark);
-      font-size: 1.1rem;
-      margin-bottom: 1rem;
+      font-size: 1rem;
+      margin-bottom: 0.8rem;
       text-align: center;
     }
 
     .instructions-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 1rem;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 0.8rem;
     }
 
     .instruction-card {
       background: var(--white);
-      border-radius: 10px;
-      padding: 1rem;
+      border-radius: 8px;
+      padding: 0.8rem;
       text-align: center;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
     }
 
     .instruction-card .company {
       font-weight: 600;
       color: var(--blue-dark);
-      margin-bottom: 0.5rem;
+      font-size: 0.95rem;
+      margin-bottom: 0.3rem;
     }
 
     .instruction-card .steps {
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       color: var(--gray);
-      text-align: right;
     }
 
     footer {
@@ -302,40 +390,6 @@
       padding: 2rem;
       color: var(--white);
       opacity: 0.8;
-    }
-
-    .stats {
-      display: none;
-      background: #f0fff4;
-      border-radius: 12px;
-      padding: 1rem;
-      margin-bottom: 1.5rem;
-      text-align: center;
-    }
-
-    .stats.active {
-      display: block;
-    }
-
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 1rem;
-    }
-
-    .stat-item {
-      padding: 0.5rem;
-    }
-
-    .stat-value {
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: var(--green);
-    }
-
-    .stat-label {
-      font-size: 0.8rem;
-      color: var(--gray);
     }
 
     @media (max-width: 768px) {
@@ -347,24 +401,12 @@
         font-size: 1.8rem;
       }
 
-      .main-card {
-        padding: 1.5rem;
-      }
-
-      .upload-box {
-        padding: 2rem 1rem;
-      }
-
-      .upload-box .icon {
-        font-size: 3rem;
-      }
-
-      .instructions-grid {
+      .cards-grid {
         grid-template-columns: 1fr;
       }
 
-      .stats-grid {
-        grid-template-columns: 1fr;
+      .summary-stats {
+        gap: 1.5rem;
       }
     }
   </style>
@@ -372,13 +414,14 @@
 <body>
   <div class="loading-overlay" id="loadingOverlay">
     <div class="loading-spinner"></div>
-    <div class="loading-text" id="loadingText">מנתח את הדוח...</div>
+    <div class="loading-text" id="loadingText">מנתח את הדוחות...</div>
     <div class="loading-subtext" id="loadingSubtext">ChatGPT מקטלג את ההוצאות</div>
   </div>
 
   <div class="container">
     <header>
       <h1>המקטרג השקעות לצעירים בתכלס</h1>
+      <p>העלה עד 4 כרטיסי אשראי וקבל דוח מפורט לכל אחד</p>
     </header>
 
     <div class="main-card">
@@ -387,62 +430,161 @@
         <div class="instructions-grid">
           <div class="instruction-card">
             <div class="company">כאל / MAX</div>
-            <div class="steps">
-              אזור אישי → פירוט עסקאות → ייצוא לאקסל
-            </div>
+            <div class="steps">אזור אישי → ייצוא לאקסל</div>
           </div>
           <div class="instruction-card">
             <div class="company">ישראכרט</div>
-            <div class="steps">
-              אזור אישי → דוח עסקאות → הורדה כ-Excel
-            </div>
+            <div class="steps">דוח עסקאות → Excel</div>
           </div>
           <div class="instruction-card">
             <div class="company">לאומי קארד</div>
-            <div class="steps">
-              אזור אישי → פירוט חיובים → ייצוא
-            </div>
+            <div class="steps">פירוט חיובים → ייצוא</div>
+          </div>
+          <div class="instruction-card">
+            <div class="company">דיינרס</div>
+            <div class="steps">פירוט עסקאות → Excel</div>
           </div>
         </div>
       </div>
 
-      <h2 class="section-title">העלאת קובץ הוצאות</h2>
+      <h2 class="section-title">העלאת דוחות אשראי</h2>
       
-      <div class="upload-box" id="uploadBox">
-        <div class="icon" id="uploadIcon">📊</div>
-        <h4 id="uploadTitle">גרור קובץ Excel/CSV לכאן או לחץ לבחירה</h4>
-        <p id="uploadDesc">קבצי Excel (.xlsx, .xls) או CSV</p>
-        <input type="file" id="fileInput" accept=".xlsx,.xls,.csv">
+      <div class="cards-grid">
+        <!-- Card 1 -->
+        <div class="card-upload card-1" id="card1">
+          <div class="card-header">
+            <div class="card-number">1</div>
+            <select class="card-select" id="cardName1">
+              <option value="כאל">כאל</option>
+              <option value="ישראכרט">ישראכרט</option>
+              <option value="מקס">מקס</option>
+              <option value="לאומי קארד">לאומי קארד</option>
+              <option value="דיינרס">דיינרס</option>
+              <option value="אמריקן אקספרס">אמריקן אקספרס</option>
+              <option value="כרטיס אחר">כרטיס אחר</option>
+            </select>
+          </div>
+          <div class="upload-area" id="upload1" onclick="document.getElementById('file1').click()">
+            <div class="icon">📊</div>
+            <h4>גרור קובץ או לחץ לבחירה</h4>
+            <p>Excel / CSV</p>
+            <input type="file" id="file1" accept=".xlsx,.xls,.csv" onchange="handleCardFile(1, this.files[0])">
+          </div>
+          <div class="file-info" id="fileInfo1">
+            <div class="file-name" id="fileName1"></div>
+            <div class="file-stats" id="fileStats1"></div>
+            <span class="remove-btn" onclick="removeFile(1)">❌ הסר קובץ</span>
+          </div>
+        </div>
+
+        <!-- Card 2 -->
+        <div class="card-upload card-2" id="card2">
+          <div class="card-header">
+            <div class="card-number">2</div>
+            <select class="card-select" id="cardName2">
+              <option value="">-- בחר כרטיס --</option>
+              <option value="כאל">כאל</option>
+              <option value="ישראכרט">ישראכרט</option>
+              <option value="מקס">מקס</option>
+              <option value="לאומי קארד">לאומי קארד</option>
+              <option value="דיינרס">דיינרס</option>
+              <option value="אמריקן אקספרס">אמריקן אקספרס</option>
+              <option value="כרטיס אחר">כרטיס אחר</option>
+            </select>
+          </div>
+          <div class="upload-area" id="upload2" onclick="document.getElementById('file2').click()">
+            <div class="icon">📊</div>
+            <h4>גרור קובץ או לחץ לבחירה</h4>
+            <p>Excel / CSV</p>
+            <input type="file" id="file2" accept=".xlsx,.xls,.csv" onchange="handleCardFile(2, this.files[0])">
+          </div>
+          <div class="file-info" id="fileInfo2">
+            <div class="file-name" id="fileName2"></div>
+            <div class="file-stats" id="fileStats2"></div>
+            <span class="remove-btn" onclick="removeFile(2)">❌ הסר קובץ</span>
+          </div>
+        </div>
+
+        <!-- Card 3 -->
+        <div class="card-upload card-3" id="card3">
+          <div class="card-header">
+            <div class="card-number">3</div>
+            <select class="card-select" id="cardName3">
+              <option value="">-- בחר כרטיס --</option>
+              <option value="כאל">כאל</option>
+              <option value="ישראכרט">ישראכרט</option>
+              <option value="מקס">מקס</option>
+              <option value="לאומי קארד">לאומי קארד</option>
+              <option value="דיינרס">דיינרס</option>
+              <option value="אמריקן אקספרס">אמריקן אקספרס</option>
+              <option value="כרטיס אחר">כרטיס אחר</option>
+            </select>
+          </div>
+          <div class="upload-area" id="upload3" onclick="document.getElementById('file3').click()">
+            <div class="icon">📊</div>
+            <h4>גרור קובץ או לחץ לבחירה</h4>
+            <p>Excel / CSV</p>
+            <input type="file" id="file3" accept=".xlsx,.xls,.csv" onchange="handleCardFile(3, this.files[0])">
+          </div>
+          <div class="file-info" id="fileInfo3">
+            <div class="file-name" id="fileName3"></div>
+            <div class="file-stats" id="fileStats3"></div>
+            <span class="remove-btn" onclick="removeFile(3)">❌ הסר קובץ</span>
+          </div>
+        </div>
+
+        <!-- Card 4 -->
+        <div class="card-upload card-4" id="card4">
+          <div class="card-header">
+            <div class="card-number">4</div>
+            <select class="card-select" id="cardName4">
+              <option value="">-- בחר כרטיס --</option>
+              <option value="כאל">כאל</option>
+              <option value="ישראכרט">ישראכרט</option>
+              <option value="מקס">מקס</option>
+              <option value="לאומי קארד">לאומי קארד</option>
+              <option value="דיינרס">דיינרס</option>
+              <option value="אמריקן אקספרס">אמריקן אקספרס</option>
+              <option value="כרטיס אחר">כרטיס אחר</option>
+            </select>
+          </div>
+          <div class="upload-area" id="upload4" onclick="document.getElementById('file4').click()">
+            <div class="icon">📊</div>
+            <h4>גרור קובץ או לחץ לבחירה</h4>
+            <p>Excel / CSV</p>
+            <input type="file" id="file4" accept=".xlsx,.xls,.csv" onchange="handleCardFile(4, this.files[0])">
+          </div>
+          <div class="file-info" id="fileInfo4">
+            <div class="file-name" id="fileName4"></div>
+            <div class="file-stats" id="fileStats4"></div>
+            <span class="remove-btn" onclick="removeFile(4)">❌ הסר קובץ</span>
+          </div>
+        </div>
       </div>
 
-      <div class="success-message" id="successMessage"></div>
+      <!-- Summary -->
+      <div class="summary-box" id="summaryBox" style="display:none;">
+        <div class="summary-title">📊 סיכום הקבצים שהועלו</div>
+        <div class="summary-stats">
+          <div class="summary-stat">
+            <div class="value" id="totalCards">0</div>
+            <div class="label">כרטיסים</div>
+          </div>
+          <div class="summary-stat">
+            <div class="value" id="totalTransactions">0</div>
+            <div class="label">עסקאות</div>
+          </div>
+          <div class="summary-stat">
+            <div class="value" id="totalSum">0</div>
+            <div class="label">סה"כ ₪</div>
+          </div>
+        </div>
+      </div>
+
       <div class="error-message" id="errorMessage"></div>
 
-      <div class="stats" id="statsSection">
-        <div class="stats-grid">
-          <div class="stat-item">
-            <div class="stat-value" id="rowCount">0</div>
-            <div class="stat-label">שורות נקראו</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-value" id="transactionCount">0</div>
-            <div class="stat-label">עסקאות זוהו</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-value" id="totalAmount">0</div>
-            <div class="stat-label">סה"כ ₪</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="extracted-text" id="extractedTextSection">
-        <h3>נתונים שנקראו מהקובץ:</h3>
-        <textarea id="extractedText" readonly></textarea>
-        <p>אלה הנתונים שנשלחים לניתוח</p>
-      </div>
-
-      <button class="btn btn-green" onclick="analyzeWithAI()" id="analyzeBtn" disabled>
-        נתח את הדוח
+      <button class="btn btn-green" onclick="analyzeAllCards()" id="analyzeBtn" disabled>
+        נתח את כל הדוחות
       </button>
     </div>
 
@@ -452,45 +594,41 @@
   </div>
 
   <script>
-    let extractedData = '';
-    let parsedTransactions = [];
+    // Store data for each card
+    const cardData = {
+      1: { name: '', data: null, transactions: 0, total: 0 },
+      2: { name: '', data: null, transactions: 0, total: 0 },
+      3: { name: '', data: null, transactions: 0, total: 0 },
+      4: { name: '', data: null, transactions: 0, total: 0 }
+    };
 
-    // Upload handling
-    const uploadBox = document.getElementById('uploadBox');
-    const fileInput = document.getElementById('fileInput');
+    // Drag and drop for each upload area
+    for (let i = 1; i <= 4; i++) {
+      const uploadArea = document.getElementById('upload' + i);
+      
+      uploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadArea.style.borderColor = '#3182ce';
+        uploadArea.style.background = '#ebf8ff';
+      });
+      
+      uploadArea.addEventListener('dragleave', () => {
+        if (!cardData[i].data) {
+          uploadArea.style.borderColor = '#cbd5e0';
+          uploadArea.style.background = 'white';
+        }
+      });
+      
+      uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        if (e.dataTransfer.files.length > 0) {
+          handleCardFile(i, e.dataTransfer.files[0]);
+        }
+      });
+    }
 
-    uploadBox.addEventListener('click', () => fileInput.click());
-
-    uploadBox.addEventListener('dragover', (e) => {
-      e.preventDefault();
-      uploadBox.classList.add('dragover');
-    });
-
-    uploadBox.addEventListener('dragleave', () => {
-      uploadBox.classList.remove('dragover');
-    });
-
-    uploadBox.addEventListener('drop', (e) => {
-      e.preventDefault();
-      uploadBox.classList.remove('dragover');
-      if (e.dataTransfer.files.length > 0) {
-        handleFile(e.dataTransfer.files[0]);
-      }
-    });
-
-    fileInput.addEventListener('change', (e) => {
-      if (e.target.files.length > 0) {
-        handleFile(e.target.files[0]);
-      }
-    });
-
-    async function handleFile(file) {
-      const validTypes = [
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'application/vnd.ms-excel',
-        'text/csv',
-        'application/csv'
-      ];
+    async function handleCardFile(cardNum, file) {
+      if (!file) return;
       
       const ext = file.name.split('.').pop().toLowerCase();
       if (!['xlsx', 'xls', 'csv'].includes(ext)) {
@@ -498,31 +636,21 @@
         return;
       }
 
-      hideError();
-      hideSuccess();
-      
-      showLoading('קורא את הקובץ...', 'מעבד את הנתונים');
-
       try {
         const data = await readExcelFile(file);
         
         if (!data || data.length < 2) {
-          hideLoading();
           showError('לא נמצאו מספיק נתונים בקובץ');
           return;
         }
 
-        // Process and format the data
-        extractedData = formatDataForAI(data);
-        
-        // Count transactions and total
+        // Calculate stats
         let total = 0;
         let transCount = 0;
         for (let i = 1; i < data.length; i++) {
           const row = data[i];
           if (row && row.length > 0) {
             transCount++;
-            // Try to find amount column
             for (const cell of row) {
               const num = parseFloat(String(cell).replace(/[^\d.-]/g, ''));
               if (!isNaN(num) && num > 0 && num < 100000) {
@@ -533,29 +661,74 @@
           }
         }
 
-        uploadBox.classList.add('has-file');
-        document.getElementById('uploadIcon').textContent = '✅';
-        document.getElementById('uploadTitle').textContent = 'קובץ נטען בהצלחה!';
-        document.getElementById('uploadDesc').textContent = file.name;
+        // Store data
+        cardData[cardNum].data = data;
+        cardData[cardNum].transactions = transCount;
+        cardData[cardNum].total = total;
+        cardData[cardNum].name = document.getElementById('cardName' + cardNum).value || 'כרטיס ' + cardNum;
 
-        // Show stats
-        document.getElementById('rowCount').textContent = data.length;
-        document.getElementById('transactionCount').textContent = transCount;
-        document.getElementById('totalAmount').textContent = Math.round(total).toLocaleString();
-        document.getElementById('statsSection').classList.add('active');
+        // Update UI
+        const uploadArea = document.getElementById('upload' + cardNum);
+        uploadArea.classList.add('has-file');
+        uploadArea.querySelector('.icon').textContent = '✅';
+        uploadArea.querySelector('h4').textContent = 'קובץ נטען!';
+        
+        document.getElementById('card' + cardNum).classList.add('has-file');
+        
+        const fileInfo = document.getElementById('fileInfo' + cardNum);
+        fileInfo.classList.add('active');
+        document.getElementById('fileName' + cardNum).textContent = file.name;
+        document.getElementById('fileStats' + cardNum).textContent = 
+          transCount + ' עסקאות | ' + Math.round(total).toLocaleString() + ' ₪';
 
-        document.getElementById('extractedText').value = extractedData;
-        document.getElementById('extractedTextSection').classList.add('active');
-        
-        document.getElementById('analyzeBtn').disabled = false;
-        
-        hideLoading();
-        showSuccess('✅ נקראו ' + transCount + ' עסקאות מהקובץ');
+        updateSummary();
+        hideError();
 
       } catch (error) {
         console.error('File Error:', error);
-        hideLoading();
         showError('שגיאה בקריאת הקובץ: ' + error.message);
+      }
+    }
+
+    function removeFile(cardNum) {
+      cardData[cardNum] = { name: '', data: null, transactions: 0, total: 0 };
+      
+      const uploadArea = document.getElementById('upload' + cardNum);
+      uploadArea.classList.remove('has-file');
+      uploadArea.querySelector('.icon').textContent = '📊';
+      uploadArea.querySelector('h4').textContent = 'גרור קובץ או לחץ לבחירה';
+      uploadArea.style.borderColor = '#cbd5e0';
+      uploadArea.style.background = 'white';
+      
+      document.getElementById('card' + cardNum).classList.remove('has-file');
+      document.getElementById('fileInfo' + cardNum).classList.remove('active');
+      document.getElementById('file' + cardNum).value = '';
+      
+      updateSummary();
+    }
+
+    function updateSummary() {
+      let totalCards = 0;
+      let totalTrans = 0;
+      let totalAmount = 0;
+      
+      for (let i = 1; i <= 4; i++) {
+        if (cardData[i].data) {
+          totalCards++;
+          totalTrans += cardData[i].transactions;
+          totalAmount += cardData[i].total;
+        }
+      }
+      
+      if (totalCards > 0) {
+        document.getElementById('summaryBox').style.display = 'block';
+        document.getElementById('totalCards').textContent = totalCards;
+        document.getElementById('totalTransactions').textContent = totalTrans;
+        document.getElementById('totalSum').textContent = Math.round(totalAmount).toLocaleString();
+        document.getElementById('analyzeBtn').disabled = false;
+      } else {
+        document.getElementById('summaryBox').style.display = 'none';
+        document.getElementById('analyzeBtn').disabled = true;
       }
     }
 
@@ -567,12 +740,8 @@
           try {
             const data = new Uint8Array(e.target.result);
             const workbook = XLSX.read(data, { type: 'array' });
-            
-            // Get first sheet
             const sheetName = workbook.SheetNames[0];
             const sheet = workbook.Sheets[sheetName];
-            
-            // Convert to array
             const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
             resolve(jsonData);
           } catch (err) {
@@ -586,11 +755,8 @@
     }
 
     function formatDataForAI(data) {
-      // Get headers from first row
       const headers = data[0] || [];
-      
-      let formatted = 'כותרות: ' + headers.join(' | ') + '\n\n';
-      formatted += 'עסקאות:\n';
+      let formatted = 'כותרות: ' + headers.join(' | ') + '\n\nעסקאות:\n';
       
       for (let i = 1; i < data.length; i++) {
         const row = data[i];
@@ -602,35 +768,58 @@
       return formatted;
     }
 
-    async function analyzeWithAI() {
-      if (!extractedData) {
-        showError('נא להעלות קובץ קודם');
+    async function analyzeAllCards() {
+      hideError();
+      
+      // Collect cards with data
+      const cardsToAnalyze = [];
+      for (let i = 1; i <= 4; i++) {
+        if (cardData[i].data) {
+          const name = document.getElementById('cardName' + i).value || 'כרטיס ' + i;
+          cardsToAnalyze.push({
+            cardNum: i,
+            name: name,
+            data: cardData[i].data
+          });
+        }
+      }
+      
+      if (cardsToAnalyze.length === 0) {
+        showError('נא להעלות לפחות קובץ אחד');
         return;
       }
 
-      hideError();
-      showLoading('מנתח את ההוצאות...', 'ChatGPT מקטלג את הנתונים');
-
+      showLoading('מנתח את הדוחות...', 'מעבד ' + cardsToAnalyze.length + ' כרטיסים');
+      
+      const allResults = {};
+      
       try {
-        const response = await fetch('/api/analyze', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ text: extractedData })
-        });
+        for (let i = 0; i < cardsToAnalyze.length; i++) {
+          const card = cardsToAnalyze[i];
+          updateLoading('מנתח ' + card.name + '...', 'כרטיס ' + (i + 1) + ' מתוך ' + cardsToAnalyze.length);
+          
+          const textData = formatDataForAI(card.data);
+          
+          const response = await fetch('/api/analyze', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: textData })
+          });
 
-        const data = await response.json();
+          const data = await response.json();
 
-        if (!response.ok) {
-          throw new Error(data.error || 'שגיאה בניתוח');
-        }
+          if (!response.ok) {
+            throw new Error(data.error || 'שגיאה בניתוח ' + card.name);
+          }
 
-        if (!data.expenses || data.expenses.length === 0) {
-          throw new Error('לא נמצאו הוצאות בדוח');
+          allResults[card.name] = {
+            expenses: data.expenses || [],
+            cardNum: card.cardNum
+          };
         }
         
-        localStorage.setItem('expenseResults', JSON.stringify(data.expenses));
+        // Save all results
+        localStorage.setItem('multiCardResults', JSON.stringify(allResults));
         window.location.href = 'report.html';
 
       } catch (error) {
@@ -646,6 +835,11 @@
       document.getElementById('loadingOverlay').classList.add('active');
     }
 
+    function updateLoading(text, subtext) {
+      document.getElementById('loadingText').textContent = text;
+      document.getElementById('loadingSubtext').textContent = subtext;
+    }
+
     function hideLoading() {
       document.getElementById('loadingOverlay').classList.remove('active');
     }
@@ -658,16 +852,6 @@
 
     function hideError() {
       document.getElementById('errorMessage').classList.remove('active');
-    }
-
-    function showSuccess(message) {
-      const el = document.getElementById('successMessage');
-      el.textContent = message;
-      el.classList.add('active');
-    }
-
-    function hideSuccess() {
-      document.getElementById('successMessage').classList.remove('active');
     }
   </script>
 </body>
