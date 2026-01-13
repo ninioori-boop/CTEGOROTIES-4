@@ -23,12 +23,17 @@ module.exports = async (req, res) => {
 CATEGORIES:
 מזון לבית, אוכל בחוץ ובילויים, תחביבים, תקשורת, ביטוח, בריאות, דלק וחניה, תחבצ, ביגוד והנעלה, פארם, תספורת וקוסמטיקה, מתנות, כבישי אגרה, חופשה וטיול, תיקוני רכב, בעלי חיים, ביט ללא מעקב, מזומן ללא מעקב, מיסים, דמי ניהול בניין, עמלות בנק ואשראי, שונות
 
-RULES:
+INSTALLMENT RULES (CRITICAL):
+- "amount" = the MONTHLY payment amount (NOT the total!)
+- If you see "תשלום X/Y" or "X מ-Y" = installment X of Y
+- Add: "installment_current": X, "installment_total": Y, "total_amount": full price
+- Example: "מכבידנט 1116 תשלום 11/12 סה"כ 13403" → amount: 1116, installment_current: 11, installment_total: 12, total_amount: 13403
+
+OTHER RULES:
 - BIT/ביט = "ביט ללא מעקב"
 - מיי טאוור = "דמי ניהול בניין"
 - מס הכנסה/מע"מ = "מיסים"
-- IGNORE: מסגרת אשראי, יתרה, סה"כ
-- For installments add: installment_current, installment_total`;
+- IGNORE: מסגרת אשראי, יתרה, סה"כ לחיוב`;
 
   const userPrompt = `Credit card data. Categorize ALL transactions:\n${cleanText}`;
 
