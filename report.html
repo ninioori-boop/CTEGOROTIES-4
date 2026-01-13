@@ -657,6 +657,8 @@
 
     function switchCard(cardName) {
       currentCard = cardName;
+      console.log('Switching to card:', cardName);
+      console.log('All data keys:', Object.keys(allData));
       
       // Update active states
       document.querySelectorAll('.card-summary-item').forEach(el => el.classList.remove('active'));
@@ -682,9 +684,12 @@
           expenses = expenses.concat(card.expenses || []);
         });
       } else {
-        expenses = allData[cardName]?.expenses || [];
+        const cardData = allData[cardName];
+        console.log('Card data for', cardName, ':', cardData);
+        expenses = cardData?.expenses || [];
       }
-
+      
+      console.log('Expenses to render:', expenses.length);
       renderExpenses(expenses);
     }
 
@@ -701,6 +706,15 @@
     }
 
     function renderExpenses(expenses) {
+      console.log('Rendering expenses:', expenses);
+      
+      // Handle empty or undefined expenses
+      if (!expenses || expenses.length === 0) {
+        document.getElementById('barChart').innerHTML = '<p style="text-align:center;color:#718096;padding:2rem;">לא נמצאו הוצאות להצגה</p>';
+        document.getElementById('categoriesGrid').innerHTML = '<p style="text-align:center;color:#718096;padding:2rem;">אין פירוט זמין</p>';
+        return;
+      }
+      
       // Group by category
       const grouped = {};
       expenses.forEach(expense => {
