@@ -634,11 +634,12 @@
         const card = allData[name];
         const expenses = card.expenses || [];
         const total = expenses.reduce((sum, e) => sum + e.amount, 0);
-        const isBank = card.type === 'bank' || name.includes('עו"ש');
+        const isBank = card.type === 'bank' || name.includes('עו"ש') || name.includes('עו&quot;ש');
         const icon = isBank ? '🏦' : '💳';
         const iconStyle = isBank ? 'background:linear-gradient(135deg, #9f7aea 0%, #667eea 100%);' : '';
+        const safeName = name.replace(/"/g, '&quot;');
         return `
-          <div class="card-summary-item ${idx === 0 ? 'active' : ''}" onclick="switchCard('${name}')">
+          <div class="card-summary-item ${idx === 0 ? 'active' : ''}" onclick="switchCard('${safeName}')">
             <div class="card-icon" style="${iconStyle}">${icon}</div>
             <div class="card-name">${name}</div>
             <div class="card-total">${total.toLocaleString('he-IL', { maximumFractionDigits: 0 })} ₪</div>
@@ -661,9 +662,10 @@
       document.getElementById('cardsSummary').style.display = 'grid';
 
       // Tabs
-      const tabsHTML = cardNames.map((name, idx) => 
-        `<button class="tab ${idx === 0 ? 'active' : ''}" onclick="switchCard('${name}')">${name}</button>`
-      ).join('') + `<button class="tab" onclick="switchCard('all')">📊 כל הכרטיסים</button>`;
+      const tabsHTML = cardNames.map((name, idx) => {
+        const safeName = name.replace(/"/g, '&quot;');
+        return `<button class="tab ${idx === 0 ? 'active' : ''}" onclick="switchCard('${safeName}')">${name}</button>`;
+      }).join('') + `<button class="tab" onclick="switchCard('all')">📊 כל הכרטיסים</button>`;
       
       document.getElementById('tabs').innerHTML = tabsHTML;
       document.getElementById('tabsContainer').classList.add('active');
@@ -673,9 +675,12 @@
     }
 
     function switchCard(cardName) {
-      currentCard = cardName;
+      // Decode HTML entities back to original characters
+      const decodedName = cardName.replace(/&quot;/g, '"');
+      currentCard = decodedName;
       console.log('=== SWITCH CARD ===');
-      console.log('Switching to:', cardName);
+      console.log('Switching to:', decodedName);
+      console.log('Original cardName:', cardName);
       console.log('All data keys:', Object.keys(allData));
       console.log('Full allData:', JSON.stringify(allData, null, 2).substring(0, 500));
       
@@ -685,34 +690,34 @@
       
       document.querySelectorAll('.card-summary-item').forEach(el => {
         const elName = el.querySelector('.card-name').textContent;
-        if (elName === cardName || (cardName === 'all' && elName === 'סיכום כולל')) {
+        if (elName === decodedName || (decodedName === 'all' && elName === 'סיכום כולל')) {
           el.classList.add('active');
         }
       });
       
       document.querySelectorAll('.tab').forEach(el => {
-        if (el.textContent === cardName || (cardName === 'all' && el.textContent.includes('כל הכרטיסים'))) {
+        if (el.textContent === decodedName || (decodedName === 'all' && el.textContent.includes('כל הכרטיסים'))) {
           el.classList.add('active');
         }
       });
 
       // Get expenses
       let expenses = [];
-      if (cardName === 'all') {
+      if (decodedName === 'all') {
         Object.values(allData).forEach(card => {
           expenses = expenses.concat(card.expenses || []);
         });
         console.log('All cards total expenses:', expenses.length);
       } else {
         // Try exact match first
-        let cardData = allData[cardName];
+        let cardData = allData[decodedName];
         
         // If not found, try to find by partial match (for bank accounts)
         if (!cardData) {
           console.log('Exact match not found, trying partial match...');
           const keys = Object.keys(allData);
           for (const key of keys) {
-            if (key.includes(cardName) || cardName.includes(key)) {
+            if (key.includes(decodedName) || decodedName.includes(key)) {
               console.log('Found partial match:', key);
               cardData = allData[key];
               break;
