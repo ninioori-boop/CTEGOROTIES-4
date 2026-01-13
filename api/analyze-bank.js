@@ -7,6 +7,8 @@ module.exports = async (req, res) => {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   const { text, bankName } = req.body || {};
+  console.log('Bank API called. Bank:', bankName, 'Text length:', text?.length || 0);
+  
   if (!text) return res.status(400).json({ error: 'No data provided' });
 
   const API_KEY = process.env.OPENAI_API_KEY;
@@ -18,15 +20,17 @@ module.exports = async (req, res) => {
     .replace(/"/g, "'")
     .substring(0, 15000);
 
-  const systemMessage = `Israeli bank (עו"ש) analyzer. Return JSON: {"expenses":[{"description":"name","amount":123,"category":"cat"}]}
+  const systemMessage = `אתה מנתח דפי חשבון עו"ש ישראלי. החזר JSON בפורמט: {"expenses":[{"description":"שם","amount":123,"category":"קטגוריה"}]}
 
-IGNORE (NOT expenses): מקס, MAX, ישראכרט, כאל, קיזוז מטח, ריבית, אלטשולר, מגדל, אקסלנס, יתרה, סה"כ, קניה/, מכירה/
+התעלם מ: תשלומי כרטיס אשראי (מקס, MAX, ישראכרט, כאל, לאומי קארד), קיזוז מטח, ריבית, עסקאות מט"ח, יתרות, סיכומים, השקעות (אלטשולר, מגדל, אקסלנס)
 
-ONLY real bills: חשמל, מים, גז, ארנונה, שכר דירה, משכנתא, מכבי, כללית, ביטוח לאומי, משיכת מזומן
+חלץ רק הוצאות אמיתיות כמו: חשבון חשמל, מים, גז, ארנונה, שכר דירה, משכנתא, קופות חולים, ביטוח לאומי, הוראות קבע, משיכות מזומן, העברות
 
-CATEGORIES: שכר דירה, משכנתא, חשמל, גז, מים, ארנונה, ועד בית, קופת חולים, ביטוח לאומי, הלוואות, מזומן ללא מעקב, שונות`;
+קטגוריות: שכר דירה, משכנתא, חשמל, גז, מים, ארנונה, ועד בית, קופת חולים, ביטוח לאומי, הלוואות, מזומן ללא מעקב, העברות, שונות
 
-  const userPrompt = `Bank statement from ${bankName || 'bank'}. Extract ONLY real bills (NOT credit card payments):\n${cleanText}`;
+חשוב: אם אין הוצאות רלוונטיות, החזר {"expenses":[]}`;
+
+  const userPrompt = `דף חשבון מבנק ${bankName || 'לא ידוע'}. חלץ את ההוצאות האמיתיות בלבד:\n${cleanText}`;
 
   try {
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -49,11 +53,17 @@ CATEGORIES: שכר דירה, משכנתא, חשמל, גז, מים, ארנונה,
 
     if (!response.ok) {
       const err = await response.json().catch(() => ({}));
+      console.error('OpenAI error:', err);
       return res.status(500).json({ error: err.error?.message || 'OpenAI error' });
     }
 
     const data = await response.json();
-    const content = data.choices[0].message.content;
+    const content = data.choices?.[0]?.message?.content;
+    console.log('OpenAI response length:', content?.length || 0);
+
+    if (!content) {
+      return res.status(500).json({ error: 'No response from AI', expenses: [] });
+    }
 
     let cleanContent = content.replace(/[\u0000-\u001F]+/g, ' ').replace(/,\s*}/g, '}').replace(/,\s*]/g, ']').trim();
 
@@ -65,23 +75,30 @@ CATEGORIES: שכר דירה, משכנתא, חשמל, גז, מים, ארנונה,
       result.expenses = result.expenses.filter(exp => {
         if (!exp.description || !exp.amount) return false;
         if (typeof exp.amount !== 'number' || exp.amount <= 0) return false;
-        const desc = exp.description.toLowerCase();
-        const ignore = ['מקס', 'max', 'ישראכרט', 'כאל', 'אלטשולר', 'מגדל', 'אקסלנס', 'קיזוז', 'ריבית', 'יתרה', 'קניה/', 'מכירה/'];
+        const desc = (exp.description || '').toLowerCase();
+        const ignore = ['מקס', 'max', 'ישראכרט', 'כאל', 'אלטשולר', 'מגדל', 'אקסלנס', 'קיזוז', 'ריבית זכות', 'יתרה', 'קניה/', 'מכירה/', 'לאומי קארד'];
         return !ignore.some(i => desc.includes(i));
       });
       
+      console.log('Returning', result.expenses.length, 'bank expenses');
       return res.status(200).json(result);
     } catch (e) {
+      console.error('JSON parse error:', e.message);
       const match = cleanContent.match(/\{[\s\S]*\}/);
       if (match) {
         try {
           const result = JSON.parse(match[0]);
-          if (result.expenses) return res.status(200).json(result);
-        } catch (e2) {}
+          if (!result.expenses) result.expenses = [];
+          console.log('Fallback: returning', result.expenses.length, 'expenses');
+          return res.status(200).json(result);
+        } catch (e2) {
+          console.error('Fallback parse error:', e2.message);
+        }
       }
-      return res.status(500).json({ error: 'שגיאה בניתוח. נסה שוב.' });
+      return res.status(200).json({ expenses: [], error: 'Parse error but returning empty' });
     }
   } catch (error) {
-    return res.status(500).json({ error: error.message });
+    console.error('Bank API error:', error.message);
+    return res.status(500).json({ error: error.message, expenses: [] });
   }
 };
