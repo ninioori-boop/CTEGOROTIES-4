@@ -548,28 +548,45 @@
     let isMultiCard = false;
 
     document.addEventListener('DOMContentLoaded', () => {
+      console.log('=== PAGE LOAD ===');
+      
       // Check URL data first
       const urlData = checkUrlData();
       if (urlData) {
+        console.log('Loading from URL data');
         handleData(urlData);
         return;
       }
 
       // Check multi-card data
       const multiData = localStorage.getItem('multiCardResults');
+      console.log('Raw localStorage data:', multiData?.substring(0, 300));
+      
       if (multiData) {
-        const parsed = JSON.parse(multiData);
-        if (Object.keys(parsed).length > 0) {
-          isMultiCard = true;
-          allData = parsed;
-          renderMultiCardReport();
-          return;
+        try {
+          const parsed = JSON.parse(multiData);
+          console.log('Parsed keys:', Object.keys(parsed));
+          
+          // Log each card's data
+          Object.entries(parsed).forEach(([name, data]) => {
+            console.log(`Card "${name}": type=${data.type}, expenses=${data.expenses?.length || 0}`);
+          });
+          
+          if (Object.keys(parsed).length > 0) {
+            isMultiCard = true;
+            allData = parsed;
+            renderMultiCardReport();
+            return;
+          }
+        } catch (e) {
+          console.error('Parse error:', e);
         }
       }
 
       // Check single card data
       const singleData = localStorage.getItem('expenseResults');
       if (singleData) {
+        console.log('Loading single card data');
         handleData(JSON.parse(singleData));
         return;
       }
@@ -657,16 +674,18 @@
 
     function switchCard(cardName) {
       currentCard = cardName;
-      console.log('Switching to card:', cardName);
+      console.log('=== SWITCH CARD ===');
+      console.log('Switching to:', cardName);
       console.log('All data keys:', Object.keys(allData));
+      console.log('Full allData:', JSON.stringify(allData, null, 2).substring(0, 500));
       
       // Update active states
       document.querySelectorAll('.card-summary-item').forEach(el => el.classList.remove('active'));
       document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
       
       document.querySelectorAll('.card-summary-item').forEach(el => {
-        if (el.querySelector('.card-name').textContent === cardName || 
-            (cardName === 'all' && el.querySelector('.card-name').textContent === 'סיכום כולל')) {
+        const elName = el.querySelector('.card-name').textContent;
+        if (elName === cardName || (cardName === 'all' && elName === 'סיכום כולל')) {
           el.classList.add('active');
         }
       });
@@ -683,13 +702,38 @@
         Object.values(allData).forEach(card => {
           expenses = expenses.concat(card.expenses || []);
         });
+        console.log('All cards total expenses:', expenses.length);
       } else {
-        const cardData = allData[cardName];
-        console.log('Card data for', cardName, ':', cardData);
+        // Try exact match first
+        let cardData = allData[cardName];
+        
+        // If not found, try to find by partial match (for bank accounts)
+        if (!cardData) {
+          console.log('Exact match not found, trying partial match...');
+          const keys = Object.keys(allData);
+          for (const key of keys) {
+            if (key.includes(cardName) || cardName.includes(key)) {
+              console.log('Found partial match:', key);
+              cardData = allData[key];
+              break;
+            }
+          }
+        }
+        
+        console.log('Card data found:', !!cardData);
+        if (cardData) {
+          console.log('Card type:', cardData.type);
+          console.log('Expenses array:', cardData.expenses);
+          console.log('Expenses count:', cardData.expenses?.length || 0);
+        }
+        
         expenses = cardData?.expenses || [];
       }
       
-      console.log('Expenses to render:', expenses.length);
+      console.log('Rendering expenses count:', expenses.length);
+      if (expenses.length > 0) {
+        console.log('First expense:', expenses[0]);
+      }
       renderExpenses(expenses);
     }
 
@@ -706,14 +750,20 @@
     }
 
     function renderExpenses(expenses) {
-      console.log('Rendering expenses:', expenses);
+      console.log('=== RENDER EXPENSES ===');
+      console.log('Expenses received:', expenses);
+      console.log('Is array:', Array.isArray(expenses));
+      console.log('Length:', expenses?.length);
       
       // Handle empty or undefined expenses
-      if (!expenses || expenses.length === 0) {
+      if (!expenses || !Array.isArray(expenses) || expenses.length === 0) {
+        console.log('No expenses to show - displaying empty message');
         document.getElementById('barChart').innerHTML = '<p style="text-align:center;color:#718096;padding:2rem;">לא נמצאו הוצאות להצגה</p>';
         document.getElementById('categoriesGrid').innerHTML = '<p style="text-align:center;color:#718096;padding:2rem;">אין פירוט זמין</p>';
         return;
       }
+      
+      console.log('Processing', expenses.length, 'expenses...');
       
       // Group by category
       const grouped = {};

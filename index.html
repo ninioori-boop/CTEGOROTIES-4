@@ -900,7 +900,10 @@
           updateLoading('מנתח עו"ש ' + bankData.name + '...', 'ניתוח חשבון בנק');
           
           const textData = formatDataForAI(bankData.data);
+          console.log('=== BANK ANALYSIS ===');
+          console.log('Bank name:', bankData.name);
           console.log('Sending bank data, length:', textData.length);
+          console.log('First 500 chars:', textData.substring(0, 500));
           
           const response = await fetch('/api/analyze-bank', {
             method: 'POST',
@@ -912,7 +915,8 @@
           });
 
           const responseText = await response.text();
-          console.log('Bank API response:', responseText.substring(0, 200));
+          console.log('Bank API response status:', response.status);
+          console.log('Bank API response:', responseText.substring(0, 500));
           
           let data;
           try {
@@ -926,16 +930,29 @@
             throw new Error(data.error || 'שגיאה בניתוח עו"ש');
           }
 
+          const bankKey = 'עו"ש ' + bankData.name;
           console.log('Bank expenses found:', data.expenses?.length || 0);
+          console.log('Storing under key:', bankKey);
           
-          allResults['עו"ש ' + bankData.name] = {
+          if (data.expenses && data.expenses.length > 0) {
+            console.log('First bank expense:', data.expenses[0]);
+          }
+          
+          allResults[bankKey] = {
             expenses: data.expenses || [],
             type: 'bank'
           };
         }
         
         // Save all results
+        console.log('=== SAVING RESULTS ===');
+        console.log('All result keys:', Object.keys(allResults));
+        Object.entries(allResults).forEach(([key, val]) => {
+          console.log(`"${key}": type=${val.type}, expenses=${val.expenses?.length || 0}`);
+        });
+        
         localStorage.setItem('multiCardResults', JSON.stringify(allResults));
+        console.log('Saved to localStorage, redirecting to report...');
         window.location.href = 'report.html';
 
       } catch (error) {
