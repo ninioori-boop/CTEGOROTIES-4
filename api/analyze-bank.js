@@ -30,46 +30,59 @@ module.exports = async (req, res) => {
     .replace(/"/g, "'")
     .substring(0, 60000);
 
-  const systemMessage = `You are an Israeli bank account (עו"ש) statement analyzer. You receive data from bank statements.
+  const systemMessage = `You are an Israeli bank account (עו"ש) statement analyzer.
 
-Your job is to categorize EVERY transaction into the correct expense category.
+CRITICAL: You must IGNORE the following - these are NOT expenses:
+- Credit card company payments: מקס איט פיננסים, מקס, MAX, ישראכרט, ישראל כרט, כאל, לאומי קארד, דיינרס, אמריקן אקספרס
+- Foreign currency transactions: קיזוז מטח, קיזוז מט"ח
+- Interest and tax on interest: ריבית זכות, מס בגין ריבית, ריבית חובה
+- Balance lines: יתרה, סה"כ
+- Investment transactions: קניה/אלטשולר, מכירה/אלטשולר, קניה/מגדל, מכירה/מגדל
+- Internal transfers to investments: העברה/אקסלנס
 
-CRITICAL: Process ALL transactions. Do not skip any rows.
+ONLY include REAL expenses that don't appear on credit cards:
+- Rent: שכר דירה, דמי שכירות
+- Mortgage: משכנתא, הלוואת דיור
+- Electricity: חברת החשמל, IEC, חשמל
+- Gas: פזגז, סופרגז, אמישראגז, גז
+- Water: תאגיד מים, מי אביבים, הגיחון, מקורות
+- Municipal tax: ארנונה, עיריית, מועצה
+- Building committee: ועד בית, דמי ניהול
+- Health insurance (HMO): מכבי, כללית, מאוחדת, לאומית (monthly fee)
+- National insurance: ביטוח לאומי
+- Loans: החזר הלוואה, הלוואה
+- ATM withdrawals: משיכת מזומן, כספומט, ATM
 
-Return ONLY valid JSON in this exact format:
-{"expenses": [{"description": "merchant/payee name", "amount": 123.45, "category": "category name"}]}
+Return ONLY valid JSON:
+{"expenses": [{"description": "payee name", "amount": 123.45, "category": "category name"}]}
 
-CATEGORIES FOR BANK ACCOUNT (עו"ש):
-- שכר דירה (rent payments, שכירות, דמי שכירות)
-- משכנתא (mortgage payments, תשלום משכנתא)
-- חשמל (electricity - חברת החשמל, IEC)
-- גז (gas - פזגז, סופרגז, אמישראגז)
-- מים (water - תאגיד מים, מקורות, הגיחון)
-- ארנונה (municipal tax - עיריית, מועצה)
-- ועד בית (building committee, ניהול בניין)
-- הלוואות (loan repayments, החזר הלוואה)
-- ביטוח לאומי (national insurance)
-- מס הכנסה (income tax, נציבות מס)
-- מזומן ללא מעקב (ATM withdrawals, משיכת מזומן, כספומט)
-- העברות בנקאיות (bank transfers without clear purpose)
-- חיסכון (savings transfers, הפקדה לחיסכון)
-- שונות (anything that doesn't fit above)
-
-IMPORTANT RULES:
-- Process EVERY transaction row
-- Look for the payee/description and amount
-- Ignore balance lines, summary lines, and account information
-- For ATM withdrawals, use "מזומן ללא מעקב"
-- For unclear transfers, use "העברות בנקאיות"`;
+CATEGORIES:
+- שכר דירה
+- משכנתא
+- חשמל
+- גז
+- מים
+- ארנונה
+- ועד בית
+- קופת חולים (for מכבי, כללית etc monthly fees)
+- ביטוח לאומי
+- הלוואות
+- מזומן ללא מעקב
+- שונות`;
 
   const userPrompt = `Analyze this Israeli bank statement (עו"ש) from ${bankName || 'the bank'}.
 
-Extract ALL transactions and categorize them.
+IMPORTANT: 
+- IGNORE all credit card payments (מקס איט פיננסים, ישראכרט, כאל, etc.) - these are just transfers to pay credit card bills!
+- IGNORE all investment transactions (אלטשולר, מגדל, אקסלנס)
+- IGNORE foreign currency transactions (קיזוז מטח)
+- IGNORE interest (ריבית)
+- ONLY include real recurring bills and expenses
 
 DATA:
 ${cleanText}
 
-Return JSON with all expenses categorized.`;
+Return JSON with ONLY real expenses (not credit card payments).`;
 
   try {
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -100,7 +113,6 @@ Return JSON with all expenses categorized.`;
     const data = await response.json();
     const content = data.choices[0].message.content;
 
-    // Clean and parse the response
     let cleanContent = content
       .replace(/[\u0000-\u001F]+/g, ' ')
       .replace(/,\s*}/g, '}')
@@ -114,14 +126,26 @@ Return JSON with all expenses categorized.`;
         result.expenses = [];
       }
       
-      // Filter out non-transactions
+      // Additional filter to remove credit card payments and other non-expenses
       result.expenses = result.expenses.filter(exp => {
         if (!exp.description || !exp.amount) return false;
         if (typeof exp.amount !== 'number' || exp.amount <= 0) return false;
         
         const desc = exp.description.toLowerCase();
-        const badPhrases = ['יתרה', 'סה"כ', 'balance', 'total'];
-        return !badPhrases.some(phrase => desc.includes(phrase));
+        
+        // Filter out credit card company payments
+        const creditCardCompanies = ['מקס', 'max', 'ישראכרט', 'ישראל כרט', 'כאל', 'לאומי קארד', 'דיינרס', 'אמריקן'];
+        if (creditCardCompanies.some(cc => desc.includes(cc))) return false;
+        
+        // Filter out investment/trading transactions
+        const investments = ['אלטשולר', 'מגדל', 'אקסלנס', 'קניה/', 'מכירה/'];
+        if (investments.some(inv => desc.includes(inv))) return false;
+        
+        // Filter out foreign currency and interest
+        const excluded = ['קיזוז מטח', 'ריבית', 'יתרה', 'סה"כ', 'balance', 'total'];
+        if (excluded.some(ex => desc.includes(ex))) return false;
+        
+        return true;
       });
       
       return res.status(200).json(result);
