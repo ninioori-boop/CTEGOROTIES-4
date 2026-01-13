@@ -900,6 +900,8 @@
           updateLoading('מנתח עו"ש ' + bankData.name + '...', 'ניתוח חשבון בנק');
           
           const textData = formatDataForAI(bankData.data);
+          console.log('Sending bank data, length:', textData.length);
+          
           const response = await fetch('/api/analyze-bank', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -909,12 +911,23 @@
             })
           });
 
-          const data = await response.json();
+          const responseText = await response.text();
+          console.log('Bank API response:', responseText.substring(0, 200));
+          
+          let data;
+          try {
+            data = JSON.parse(responseText);
+          } catch (e) {
+            console.error('Failed to parse bank response:', responseText);
+            throw new Error('שגיאה בניתוח עו"ש: תשובה לא תקינה');
+          }
 
           if (!response.ok) {
             throw new Error(data.error || 'שגיאה בניתוח עו"ש');
           }
 
+          console.log('Bank expenses found:', data.expenses?.length || 0);
+          
           allResults['עו"ש ' + bankData.name] = {
             expenses: data.expenses || [],
             type: 'bank'
