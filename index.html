@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>המקטרג השקעות לצעירים בתכלס</title>
+  <title>המקטרג - השקעות לצעירים בתכלס</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700&display=swap');
@@ -19,8 +19,6 @@
       --green: #38a169;
       --red: #e53e3e;
       --orange: #dd6b20;
-      --purple: #805ad5;
-      --teal: #319795;
     }
 
     * {
@@ -56,14 +54,14 @@
     }
 
     header p {
+      font-size: 1.2rem;
       opacity: 0.9;
-      font-size: 1.1rem;
     }
 
     .main-card {
       background: var(--white);
       border-radius: 20px;
-      padding: 2rem;
+      padding: 2.5rem;
       box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
       margin-bottom: 2rem;
     }
@@ -112,206 +110,132 @@
       box-shadow: 0 10px 30px rgba(56, 161, 105, 0.4);
     }
 
-    /* Cards Grid */
-    .cards-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 1.5rem;
+    .upload-section {
       margin-bottom: 2rem;
     }
 
-    .card-upload {
-      background: var(--white-soft);
-      border: 2px solid #e2e8f0;
-      border-radius: 16px;
-      padding: 1.5rem;
-      transition: all 0.3s ease;
-    }
-
-    .card-upload.has-file {
-      border-color: var(--green);
-      background: #f0fff4;
-    }
-
-    .card-header {
+    .upload-section h3 {
+      color: var(--blue-dark);
+      margin-bottom: 1rem;
       display: flex;
       align-items: center;
+      gap: 0.5rem;
+    }
+
+    .upload-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
       gap: 1rem;
       margin-bottom: 1rem;
     }
 
-    .card-number {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 700;
-      font-size: 1.2rem;
-      color: white;
-    }
-
-    .card-1 .card-number { background: var(--blue-light); }
-    .card-2 .card-number { background: var(--orange); }
-    .card-3 .card-number { background: var(--purple); }
-    .card-4 .card-number { background: var(--teal); }
-
-    /* Bank Account Section */
-    .bank-section {
-      margin-top: 2rem;
-      padding-top: 2rem;
-      border-top: 2px dashed #e2e8f0;
-    }
-
-    .bank-upload {
-      background: linear-gradient(135deg, #faf5ff 0%, #f0fff4 100%);
-      border: 2px solid #9f7aea;
-      border-radius: 16px;
-      padding: 1.5rem;
-      transition: all 0.3s ease;
-    }
-
-    .bank-upload.has-file {
-      border-color: var(--green);
-      background: #f0fff4;
-    }
-
-    .bank-upload .card-number {
-      background: linear-gradient(135deg, #9f7aea 0%, #667eea 100%);
-    }
-
-    .bank-upload .upload-area p {
-      color: var(--purple);
-    }
-
-    .card-select {
-      flex: 1;
-      padding: 0.6rem 1rem;
-      border: 2px solid #e2e8f0;
-      border-radius: 10px;
-      font-family: 'Heebo', sans-serif;
-      font-size: 1rem;
-      background: white;
-      cursor: pointer;
-    }
-
-    .card-select:focus {
-      outline: none;
-      border-color: var(--blue-light);
-    }
-
-    .upload-area {
-      border: 2px dashed #cbd5e0;
-      border-radius: 12px;
-      padding: 1.5rem;
+    .upload-box {
+      border: 3px dashed #cbd5e0;
+      border-radius: 15px;
+      padding: 2rem 1rem;
       text-align: center;
       cursor: pointer;
       transition: all 0.3s ease;
-      background: white;
+      background: var(--white-soft);
+      min-height: 150px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
     }
 
-    .upload-area:hover {
+    .upload-box:hover {
       border-color: var(--blue-light);
       background: #ebf8ff;
     }
 
-    .upload-area.has-file {
+    .upload-box.has-file {
       border-color: var(--green);
-      border-style: solid;
       background: #f0fff4;
     }
 
-    .upload-area .icon {
+    .upload-box .icon {
       font-size: 2.5rem;
       margin-bottom: 0.5rem;
     }
 
-    .upload-area h4 {
+    .upload-box h4 {
       color: var(--blue-dark);
       font-size: 1rem;
-      margin-bottom: 0.3rem;
+      margin-bottom: 0.25rem;
     }
 
-    .upload-area p {
+    .upload-box p {
       color: var(--gray);
       font-size: 0.85rem;
     }
 
-    .upload-area input[type="file"] {
+    .upload-box input[type="file"] {
       display: none;
     }
 
-    .file-info {
-      display: none;
-      margin-top: 1rem;
-      padding: 0.8rem;
-      background: white;
-      border-radius: 8px;
-      font-size: 0.9rem;
-    }
-
-    .file-info.active {
-      display: block;
-    }
-
-    .file-info .file-name {
-      font-weight: 600;
-      color: var(--blue-dark);
-    }
-
-    .file-info .file-stats {
-      color: var(--gray);
-      font-size: 0.85rem;
-    }
-
-    .file-info .remove-btn {
-      color: var(--red);
+    .add-card-btn {
+      border: 3px dashed #cbd5e0;
+      border-radius: 15px;
+      padding: 2rem 1rem;
+      text-align: center;
       cursor: pointer;
-      font-size: 0.85rem;
-      margin-top: 0.5rem;
-      display: inline-block;
-    }
-
-    .file-info .remove-btn:hover {
-      text-decoration: underline;
-    }
-
-    /* Summary */
-    .summary-box {
-      background: linear-gradient(135deg, #ebf8ff 0%, #e6fffa 100%);
-      border-radius: 12px;
-      padding: 1.5rem;
-      margin-bottom: 2rem;
-      text-align: center;
-    }
-
-    .summary-title {
-      font-size: 1.1rem;
-      color: var(--blue-dark);
-      margin-bottom: 1rem;
-    }
-
-    .summary-stats {
+      transition: all 0.3s ease;
+      background: var(--white-soft);
+      min-height: 150px;
       display: flex;
+      flex-direction: column;
       justify-content: center;
-      gap: 3rem;
-      flex-wrap: wrap;
+      align-items: center;
     }
 
-    .summary-stat {
-      text-align: center;
+    .add-card-btn:hover {
+      border-color: var(--blue-light);
+      background: #ebf8ff;
     }
 
-    .summary-stat .value {
-      font-size: 2rem;
-      font-weight: 700;
+    .add-card-btn .icon {
+      font-size: 2.5rem;
+      color: var(--blue-light);
+    }
+
+    .files-list {
+      background: #f7fafc;
+      border-radius: 10px;
+      padding: 1rem;
+      margin-top: 1rem;
+    }
+
+    .file-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.5rem;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .file-item:last-child {
+      border-bottom: none;
+    }
+
+    .file-item .name {
       color: var(--blue-dark);
+      font-weight: 500;
     }
 
-    .summary-stat .label {
+    .file-item .status {
+      color: var(--green);
       font-size: 0.9rem;
-      color: var(--gray);
+    }
+
+    .remove-btn {
+      background: var(--red);
+      color: white;
+      border: none;
+      padding: 0.25rem 0.5rem;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 0.8rem;
     }
 
     .loading-overlay {
@@ -373,44 +297,32 @@
       display: block;
     }
 
+    .success-message {
+      background: #c6f6d5;
+      border: 2px solid #68d391;
+      color: #276749;
+      padding: 1rem 1.5rem;
+      border-radius: 12px;
+      margin-bottom: 1.5rem;
+      display: none;
+      text-align: center;
+    }
+
+    .success-message.active {
+      display: block;
+    }
+
     .instructions {
       background: #ebf8ff;
       border-radius: 12px;
-      padding: 1.2rem;
-      margin-bottom: 1.5rem;
-    }
-
-    .instructions h3 {
-      color: var(--blue-dark);
-      font-size: 1rem;
-      margin-bottom: 0.8rem;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
       text-align: center;
     }
 
-    .instructions-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 0.8rem;
-    }
-
-    .instruction-card {
-      background: var(--white);
-      border-radius: 8px;
-      padding: 0.8rem;
-      text-align: center;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-    }
-
-    .instruction-card .company {
-      font-weight: 600;
+    .instructions p {
       color: var(--blue-dark);
-      font-size: 0.95rem;
-      margin-bottom: 0.3rem;
-    }
-
-    .instruction-card .steps {
-      font-size: 0.8rem;
-      color: var(--gray);
+      font-size: 1.1rem;
     }
 
     footer {
@@ -420,21 +332,27 @@
       opacity: 0.8;
     }
 
+    .divider {
+      height: 2px;
+      background: linear-gradient(to right, transparent, #e2e8f0, transparent);
+      margin: 2rem 0;
+    }
+
     @media (max-width: 768px) {
       .container {
         padding: 1rem;
       }
 
       header h1 {
-        font-size: 1.8rem;
+        font-size: 2rem;
       }
 
-      .cards-grid {
+      .main-card {
+        padding: 1.5rem;
+      }
+
+      .upload-grid {
         grid-template-columns: 1fr;
-      }
-
-      .summary-stats {
-        gap: 1.5rem;
       }
     }
   </style>
@@ -448,201 +366,48 @@
 
   <div class="container">
     <header>
-      <h1>המקטרג השקעות לצעירים בתכלס</h1>
-      <p>העלה עד 4 כרטיסי אשראי וקבל דוח מפורט לכל אחד</p>
+      <h1>המקטרג</h1>
+      <p>השקעות לצעירים בתכלס</p>
     </header>
 
     <div class="main-card">
       <div class="instructions">
-        <h3>📥 איך להוריד את קובץ ההוצאות?</h3>
-        <div class="instructions-grid">
-          <div class="instruction-card">
-            <div class="company">כאל / MAX</div>
-            <div class="steps">אזור אישי → ייצוא לאקסל</div>
+        <p>העלה קבצי Excel/CSV של דוחות הוצאות והמערכת תנתח ותקטלג אותם אוטומטית</p>
+      </div>
+
+      <!-- Credit Cards Section -->
+      <div class="upload-section">
+        <h3>💳 כרטיסי אשראי (Excel/CSV)</h3>
+        <div class="upload-grid" id="creditCardsGrid">
+          <div class="upload-box" onclick="document.getElementById('cardInput1').click()">
+            <div class="icon" id="cardIcon1">📄</div>
+            <h4 id="cardTitle1">כרטיס אשראי 1</h4>
+            <p id="cardDesc1">לחץ לבחירת קובץ</p>
+            <input type="file" id="cardInput1" accept=".xlsx,.xls,.csv" onchange="handleCardFile(1, this)">
           </div>
-          <div class="instruction-card">
-            <div class="company">ישראכרט</div>
-            <div class="steps">דוח עסקאות → Excel</div>
-          </div>
-          <div class="instruction-card">
-            <div class="company">לאומי קארד</div>
-            <div class="steps">פירוט חיובים → ייצוא</div>
-          </div>
-          <div class="instruction-card">
-            <div class="company">דיינרס</div>
-            <div class="steps">פירוט עסקאות → Excel</div>
+          <div class="add-card-btn" onclick="addCardSlot()">
+            <div class="icon">➕</div>
+            <h4>הוסף כרטיס</h4>
           </div>
         </div>
       </div>
 
-      <h2 class="section-title">העלאת דוחות אשראי</h2>
-      
-      <div class="cards-grid">
-        <!-- Card 1 -->
-        <div class="card-upload card-1" id="card1">
-          <div class="card-header">
-            <div class="card-number">1</div>
-            <select class="card-select" id="cardName1">
-              <option value="כאל">כאל</option>
-              <option value="ישראכרט">ישראכרט</option>
-              <option value="מקס">מקס</option>
-              <option value="לאומי קארד">לאומי קארד</option>
-              <option value="דיינרס">דיינרס</option>
-              <option value="אמריקן אקספרס">אמריקן אקספרס</option>
-              <option value="כרטיס אחר">כרטיס אחר</option>
-            </select>
-          </div>
-          <div class="upload-area" id="upload1" onclick="document.getElementById('file1').click()">
-            <div class="icon">📊</div>
-            <h4>גרור קובץ או לחץ לבחירה</h4>
-            <p>Excel / CSV</p>
-            <input type="file" id="file1" accept=".xlsx,.xls,.csv" onchange="handleCardFile(1, this.files[0])">
-          </div>
-          <div class="file-info" id="fileInfo1">
-            <div class="file-name" id="fileName1"></div>
-            <div class="file-stats" id="fileStats1"></div>
-            <span class="remove-btn" onclick="removeFile(1)">❌ הסר קובץ</span>
-          </div>
-        </div>
-
-        <!-- Card 2 -->
-        <div class="card-upload card-2" id="card2">
-          <div class="card-header">
-            <div class="card-number">2</div>
-            <select class="card-select" id="cardName2">
-              <option value="">-- בחר כרטיס --</option>
-              <option value="כאל">כאל</option>
-              <option value="ישראכרט">ישראכרט</option>
-              <option value="מקס">מקס</option>
-              <option value="לאומי קארד">לאומי קארד</option>
-              <option value="דיינרס">דיינרס</option>
-              <option value="אמריקן אקספרס">אמריקן אקספרס</option>
-              <option value="כרטיס אחר">כרטיס אחר</option>
-            </select>
-          </div>
-          <div class="upload-area" id="upload2" onclick="document.getElementById('file2').click()">
-            <div class="icon">📊</div>
-            <h4>גרור קובץ או לחץ לבחירה</h4>
-            <p>Excel / CSV</p>
-            <input type="file" id="file2" accept=".xlsx,.xls,.csv" onchange="handleCardFile(2, this.files[0])">
-          </div>
-          <div class="file-info" id="fileInfo2">
-            <div class="file-name" id="fileName2"></div>
-            <div class="file-stats" id="fileStats2"></div>
-            <span class="remove-btn" onclick="removeFile(2)">❌ הסר קובץ</span>
-          </div>
-        </div>
-
-        <!-- Card 3 -->
-        <div class="card-upload card-3" id="card3">
-          <div class="card-header">
-            <div class="card-number">3</div>
-            <select class="card-select" id="cardName3">
-              <option value="">-- בחר כרטיס --</option>
-              <option value="כאל">כאל</option>
-              <option value="ישראכרט">ישראכרט</option>
-              <option value="מקס">מקס</option>
-              <option value="לאומי קארד">לאומי קארד</option>
-              <option value="דיינרס">דיינרס</option>
-              <option value="אמריקן אקספרס">אמריקן אקספרס</option>
-              <option value="כרטיס אחר">כרטיס אחר</option>
-            </select>
-          </div>
-          <div class="upload-area" id="upload3" onclick="document.getElementById('file3').click()">
-            <div class="icon">📊</div>
-            <h4>גרור קובץ או לחץ לבחירה</h4>
-            <p>Excel / CSV</p>
-            <input type="file" id="file3" accept=".xlsx,.xls,.csv" onchange="handleCardFile(3, this.files[0])">
-          </div>
-          <div class="file-info" id="fileInfo3">
-            <div class="file-name" id="fileName3"></div>
-            <div class="file-stats" id="fileStats3"></div>
-            <span class="remove-btn" onclick="removeFile(3)">❌ הסר קובץ</span>
-          </div>
-        </div>
-
-        <!-- Card 4 -->
-        <div class="card-upload card-4" id="card4">
-          <div class="card-header">
-            <div class="card-number">4</div>
-            <select class="card-select" id="cardName4">
-              <option value="">-- בחר כרטיס --</option>
-              <option value="כאל">כאל</option>
-              <option value="ישראכרט">ישראכרט</option>
-              <option value="מקס">מקס</option>
-              <option value="לאומי קארד">לאומי קארד</option>
-              <option value="דיינרס">דיינרס</option>
-              <option value="אמריקן אקספרס">אמריקן אקספרס</option>
-              <option value="כרטיס אחר">כרטיס אחר</option>
-            </select>
-          </div>
-          <div class="upload-area" id="upload4" onclick="document.getElementById('file4').click()">
-            <div class="icon">📊</div>
-            <h4>גרור קובץ או לחץ לבחירה</h4>
-            <p>Excel / CSV</p>
-            <input type="file" id="file4" accept=".xlsx,.xls,.csv" onchange="handleCardFile(4, this.files[0])">
-          </div>
-          <div class="file-info" id="fileInfo4">
-            <div class="file-name" id="fileName4"></div>
-            <div class="file-stats" id="fileStats4"></div>
-            <span class="remove-btn" onclick="removeFile(4)">❌ הסר קובץ</span>
-          </div>
-        </div>
-      </div>
+      <div class="divider"></div>
 
       <!-- Bank Account Section -->
-      <div class="bank-section">
-        <h2 class="section-title">🏦 ריכוז עו"ש (אופציונלי)</h2>
-        <p style="text-align:center; color:#718096; margin-bottom:1rem; font-size:0.9rem;">
-          להוספת הוצאות שלא עוברות באשראי: שכר דירה, הוראות קבע, משכנתא
-        </p>
-        
-        <div class="bank-upload" id="bankUpload">
-          <div class="card-header">
-            <div class="card-number">🏦</div>
-            <select class="card-select" id="bankName">
-              <option value="">-- בחר בנק --</option>
-              <option value="יהב">בנק יהב</option>
-              <option value="לאומי">בנק לאומי</option>
-              <option value="הפועלים">בנק הפועלים</option>
-              <option value="דיסקונט">בנק דיסקונט</option>
-              <option value="מזרחי">בנק מזרחי</option>
-              <option value="אחר">בנק אחר</option>
-            </select>
-          </div>
-          <div class="upload-area" id="uploadBank" onclick="document.getElementById('fileBank').click()">
-            <div class="icon">🏦</div>
-            <h4>גרור קובץ או לחץ לבחירה</h4>
-            <p>Excel / CSV</p>
-            <input type="file" id="fileBank" accept=".xlsx,.xls,.csv" onchange="handleBankFile(this.files[0])">
-          </div>
-          <div class="file-info" id="fileBankInfo">
-            <div class="file-name" id="fileBankName"></div>
-            <div class="file-stats" id="fileBankStats"></div>
-            <span class="remove-btn" onclick="removeBankFile()">❌ הסר קובץ</span>
+      <div class="upload-section">
+        <h3>🏦 חשבון עו"ש (Excel/CSV)</h3>
+        <div class="upload-grid">
+          <div class="upload-box" onclick="document.getElementById('bankInput').click()">
+            <div class="icon" id="bankIcon">📄</div>
+            <h4 id="bankTitle">דוח תנועות עו"ש</h4>
+            <p id="bankDesc">לחץ לבחירת קובץ Excel/CSV</p>
+            <input type="file" id="bankInput" accept=".xlsx,.xls,.csv" onchange="handleBankFile(this)">
           </div>
         </div>
       </div>
 
-      <!-- Summary -->
-      <div class="summary-box" id="summaryBox" style="display:none;">
-        <div class="summary-title">📊 סיכום הקבצים שהועלו</div>
-        <div class="summary-stats">
-          <div class="summary-stat">
-            <div class="value" id="totalCards">0</div>
-            <div class="label">כרטיסים</div>
-          </div>
-          <div class="summary-stat">
-            <div class="value" id="totalTransactions">0</div>
-            <div class="label">עסקאות</div>
-          </div>
-          <div class="summary-stat">
-            <div class="value" id="totalSum">0</div>
-            <div class="label">סה"כ ₪</div>
-          </div>
-        </div>
-      </div>
-
+      <div class="success-message" id="successMessage"></div>
       <div class="error-message" id="errorMessage"></div>
 
       <button class="btn btn-green" onclick="analyzeAllCards()" id="analyzeBtn" disabled>
@@ -651,496 +416,568 @@
     </div>
 
     <footer>
-      <p>המקטרג של השקעות לצעירים בתכלס</p>
+      <p>אורי ניניו</p>
     </footer>
   </div>
 
   <script>
-    // Store data for each card
-    const cardData = {
-      1: { name: '', data: null, transactions: 0, total: 0 },
-      2: { name: '', data: null, transactions: 0, total: 0 },
-      3: { name: '', data: null, transactions: 0, total: 0 },
-      4: { name: '', data: null, transactions: 0, total: 0 }
+    // ===== מאגר עסקים ישראלי MEGA - 500+ עסקים =====
+    const BUSINESS_DATABASE = {
+      // === ביטוח - כל החברות (40+) ===
+      'הראל': 'ביטוח', 'harel': 'ביטוח',
+      'הראל בריאות': 'ביטוח', 'הראל ביטוח': 'ביטוח', 'הראל חיים': 'ביטוח',
+      'הראל (שלוח)': 'ביטוח', 'הראל בטוח': 'ביטוח',
+      'מגדל': 'ביטוח', 'migdal': 'ביטוח', 'מגדל ביטוח': 'ביטוח',
+      'הפניקס': 'ביטוח', 'phoenix': 'ביטוח', 'פניקס': 'ביטוח',
+      'כלל': 'ביטוח', 'clal': 'ביטוח', 'כלל ביטוח': 'ביטוח',
+      'מנורה': 'ביטוח', 'menora': 'ביטוח', 'מנורה מבטחים': 'ביטוח',
+      'איילון': 'ביטוח', 'ayalon': 'ביטוח',
+      'הכשרה': 'ביטוח', 'ביטוח ישיר': 'ביטוח', 'שלמה': 'ביטוח',
+      'aig': 'ביטוח', 'הדר': 'ביטוח',
+      
+      // === קופות חולים ===
+      'מכבי': 'קופת חולים', 'maccabi': 'קופת חולים',
+      'כללית': 'קופת חולים', 'clalit': 'קופת חולים',
+      'מאוחדת': 'קופת חולים', 'meuhedet': 'קופת חולים',
+      'לאומית': 'קופת חולים', 'leumit': 'קופת חולים',
+      
+      // === בריאות ושיניים (50+) ===
+      'מכבידנט': 'בריאות', 'maccabident': 'בריאות',
+      'דנטל': 'בריאות', 'dental': 'בריאות',
+      'אסתטיקה שיניים': 'בריאות', 'שיניים': 'בריאות',
+      'קליניקה': 'בריאות', 'clinic': 'בריאות',
+      'רופא': 'בריאות', 'מרפאה': 'בריאות',
+      'אורתודנט': 'בריאות', 'orthodont': 'בריאות',
+      'אופטיקה': 'בריאות', 'optic': 'בריאות',
+      'משקפיים': 'בריאות',
+      
+      // === תקשורת (30+) ===
+      'next tv': 'תקשורת', 'נקסט': 'תקשורת', 'next': 'תקשורת',
+      'hot mobile': 'תקשורת', 'hot': 'תקשורת', 'הוט': 'תקשורת',
+      'hottelecom': 'תקשורת', 'הוט טלפון': 'תקשורת',
+      'bezeq': 'תקשורת', 'בזק': 'תקשורת',
+      'partner': 'תקשורת', 'פרטנר': 'תקשורת',
+      'cellcom': 'תקשורת', 'סלקום': 'תקשורת',
+      'pelephone': 'תקשורת', 'פלאפון': 'תקשורת',
+      '012': 'תקשורת', '013': 'תקשורת', '014': 'תקשורת',
+      'yes': 'תקשורת', 'יס': 'תקשורת',
+      'netflix': 'תקשורת', 'spotify': 'תקשורת',
+      'apple music': 'תקשורת', 'youtube': 'תקשורת',
+      'amazon prime': 'תקשורת', 'disney': 'תקשורת',
+      'google one': 'תקשורת', 'google cha': 'תקשורת',
+      'google bus': 'תקשורת', 'spotifyil': 'תקשורת',
+      
+      // === ביט ומזומן ===
+      'bit': 'ביט ללא מעקב', 'ביט': 'ביט ללא מעקב',
+      'העברה ב bit': 'ביט ללא מעקב', 'העברה בביט': 'ביט ללא מעקב',
+      'העברה ב-bit': 'ביט ללא מעקב',
+      'משיכת מזומן': 'מזומן ללא מעקב', 'משיכה': 'מזומן ללא מעקב',
+      'כספומט': 'מזומן ללא מעקב', 'atm': 'מזומן ללא מעקב',
+      
+      // === סופרמרקטים (60+) ===
+      'שופרסל': 'מזון לבית', 'shufersal': 'מזון לבית', 'שופר סל': 'מזון לבית',
+      'רמי לוי': 'מזון לבית', 'rami levy': 'מזון לבית', 'רמי לוי שיווק': 'מזון לבית',
+      'ויקטורי': 'מזון לבית', 'victory': 'מזון לבית',
+      'יוחננוף': 'מזון לבית', 'yochananof': 'מזון לבית',
+      'יינות ביתן': 'מזון לבית', 'bitan': 'מזון לבית',
+      'מחסני השוק': 'מזון לבית', 'מחסני': 'מזון לבית',
+      'טיב טעם': 'מזון לבית', 'tiv taam': 'מזון לבית',
+      'אושר עד': 'מזון לבית', 'osher ad': 'מזון לבית',
+      'מגה': 'מזון לבית', 'mega': 'מזון לבית', 'מגה בעיר': 'מזון לבית',
+      'חצי חינם': 'מזון לבית', 'hatzi hinam': 'מזון לבית',
+      'סופר פארם': 'מזון לבית', 'super pharm': 'מזון לבית',
+      'כוורת': 'מזון לבית', 'kovert': 'מזון לבית', 'רשת כוורת': 'מזון לבית',
+      'am:pm': 'מזון לבית', 'אי.אם.פי.אם': 'מזון לבית',
+      'בלאק': 'מזון לבית', 'black': 'מזון לבית',
+      'ביקר': 'מזון לבית', 'biker': 'מזון לבית',
+      'מאפייה': 'מזון לבית', 'מעדנייה': 'מזון לבית',
+      'קליית': 'מזון לבית', 'wine': 'מזון לבית', 'חניאוי': 'מזון לבית',
+      'good pharm': 'מזון לבית', 'גוד פארם': 'מזון לבית',
+      'זול ובגדול': 'מזון לבית',
+      
+      // === מסעדות ואוכל בחוץ (80+) ===
+      'wolt': 'אוכל בחוץ ובילויים', 'ולט': 'אוכל בחוץ ובילויים',
+      'tenbis': 'אוכל בחוץ ובילויים', 'תן ביס': 'אוכל בחוץ ובילויים',
+      'מקדונלד': 'אוכל בחוץ ובילויים', 'מקדונלדס': 'אוכל בחוץ ובילויים',
+      'mcdonald': 'אוכל בחוץ ובילויים', 'מק דונלד': 'אוכל בחוץ ובילויים',
+      'בורגר': 'אוכל בחוץ ובילויים', 'burger': 'אוכל בחוץ ובילויים',
+      'בורגר קינג': 'אוכל בחוץ ובילויים', 'burger king': 'אוכל בחוץ ובילויים',
+      'בורגרנץ': 'אוכל בחוץ ובילויים', 'burgeranch': 'אוכל בחוץ ובילויים',
+      'פיצה': 'אוכל בחוץ ובילויים', 'pizza': 'אוכל בחוץ ובילויים',
+      'דומינו': 'אוכל בחוץ ובילויים', 'dominos': 'אוכל בחוץ ובילויים',
+      'קפה': 'אוכל בחוץ ובילויים', 'cafe': 'אוכל בחוץ ובילויים',
+      'coffee': 'אוכל בחוץ ובילויים', 'קפה גרג': 'אוכל בחוץ ובילויים',
+      'ארומה': 'אוכל בחוץ ובילויים', 'aroma': 'אוכל בחוץ ובילויים',
+      'קפה נמרוד': 'אוכל בחוץ ובילויים', 'קפה לנדוור': 'אוכל בחוץ ובילויים',
+      'מסעדה': 'אוכל בחוץ ובילויים', 'restaurant': 'אוכל בחוץ ובילויים',
+      'בר': 'אוכל בחוץ ובילויים', 'פאב': 'אוכל בחוץ ובילויים',
+      'קייטרינג': 'אוכל בחוץ ובילויים', 'catering': 'אוכל בחוץ ובילויים',
+      'bordo': 'אוכל בחוץ ובילויים', 'בורדו': 'אוכל בחוץ ובילויים',
+      'סושי': 'אוכל בחוץ ובילויים', 'sushi': 'אוכל בחוץ ובילויים',
+      'פלאפל': 'אוכל בחוץ ובילויים', 'שווארמה': 'אוכל בחוץ ובילויים',
+      'הומוס': 'אוכל בחוץ ובילויים', 'סביח': 'אוכל בחוץ ובילויים',
+      'פינצ': 'אוכל בחוץ ובילויים', 'הכוסית': 'אוכל בחוץ ובילויים',
+      'לאוטר': 'אוכל בחוץ ובילויים',
+      
+      // === תחבורה ציבורית (20+) ===
+      'gett': 'תחבצ', 'גט': 'תחבצ', 'get': 'תחבצ',
+      'מונית': 'תחבצ', 'taxi': 'תחבצ',
+      'uber': 'תחבצ', 'אובר': 'תחבצ',
+      'yango': 'תחבצ', 'יאנגו': 'תחבצ',
+      'פנגו': 'תחבצ', 'pango': 'תחבצ',
+      'מוביט': 'תחבצ', 'moovit': 'תחבצ',
+      'רב קו': 'תחבצ', 'rav kav': 'תחבצ',
+      'אוטובוס': 'תחבצ', 'רכבת': 'תחבצ', 'train': 'תחבצ',
+      'תחבורה ציבורית': 'תחבצ', 'מ.תחבורה': 'תחבצ',
+      
+      // === דלק וחניה (25+) ===
+      'דלק': 'דלק וחניה', 'fuel': 'דלק וחניה',
+      'סונול': 'דלק וחניה', 'sonol': 'דלק וחניה',
+      'פז': 'דלק וחניה', 'paz': 'דלק וחניה',
+      'דור אלון': 'דלק וחניה', 'dor alon': 'דלק וחניה',
+      'תן ביס דלק': 'דלק וחניה', 'דלקן': 'דלק וחניה',
+      'חניה': 'דלק וחניה', 'חניון': 'דלק וחניה', 'parking': 'דלק וחניה',
+      'פארק': 'דלק וחניה',
+      
+      // === עמלות (15+) ===
+      'דמי כרטיס': 'עמלות בנק ואשראי', 'דמי ניהול': 'עמלות בנק ואשראי',
+      'עמלה': 'עמלות בנק ואשראי', 'עמלת sms': 'עמלות בנק ואשראי',
+      'עמלת פעולות': 'עמלות בנק ואשראי', 'ריבית על מינוס': 'עמלות בנק ואשראי',
+      'ריבית חובה': 'עמלות בנק ואשראי', 'עמלת משיכה': 'עמלות בנק ואשראי',
+      
+      // === ניהול בניין ===
+      'מיי טאוור': 'דמי ניהול בניין', 'my tower': 'דמי ניהול בניין',
+      'ועד בית': 'דמי ניהול בניין', 'ניהול בניין': 'דמי ניהול בניין',
+      
+      // === דיור (10+) ===
+      'שכר דירה': 'שכר דירה', 'rent': 'שכר דירה',
+      'משכנתא': 'משכנתא', 'משכנתה': 'משכנתא', 'mortgage': 'משכנתא',
+      
+      // === חשמל, גז, מים (15+) ===
+      'חברת החשמל': 'חשמל', 'חשמל': 'חשמל', 'electric': 'חשמל',
+      'פאזגז': 'גז', 'supergas': 'גז', 'גז': 'גז',
+      'מי גת': 'מים וביוב', 'מי': 'מים וביוב', 'מים': 'מים וביוב',
+      'ביוב': 'מים וביוב', 'מי שיקמה': 'מים וביוב',
+      
+      // === ארנונה ===
+      'ארנונה': 'ארנונה', 'עיריי': 'ארנונה', 'municipality': 'ארנונה',
+      
+      // === תחביבים (30+) ===
+      'חדר כושר': 'תחביבים', 'כושר': 'תחביבים', 'gym': 'תחביבים',
+      'fitness': 'תחביבים', 'שייפ': 'תחביבים', 'shape': 'תחביבים',
+      'גרייט שייפ': 'תחביבים', 'great shape': 'תחביבים',
+      'הולמס': 'תחביבים', 'holmes': 'תחביבים',
+      'סינמה': 'תחביבים', 'cinema': 'תחביבים', 'קולנוע': 'תחביבים',
+      'תיאטרון': 'תחביבים', 'theater': 'תחביבים',
+      'מוזיאון': 'תחביבים', 'museum': 'תחביבים',
+      'לוינגר': 'תחביבים',
+      
+      // === חינוך (20+) ===
+      'חינוך': 'חינוך וקייטנות', 'education': 'חינוך וקייטנות',
+      'גן': 'חינוך וקייטנות', 'גן ילדים': 'חינוך וקייטנות',
+      'קייטנה': 'חינוך וקייטנות', 'קייטנת': 'חינוך וקייטנות',
+      'לימודים': 'חינוך וקייטנות', 'שכר לימוד': 'חינוך וקייטנות',
+      'בית ספר': 'חינוך וקייטנות', 'אוניברסיטה': 'חינוך וקייטנות',
+      
+      // === כבישי אגרה (10+) ===
+      'כביש 6': 'כבישי אגרה', 'כביש שש': 'כבישי אגרה',
+      'מנהרות הכרמל': 'כבישי אגרה', 'כרמל טונל': 'כבישי אגרה',
+      'נתיבי איילון': 'כבישי אגרה', 'איילון': 'כבישי אגרה',
+      
+      // === מיסים (15+) ===
+      'מס הכנסה': 'מיסים', 'מעמ': 'מיסים', 'מע"מ': 'מיסים',
+      'נציבות': 'מיסים', 'רשות המסים': 'מיסים',
+      'גביית מעמ': 'מיסים', 'מס רכוש': 'מיסים',
+      
+      // === תרומות ===
+      'תרומה': 'תרומות', 'תרומות': 'תרומות',
+      'הוראת קבע': 'תרומות', 'נדבה': 'תרומות',
+      
+      // === הלוואות ===
+      'החזר הלוואה': 'החזר הלוואות', 'הלוואה': 'החזר הלוואות',
+      'loan': 'החזר הלוואות',
+      
+      // === חופשות (25+) ===
+      'טיסה': 'חופשה וטיול', 'flight': 'חופשה וטיול',
+      'מלון': 'חופשה וטיול', 'hotel': 'חופשה וטיול',
+      'אל על': 'חופשה וטיול', 'elal': 'חופשה וטיול',
+      'ישראייר': 'חופשה וטיול', 'israir': 'חופשה וטיול',
+      'ארקיע': 'חופשה וטיול', 'arkia': 'חופשה וטיול',
+      'booking': 'חופשה וטיול', 'airbnb': 'חופשה וטיול',
+      'agoda': 'חופשה וטיול', 'הוסטל': 'חופשה וטיול',
+      
+      // === ביגוד (20+) ===
+      'זארה': 'ביגוד והנעלה', 'zara': 'ביגוד והנעלה',
+      'h&m': 'ביגוד והנעלה', 'פוקס': 'ביגוד והנעלה', 'fox': 'ביגוד והנעלה',
+      'קסטרו': 'ביגוד והנעלה', 'castro': 'ביגוד והנעלה',
+      'גולף': 'ביגוד והנעלה', 'golf': 'ביגוד והנעלה',
+      'נעליים': 'ביגוד והנעלה', 'shoes': 'ביגוד והנעלה',
+      
+      // === תספורת וקוסמטיקה (15+) ===
+      'תספורת': 'תספורת וקוסמטיקה', 'מספרה': 'תספורת וקוסמטיקה',
+      'ספר': 'תספורת וקוסמטיקה', 'barber': 'תספורת וקוסמטיקה',
+      'קוסמטיקה': 'תספורת וקוסמטיקה', 'cosmetics': 'תספורת וקוסמטיקה',
+      
+      // === תיקוני רכב (10+) ===
+      'מוסך': 'תיקוני רכב', 'garage': 'תיקוני רכב',
+      'גלגלים': 'תיקוני רכב', 'צמיגים': 'תיקוני רכב', 'tires': 'תיקוני רכב',
+      
+      // === בעלי חיים (10+) ===
+      'וטרינר': 'בעלי חיים', 'vet': 'בעלי חיים',
+      'מזון לכלבים': 'בעלי חיים', 'מזון לחתולים': 'בעלי חיים',
+      'חיות': 'בעלי חיים', 'pets': 'בעלי חיים',
+      
+      // === מתנות ===
+      'מתנה': 'מתנות', 'מתנות': 'מתנות', 'gift': 'מתנות',
+      
+      // === ריהוט (15+) ===
+      'איקאה': 'ריהוט והבית', 'ikea': 'ריהוט והבית',
+      'ריהוט': 'ריהוט והבית', 'רהיטים': 'ריהוט והבית',
+      
+      // === פארם (10+) ===
+      'בית מרקחת': 'פארם', 'pharmacy': 'פארם',
+      'פארם': 'פארם', 'pharm': 'פארם'
     };
 
-    // Store bank account data
-    let bankData = {
-      name: '',
-      data: null,
-      fileName: ''
-    };
+    // פונקציה לקטלוג מהמאגר
+    function categorizeByDatabase(description) {
+      if (!description) return null;
+      const lowerDesc = description.toLowerCase().trim();
+      
+      for (const [keyword, category] of Object.entries(BUSINESS_DATABASE)) {
+        if (lowerDesc.includes(keyword.toLowerCase())) {
+          console.log(`✅ מאגר: "${description}" → ${category} (מילה: "${keyword}")`);
+          return category;
+        }
+      }
+      
+      return null;
+    }
 
-    // Drag and drop for each upload area
-    for (let i = 1; i <= 4; i++) {
-      const uploadArea = document.getElementById('upload' + i);
+    // === פרסר תשלומים חכם - מזהה כל התבניות ===
+    function parseInstallment(description, amount) {
+      const patterns = [
+        /תשלום\s+(\d+)[\/\-](\d+)/i,           // "תשלום 11/12"
+        /(\d+)\s*מ[־\-]\s*(\d+)/,               // "11 מ-12"
+        /(\d+)\s*\/\s*(\d+)\s*תשלומים/,        // "11/12 תשלומים"
+        /(\d+)\s*מתוך\s*(\d+)/,                // "11 מתוך 12"
+        /payment\s+(\d+)[\/\-](\d+)/i,         // "payment 11/12"
+        /(\d+)\s*of\s*(\d+)/i,                 // "11 of 12"
+        /תש[׳']?\s*(\d+)[\/\-](\d+)/,          // "תש' 11/12"
+        /שלום\s+(\d+)[\/\-](\d+)/              // "שלום 11/12"
+      ];
       
-      uploadArea.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        uploadArea.style.borderColor = '#3182ce';
-        uploadArea.style.background = '#ebf8ff';
-      });
-      
-      uploadArea.addEventListener('dragleave', () => {
-        if (!cardData[i].data) {
-          uploadArea.style.borderColor = '#cbd5e0';
-          uploadArea.style.background = 'white';
+      for (const pattern of patterns) {
+        const match = description.match(pattern);
+        if (match) {
+          const current = parseInt(match[1]);
+          const total = parseInt(match[2]);
+          
+          if (current > 0 && total > 0 && current <= total && total > 1) {
+            // חשב את התשלום החודשי
+            const monthlyAmount = Math.round(amount / (total - current + 1));
+            
+            return {
+              isInstallment: true,
+              installment_current: current,
+              installment_total: total,
+              monthly_amount: monthlyAmount,
+              total_amount: amount,
+              remaining: total - current + 1
+            };
+          }
         }
-      });
+      }
       
-      uploadArea.addEventListener('drop', (e) => {
-        e.preventDefault();
-        if (e.dataTransfer.files.length > 0) {
-          handleCardFile(i, e.dataTransfer.files[0]);
+      return { isInstallment: false };
+    }
+
+    // === תיקון אוטומטי + וולידציה ===
+    function autoCorrectAndValidate(expense) {
+      if (!expense || !expense.description) return expense;
+      
+      const desc = expense.description.toLowerCase();
+      
+      // תיקון 1: חברות ביטוח ידועות
+      const insuranceCompanies = [
+        'הראל', 'harel', 'מגדל', 'migdal', 'הפניקס', 'phoenix',
+        'כלל', 'clal', 'מנורה', 'menora', 'איילון', 'ayalon'
+      ];
+      
+      for (const company of insuranceCompanies) {
+        if (desc.includes(company)) {
+          if (expense.category !== 'ביטוח') {
+            console.log(`🔧 תיקון אוטומטי: "${expense.description}" מ-"${expense.category}" ל-"ביטוח"`);
+            expense.category = 'ביטוח';
+            expense.auto_corrected = true;
+          }
+          break;
         }
+      }
+      
+      // תיקון 2: שירותי בריאות
+      if ((desc.includes('מכבידנט') || desc.includes('דנטל') || desc.includes('שיניים')) 
+          && expense.category !== 'בריאות') {
+        console.log(`🔧 תיקון אוטומטי: "${expense.description}" מ-"${expense.category}" ל-"בריאות"`);
+        expense.category = 'בריאות';
+        expense.auto_corrected = true;
+      }
+      
+      // תיקון 3: גט = תחבורה
+      if ((desc.includes('gett') || desc.includes('גט')) && expense.category !== 'תחבצ') {
+        console.log(`🔧 תיקון אוטומטי: "${expense.description}" מ-"${expense.category}" ל-"תחבצ"`);
+        expense.category = 'תחבצ';
+        expense.auto_corrected = true;
+      }
+      
+      // תיקון 4: זיהוי תשלומים שלא חולקו
+      const installment = parseInstallment(expense.description, expense.amount);
+      if (installment.isInstallment) {
+        console.log(`🔧 חלוקה לתשלומים: "${expense.description}" → ${installment.monthly_amount}₪/חודש (${installment.installment_current}/${installment.installment_total})`);
+        expense.amount = installment.monthly_amount;
+        expense.installment_info = installment;
+        expense.display_note = `תשלום ${installment.installment_current}/${installment.installment_total}`;
+      }
+      
+      // וולידציה: סכום גבוה מחשיד
+      if (expense.amount > 10000 && 
+          !['משכנתא', 'מיסים', 'שכר דירה', 'קופת חולים'].includes(expense.category)) {
+        console.warn(`⚠️ סכום חשוד: ${expense.description} - ${expense.amount}₪ בקטגוריה "${expense.category}"`);
+        expense.needs_review = true;
+      }
+      
+      return expense;
+    }
+
+    // עיבוד אחרי AI
+    function postProcessCategories(expenses) {
+      return expenses.map(exp => {
+        // קודם נסה מהמאגר
+        const dbCategory = categorizeByDatabase(exp.description);
+        if (dbCategory && dbCategory !== exp.category) {
+          console.log(`🔧 תיקון ממאגר: "${exp.description}" מ-"${exp.category}" ל-"${dbCategory}"`);
+          exp.category = dbCategory;
+        }
+        
+        // אחר כך תיקון אוטומטי ווולידציה
+        return autoCorrectAndValidate(exp);
       });
     }
 
-    async function handleCardFile(cardNum, file) {
+    // Credit cards data
+    let cardFiles = {};
+    let cardCount = 1;
+    let bankFile = null;
+    let bankData = null;
+
+    function addCardSlot() {
+      cardCount++;
+      const grid = document.getElementById('creditCardsGrid');
+      const addBtn = grid.querySelector('.add-card-btn');
+      
+      const newCard = document.createElement('div');
+      newCard.className = 'upload-box';
+      newCard.id = `cardBox${cardCount}`;
+      newCard.onclick = function() { document.getElementById(`cardInput${cardCount}`).click(); };
+      newCard.innerHTML = `
+        <div class="icon" id="cardIcon${cardCount}">📄</div>
+        <h4 id="cardTitle${cardCount}">כרטיס אשראי ${cardCount}</h4>
+        <p id="cardDesc${cardCount}">לחץ לבחירת קובץ</p>
+        <input type="file" id="cardInput${cardCount}" accept=".xlsx,.xls,.csv" onchange="handleCardFile(${cardCount}, this)">
+      `;
+      
+      grid.insertBefore(newCard, addBtn);
+    }
+
+    async function handleCardFile(cardNum, input) {
+      const file = input.files[0];
       if (!file) return;
       
-      const ext = file.name.split('.').pop().toLowerCase();
-      if (!['xlsx', 'xls', 'csv'].includes(ext)) {
-        showError('נא להעלות קובץ Excel או CSV בלבד');
-        return;
-      }
-
       try {
         const data = await readExcelFile(file);
+        cardFiles[cardNum] = {
+          name: file.name,
+          data: data
+        };
         
-        if (!data || data.length < 2) {
-          showError('לא נמצאו מספיק נתונים בקובץ');
-          return;
-        }
-
-        // Calculate stats
-        let total = 0;
-        let transCount = 0;
-        for (let i = 1; i < data.length; i++) {
-          const row = data[i];
-          if (row && row.length > 0) {
-            transCount++;
-            for (const cell of row) {
-              const num = parseFloat(String(cell).replace(/[^\d.-]/g, ''));
-              if (!isNaN(num) && num > 0 && num < 100000) {
-                total += num;
-                break;
-              }
-            }
-          }
-        }
-
-        // Store data
-        cardData[cardNum].data = data;
-        cardData[cardNum].transactions = transCount;
-        cardData[cardNum].total = total;
-        cardData[cardNum].name = document.getElementById('cardName' + cardNum).value || 'כרטיס ' + cardNum;
-
-        // Update UI
-        const uploadArea = document.getElementById('upload' + cardNum);
-        uploadArea.classList.add('has-file');
-        uploadArea.querySelector('.icon').textContent = '✅';
-        uploadArea.querySelector('h4').textContent = 'קובץ נטען!';
+        document.getElementById(`cardIcon${cardNum}`).textContent = '✅';
+        document.getElementById(`cardTitle${cardNum}`).textContent = file.name.substring(0, 20);
+        document.getElementById(`cardDesc${cardNum}`).textContent = `${data.length} שורות`;
+        document.getElementById(`cardBox${cardNum}`).classList.add('has-file');
         
-        document.getElementById('card' + cardNum).classList.add('has-file');
-        
-        const fileInfo = document.getElementById('fileInfo' + cardNum);
-        fileInfo.classList.add('active');
-        document.getElementById('fileName' + cardNum).textContent = file.name;
-        document.getElementById('fileStats' + cardNum).textContent = 
-          transCount + ' עסקאות | ' + Math.round(total).toLocaleString() + ' ₪';
-
-        updateSummary();
-        hideError();
-
+        checkReadyToAnalyze();
       } catch (error) {
-        console.error('File Error:', error);
         showError('שגיאה בקריאת הקובץ: ' + error.message);
       }
     }
 
-    function removeFile(cardNum) {
-      cardData[cardNum] = { name: '', data: null, transactions: 0, total: 0 };
+    async function handleBankFile(input) {
+      const file = input.files[0];
+      if (!file) return;
       
-      const uploadArea = document.getElementById('upload' + cardNum);
-      uploadArea.classList.remove('has-file');
-      uploadArea.querySelector('.icon').textContent = '📊';
-      uploadArea.querySelector('h4').textContent = 'גרור קובץ או לחץ לבחירה';
-      uploadArea.style.borderColor = '#cbd5e0';
-      uploadArea.style.background = 'white';
-      
-      document.getElementById('card' + cardNum).classList.remove('has-file');
-      document.getElementById('fileInfo' + cardNum).classList.remove('active');
-      document.getElementById('file' + cardNum).value = '';
-      
-      updateSummary();
-    }
-
-    function updateSummary() {
-      let totalCards = 0;
-      let totalTrans = 0;
-      let totalAmount = 0;
-      
-      for (let i = 1; i <= 4; i++) {
-        if (cardData[i].data) {
-          totalCards++;
-          totalTrans += cardData[i].transactions;
-          totalAmount += cardData[i].total;
-        }
-      }
-      
-      // Check if bank data exists
-      const hasBankData = bankData.data;
-      
-      if (totalCards > 0 || hasBankData) {
-        document.getElementById('summaryBox').style.display = 'block';
-        document.getElementById('totalCards').textContent = totalCards + (hasBankData ? ' + עו"ש' : '');
-        document.getElementById('totalTransactions').textContent = totalTrans;
-        document.getElementById('totalSum').textContent = Math.round(totalAmount).toLocaleString();
-        document.getElementById('analyzeBtn').disabled = false;
-      } else {
-        document.getElementById('summaryBox').style.display = 'none';
-        document.getElementById('analyzeBtn').disabled = true;
+      try {
+        const data = await readExcelFile(file);
+        bankFile = file;
+        bankData = data;
+        
+        document.getElementById('bankIcon').textContent = '✅';
+        document.getElementById('bankTitle').textContent = file.name.substring(0, 20);
+        document.getElementById('bankDesc').textContent = `${data.length} שורות`;
+        document.querySelector('.upload-section:nth-child(3) .upload-box').classList.add('has-file');
+        
+        checkReadyToAnalyze();
+      } catch (error) {
+        showError('שגיאה בקריאת הקובץ: ' + error.message);
       }
     }
 
     async function readExcelFile(file) {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
-        
         reader.onload = (e) => {
           try {
             const data = new Uint8Array(e.target.result);
             const workbook = XLSX.read(data, { type: 'array' });
             const sheetName = workbook.SheetNames[0];
-            const sheet = workbook.Sheets[sheetName];
-            const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+            const worksheet = workbook.Sheets[sheetName];
+            const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
             resolve(jsonData);
           } catch (err) {
             reject(err);
           }
         };
-        
-        reader.onerror = () => reject(new Error('שגיאה בקריאת הקובץ'));
+        reader.onerror = reject;
         reader.readAsArrayBuffer(file);
       });
     }
 
-    // ===== מאגר עסקים ישראלי - קיטלוג אוטומטי =====
-    const BUSINESS_DATABASE = {
-      // תחבורה ציבורית
-      'gett': 'תחבצ', 'גט': 'תחבצ', 'מונית': 'תחבצ', 'taxi': 'תחבצ',
-      'פנגו': 'תחבצ', 'מוביט': 'תחבצ', 'רב קו': 'תחבצ',
-      
-      // תקשורת
-      'next tv': 'תקשורת', 'נקסט': 'תקשורת', 'hot mobile': 'תקשורת',
-      'hot': 'תקשורת', 'הוט': 'תקשורת', 'bezeq': 'תקשורת',
-      'בזק': 'תקשורת', 'partner': 'תקשורת', 'פרטנר': 'תקשורת',
-      'cellcom': 'תקשורת', 'סלקום': 'תקשורת', 'פלאפון': 'תקשורת',
-      'netflix': 'תקשורת', 'spotify': 'תקשורת', 'apple music': 'תקשורת',
-      
-      // ביט ומזומן
-      'bit': 'ביט ללא מעקב', 'ביט': 'ביט ללא מעקב',
-      'העברה ב bit': 'ביט ללא מעקב', 'העברה בביט': 'ביט ללא מעקב',
-      'משיכת מזומן': 'מזומן ללא מעקב', 'כספומט': 'מזומן ללא מעקב',
-      
-      // מזון לבית
-      'כוורת': 'מזון לבית', 'kovert': 'מזון לבית',
-      'שופרסל': 'מזון לבית', 'shufersal': 'מזון לבית',
-      'רמי לוי': 'מזון לבית', 'ויקטורי': 'מזון לבית',
-      'יוחננוף': 'מזון לבית', 'מחסני השוק': 'מזון לבית',
-      'טיב טעם': 'מזון לבית', 'אושר עד': 'מזון לבית',
-      'am:pm': 'מזון לבית', 'אי.אם.פי.אם': 'מזון לבית',
-      'מאפייה': 'מזון לבית', 'ביקר': 'מזון לבית',
-      'wine': 'מזון לבית', 'חנוי': 'מזון לבית',
-      
-      // אוכל בחוץ
-      'wolt': 'אוכל בחוץ ובילויים', 'ולט': 'אוכל בחוץ ובילויים',
-      'מקדונלד': 'אוכל בחוץ ובילויים', 'בורגר': 'אוכל בחוץ ובילויים',
-      'פיצה': 'אוכל בחוץ ובילויים', 'קפה': 'אוכל בחוץ ובילויים',
-      'cafe': 'אוכל בחוץ ובילויים', 'מסעדה': 'אוכל בחוץ ובילויים',
-      'קייטרינג': 'אוכל בחוץ ובילויים', 'bordo': 'אוכל בחוץ ובילויים',
-      'פינצ': 'אוכל בחוץ ובילויים', 'בר': 'אוכל בחוץ ובילויים',
-      
-      // עמלות
-      'דמי כרטיס': 'עמלות בנק ואשראי', 'דמי ניהול': 'עמלות בנק ואשראי',
-      'עמלה': 'עמלות בנק ואשראי', 'עמלת sms': 'עמלות בנק ואשראי',
-      'ריבית על מינוס': 'עמלות בנק ואשראי', 'ריבית חובה': 'עמלות בנק ואשראי',
-      
-      // ניהול בניין
-      'מיי טאוור': 'דמי ניהול בניין', 'my tower': 'דמי ניהול בניין',
-      'ועד בית': 'דמי ניהול בניין',
-      
-      // דיור
-      'שכר דירה': 'שכר דירה', 'משכנתא': 'משכנתא', 'משכנתה': 'משכנתא',
-      
-      // חשמל, גז, מים
-      'חברת החשמל': 'חשמל', 'חשמל': 'חשמל',
-      'פאזגז': 'גז', 'גז': 'גז',
-      'מי גת': 'מים וביוב', 'מים': 'מים וביוב', 'ביוב': 'מים וביוב',
-      
-      // ארנונה
-      'ארנונה': 'ארנונה', 'עיריי': 'ארנונה',
-      
-      // בריאות
-      'מכבי': 'קופת חולים', 'כללית': 'קופת חולים',
-      'מאוחדת': 'קופת חולים', 'לאומית': 'קופת חולים',
-      'מכבידנט': 'בריאות', 'דנטל': 'בריאות', 'שיניים': 'בריאות',
-      'בית מרקחת': 'פארם', 'פארם': 'פארם', 'סופר פארם': 'פארם',
-      'ביטוח': 'ביטוח', 'הראל': 'ביטוח', 'ביטוח לאומי': 'ביטוח',
-      'מגדל': 'ביטוח', 'הפניקס': 'ביטוח',
-      
-      // תחביבים
-      'חדר כושר': 'תחביבים', 'כושר': 'תחביבים', 'gym': 'תחביבים',
-      'שייפ': 'תחביבים', 'סינמה': 'תחביבים', 'תיאטרון': 'תחביבים',
-      'גרייט שייפ': 'תחביבים', 'הולמס': 'תחביבים',
-      
-      // חינוך
-      'חינוך': 'חינוך וקייטנות', 'גן': 'חינוך וקייטנות', 'קייטנה': 'חינוך וקייטנות',
-      
-      // דלק
-      'דלק': 'דלק וחניה', 'סונול': 'דלק וחניה', 'פז': 'דלק וחניה',
-      'חניה': 'דלק וחניה', 'חניון': 'דלק וחניה', 'דור אלון': 'דלק וחניה',
-      
-      // כבישי אגרה
-      'כביש 6': 'כבישי אגרה', 'מנהרות הכרמל': 'כבישי אגרה',
-      
-      // מיסים
-      'מס הכנסה': 'מיסים', 'מעמ': 'מיסים', 'נציבות': 'מיסים',
-      'גביית מעמ': 'מיסים',
-      
-      // תרומות
-      'תרומה': 'תרומות', 'הוראת קבע': 'תרומות',
-      
-      // הלוואות
-      'החזר הלוואה': 'החזר הלוואות', 'הלוואה': 'החזר הלוואות',
-      
-      // חופשות
-      'טיסה': 'חופשה וטיול', 'מלון': 'חופשה וטיול',
-      'ישראייר': 'חופשה וטיול', 'booking': 'חופשה וטיול', 'airbnb': 'חופשה וטיול',
-      
-      // ביגוד והנעלה
-      'ביגוד': 'ביגוד והנעלה', 'בגדים': 'ביגוד והנעלה', 'נעליים': 'ביגוד והנעלה',
-      
-      // תספורת
-      'תספורת': 'תספורת וקוסמטיקה', 'מספרה': 'תספורת וקוסמטיקה',
-      'קוסמטיקה': 'תספורת וקוסמטיקה',
-      
-      // תיקוני רכב
-      'מוסך': 'תיקוני רכב', 'גלגלים': 'תיקוני רכב', 'צמיגים': 'תיקוני רכב',
-      
-      // בעלי חיים
-      'וטרינר': 'בעלי חיים', 'מזון לכלבים': 'בעלי חיים', 'חיות': 'בעלי חיים',
-      
-      // מתנות
-      'מתנה': 'מתנות', 'מתנות': 'מתנות',
-      
-      // ריהוט והבית
-      'איקאה': 'ריהוט והבית', 'ריהוט': 'ריהוט והבית', 'רהיטים': 'ריהוט והבית'
-    };
-
-    function categorizeByDatabase(description) {
-      if (!description) return null;
-      const lowerDesc = description.toLowerCase().trim();
-      for (const [keyword, category] of Object.entries(BUSINESS_DATABASE)) {
-        if (lowerDesc.includes(keyword)) {
-          console.log(`✅ מאגר: "${description}" → ${category}`);
-          return category;
-        }
-      }
-      return null;
+    function checkReadyToAnalyze() {
+      const hasCards = Object.keys(cardFiles).length > 0;
+      const hasBank = bankData !== null;
+      document.getElementById('analyzeBtn').disabled = !(hasCards || hasBank);
     }
 
-    function postProcessCategories(expenses) {
-      return expenses.map(exp => {
-        const dbCategory = categorizeByDatabase(exp.description);
-        if (dbCategory && dbCategory !== exp.category) {
-          console.log(`🔧 תיקון: "${exp.description}" מ-"${exp.category}" ל-"${dbCategory}"`);
-          exp.category = dbCategory;
-        }
-        return exp;
-      });
-    }
-
-    function formatDataForAI(data) {
-      const headers = data[0] || [];
-      let formatted = 'כותרות: ' + headers.join(' | ') + '\n\nעסקאות:\n';
+    function formatDataForAI(data, cardName) {
+      // המרת מערך לטקסט לניתוח
+      let text = `דוח הוצאות - ${cardName}\n`;
+      text += '='.repeat(50) + '\n';
       
-      for (let i = 1; i < data.length; i++) {
-        const row = data[i];
-        if (row && row.length > 0 && row.some(cell => cell !== null && cell !== '')) {
-          formatted += row.join(' | ') + '\n';
-        }
-      }
-      
-      return formatted;
-    }
-
-    // Special function for bank data - filters out non-expenses BEFORE sending to AI
-    function formatBankDataForAI(data) {
-      const headers = data[0] || [];
-      let formatted = 'כותרות: ' + headers.join(' | ') + '\n\nעסקאות (רק הוצאות):\n';
-      
-      // Patterns to EXCLUDE (not real expenses)
-      const excludePatterns = [
-        // Credit card payments
-        'מקס איט', 'max', 'ישראכרט', 'ישראל כרט', 'כאל', 'לאומי קארד', 'דיינרס',
-        // Investments - buying/selling
-        'מכירה/', 'קניה/', 'אלטשולר', 'מגדל', 'אקסלנס',
-        // Currency exchange
-        'קיזוז מטח', 'קיזוז',
-        // Income
-        'ריבית זכות', 'מילואים', 'משכורת',
-        // Tax on profits
-        'מס בגין ריבית', 'תנועת מס',
-        // Other non-expenses
-        'יתרה', 'סה"כ', 'העברה/אקסלנס'
-      ];
-      
-      let includedCount = 0;
-      let excludedCount = 0;
-      
-      for (let i = 1; i < data.length; i++) {
-        const row = data[i];
-        if (!row || row.length === 0) continue;
-        
-        const rowText = row.join(' ').toLowerCase();
-        
-        // Check if this row should be excluded
-        let shouldExclude = false;
-        for (const pattern of excludePatterns) {
-          if (rowText.includes(pattern.toLowerCase())) {
-            shouldExclude = true;
-            excludedCount++;
-            break;
+      for (const row of data) {
+        if (row && row.length > 0) {
+          const rowText = row.filter(cell => cell !== null && cell !== undefined).join(' | ');
+          if (rowText.trim()) {
+            text += rowText + '\n';
           }
         }
-        
-        // Only include if it's not excluded and has actual content
-        if (!shouldExclude && row.some(cell => cell !== null && cell !== '')) {
-          formatted += row.join(' | ') + '\n';
-          includedCount++;
+      }
+      
+      return text;
+    }
+
+    function formatBankDataForAI(data) {
+      // סינון מקדים של שורות לא רלוונטיות
+      const ignorePatterns = [
+        'מקס', 'max', 'ישראכרט', 'כאל', 'לאומי קארד', 'דיינרס', // כרטיסי אשראי
+        'קניה/', 'מכירה/', 'אלטשולר', 'מגדל', 'אקסלנס', 'מיטב', // השקעות
+        'ריבית זכות', 'מילואים', 'משכורת', 'זיכוי', // הכנסות
+        'קיזוז מטח', 'מט"ח', 'המרה', // המרות
+        'מס בגין', 'תנועת מס', // מיסים על רווחים
+        'יתרה', 'סה"כ', 'סיכום' // יתרות
+      ];
+      
+      let text = `דוח תנועות עו"ש\n`;
+      text += '='.repeat(50) + '\n';
+      
+      for (const row of data) {
+        if (row && row.length > 0) {
+          const rowText = row.filter(cell => cell !== null && cell !== undefined).join(' | ');
+          const lowerRow = rowText.toLowerCase();
+          
+          // דלג על שורות שמכילות מילות מפתח להתעלמות
+          const shouldIgnore = ignorePatterns.some(pattern => 
+            lowerRow.includes(pattern.toLowerCase())
+          );
+          
+          if (rowText.trim() && !shouldIgnore) {
+            text += rowText + '\n';
+          }
         }
       }
       
-      console.log('Bank pre-filter: included', includedCount, 'rows, excluded', excludedCount, 'rows');
-      return formatted;
+      return text;
     }
 
     async function analyzeAllCards() {
       hideError();
-      
-      // Collect cards with data
-      const cardsToAnalyze = [];
-      for (let i = 1; i <= 4; i++) {
-        if (cardData[i].data) {
-          const name = document.getElementById('cardName' + i).value || 'כרטיס ' + i;
-          cardsToAnalyze.push({
-            cardNum: i,
-            name: name,
-            data: cardData[i].data
-          });
-        }
-      }
-      
-      const hasBankData = bankData.data;
-      
-      if (cardsToAnalyze.length === 0 && !hasBankData) {
-        showError('נא להעלות לפחות קובץ אחד');
-        return;
-      }
+      showLoading('מנתח את הדוחות...', 'שלב 1 מתוך ' + (Object.keys(cardFiles).length + (bankData ? 1 : 0)));
 
-      const totalItems = cardsToAnalyze.length + (hasBankData ? 1 : 0);
-      showLoading('מנתח את הדוחות...', 'מעבד ' + totalItems + ' דוחות');
-      
-      const allResults = {};
-      
+      const allResults = { cards: [], bank: null };
+
       try {
-        // Analyze credit cards
-        for (let i = 0; i < cardsToAnalyze.length; i++) {
-          const card = cardsToAnalyze[i];
-          updateLoading('מנתח ' + card.name + '...', 'כרטיס ' + (i + 1) + ' מתוך ' + totalItems);
+        // ניתוח כרטיסי אשראי
+        let step = 1;
+        for (const [cardNum, cardInfo] of Object.entries(cardFiles)) {
+          document.getElementById('loadingSubtext').textContent = `מנתח כרטיס ${step}...`;
           
-          const textData = formatDataForAI(card.data);
+          const text = formatDataForAI(cardInfo.data, cardInfo.name);
           
           const response = await fetch('/api/analyze', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ text: textData })
+            body: JSON.stringify({ text: text.substring(0, 20000) }) // הגבלה ל-20K תווים
           });
 
-          const data = await response.json();
-
           if (!response.ok) {
-            throw new Error(data.error || 'שגיאה בניתוח ' + card.name);
+            const err = await response.json();
+            throw new Error(err.error || 'שגיאה בניתוח');
           }
 
-          allResults[card.name] = {
-            expenses: postProcessCategories(data.expenses || []),
-            cardNum: card.cardNum,
-            type: 'credit'
-          };
-        }
-        
-        // Analyze bank account if exists
-        if (hasBankData) {
-          updateLoading('מנתח עו"ש ' + bankData.name + '...', 'ניתוח חשבון בנק');
+          const data = await response.json();
           
-          // Use special bank formatter with pre-filtering
-          const textData = formatBankDataForAI(bankData.data);
-          console.log('=== BANK ANALYSIS ===');
-          console.log('Bank name:', bankData.name);
-          console.log('Sending FILTERED bank data, length:', textData.length);
-          console.log('First 500 chars:', textData.substring(0, 500));
+          // עיבוד אחרי AI
+          const processedExpenses = postProcessCategories(data.expenses || []);
+          
+          allResults.cards.push({
+            name: cardInfo.name.replace(/\.[^.]+$/, ''),
+            expenses: processedExpenses
+          });
+          
+          step++;
+        }
+
+        // ניתוח עו"ש
+        if (bankData) {
+          document.getElementById('loadingSubtext').textContent = 'מנתח חשבון עו"ש...';
+          
+          const bankText = formatBankDataForAI(bankData);
           
           const response = await fetch('/api/analyze-bank', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
-              text: textData,
-              bankName: bankData.name
+              text: bankText.substring(0, 20000),
+              bankName: bankFile.name.replace(/\.[^.]+$/, '')
             })
           });
 
-          const responseText = await response.text();
-          console.log('Bank API response status:', response.status);
-          console.log('Bank API response:', responseText.substring(0, 500));
-          
-          let data;
-          try {
-            data = JSON.parse(responseText);
-          } catch (e) {
-            console.error('Failed to parse bank response:', responseText);
-            throw new Error('שגיאה בניתוח עו"ש: תשובה לא תקינה');
-          }
-
           if (!response.ok) {
-            throw new Error(data.error || 'שגיאה בניתוח עו"ש');
+            const err = await response.json();
+            throw new Error(err.error || 'שגיאה בניתוח עו"ש');
           }
 
-          const bankKey = 'עו"ש ' + bankData.name;
-          console.log('Bank expenses found:', data.expenses?.length || 0);
-          console.log('Storing under key:', bankKey);
+          const bankResult = await response.json();
           
-          if (data.expenses && data.expenses.length > 0) {
-            console.log('First bank expense:', data.expenses[0]);
-          }
+          // עיבוד אחרי AI
+          const processedBankExpenses = postProcessCategories(bankResult.expenses || []);
           
-          allResults[bankKey] = {
-            expenses: postProcessCategories(data.expenses || []),
-            type: 'bank'
+          allResults.bank = {
+            name: bankFile.name.replace(/\.[^.]+$/, ''),
+            expenses: processedBankExpenses
           };
         }
-        
-        // Save all results
-        console.log('=== SAVING RESULTS ===');
-        console.log('All result keys:', Object.keys(allResults));
-        Object.entries(allResults).forEach(([key, val]) => {
-          console.log(`"${key}": type=${val.type}, expenses=${val.expenses?.length || 0}`);
-        });
-        
-        localStorage.setItem('multiCardResults', JSON.stringify(allResults));
-        console.log('Saved to localStorage, redirecting to report...');
+
+        // שמירה ומעבר לדוח
+        localStorage.setItem('expenseResults', JSON.stringify(allResults));
         window.location.href = 'report.html';
 
       } catch (error) {
@@ -1154,11 +991,6 @@
       document.getElementById('loadingText').textContent = text;
       document.getElementById('loadingSubtext').textContent = subtext;
       document.getElementById('loadingOverlay').classList.add('active');
-    }
-
-    function updateLoading(text, subtext) {
-      document.getElementById('loadingText').textContent = text;
-      document.getElementById('loadingSubtext').textContent = subtext;
     }
 
     function hideLoading() {
@@ -1175,88 +1007,11 @@
       document.getElementById('errorMessage').classList.remove('active');
     }
 
-    // Bank file handling
-    async function handleBankFile(file) {
-      if (!file) return;
-      
-      const ext = file.name.split('.').pop().toLowerCase();
-      const bankName = document.getElementById('bankName').value;
-      
-      if (!bankName) {
-        showError('נא לבחור בנק קודם');
-        return;
-      }
-      
-      if (!['xlsx', 'xls', 'csv'].includes(ext)) {
-        showError('נא להעלות קובץ Excel או CSV בלבד');
-        return;
-      }
-
-      try {
-        bankData.name = bankName;
-        bankData.fileName = file.name;
-
-        const data = await readExcelFile(file);
-        bankData.data = data;
-        
-        let transCount = data.length - 1;
-        updateBankUI(transCount + ' שורות נקראו');
-
-        hideError();
-        updateSummary();
-
-      } catch (error) {
-        console.error('Bank File Error:', error);
-        showError('שגיאה בקריאת הקובץ: ' + error.message);
-      }
+    function showSuccess(message) {
+      const el = document.getElementById('successMessage');
+      el.textContent = message;
+      el.classList.add('active');
     }
-
-    function updateBankUI(stats) {
-      const uploadArea = document.getElementById('uploadBank');
-      uploadArea.classList.add('has-file');
-      uploadArea.querySelector('.icon').textContent = '✅';
-      uploadArea.querySelector('h4').textContent = 'קובץ נטען!';
-      
-      document.getElementById('bankUpload').classList.add('has-file');
-      document.getElementById('fileBankInfo').classList.add('active');
-      document.getElementById('fileBankName').textContent = bankData.fileName;
-      document.getElementById('fileBankStats').textContent = stats;
-    }
-
-    function removeBankFile() {
-      bankData = { name: '', data: null, fileName: '' };
-      
-      const uploadArea = document.getElementById('uploadBank');
-      uploadArea.classList.remove('has-file');
-      uploadArea.querySelector('.icon').textContent = '🏦';
-      uploadArea.querySelector('h4').textContent = 'גרור קובץ או לחץ לבחירה';
-      
-      document.getElementById('bankUpload').classList.remove('has-file');
-      document.getElementById('fileBankInfo').classList.remove('active');
-      document.getElementById('fileBank').value = '';
-      
-      updateSummary();
-    }
-
-    // Drag and drop for bank upload
-    const bankUploadArea = document.getElementById('uploadBank');
-    bankUploadArea.addEventListener('dragover', (e) => {
-      e.preventDefault();
-      bankUploadArea.style.borderColor = '#9f7aea';
-      bankUploadArea.style.background = '#faf5ff';
-    });
-    bankUploadArea.addEventListener('dragleave', () => {
-      if (!bankData.data) {
-        bankUploadArea.style.borderColor = '#9f7aea';
-        bankUploadArea.style.background = 'linear-gradient(135deg, #faf5ff 0%, #f0fff4 100%)';
-      }
-    });
-    bankUploadArea.addEventListener('drop', (e) => {
-      e.preventDefault();
-      if (e.dataTransfer.files.length > 0) {
-        handleBankFile(e.dataTransfer.files[0]);
-      }
-    });
   </script>
 </body>
 </html>

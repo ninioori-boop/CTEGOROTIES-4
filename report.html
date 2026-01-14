@@ -19,8 +19,6 @@
       --green: #38a169;
       --red: #e53e3e;
       --orange: #dd6b20;
-      --purple: #805ad5;
-      --teal: #319795;
     }
 
     * {
@@ -43,10 +41,11 @@
       padding: 2rem;
     }
 
+    /* Header */
     .report-header {
       background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
       color: var(--white);
-      padding: 2.5rem 2rem;
+      padding: 3rem 2rem;
       border-radius: 20px;
       text-align: center;
       margin-bottom: 2rem;
@@ -54,27 +53,69 @@
     }
 
     .report-header h1 {
-      font-size: 2.2rem;
+      font-size: 2.5rem;
       font-weight: 800;
       margin-bottom: 0.5rem;
     }
 
     .report-header p {
-      font-size: 1rem;
+      font-size: 1.1rem;
       opacity: 0.9;
     }
 
     .report-date {
-      margin-top: 0.8rem;
-      font-size: 0.9rem;
+      margin-top: 1rem;
+      font-size: 0.95rem;
       opacity: 0.8;
     }
 
-    /* Total Summary */
+    /* Card Tabs */
+    .card-tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .card-tab {
+      padding: 0.8rem 1.5rem;
+      background: var(--white);
+      border: 2px solid #e2e8f0;
+      border-radius: 50px;
+      cursor: pointer;
+      font-family: 'Heebo', sans-serif;
+      font-size: 1rem;
+      font-weight: 500;
+      transition: all 0.3s ease;
+    }
+
+    .card-tab:hover {
+      border-color: var(--accent);
+    }
+
+    .card-tab.active {
+      background: var(--accent);
+      color: var(--white);
+      border-color: var(--accent);
+    }
+
+    .card-tab.bank {
+      background: linear-gradient(135deg, #38a169, #276749);
+      color: white;
+      border-color: #38a169;
+    }
+
+    .card-tab.bank:not(.active) {
+      background: var(--white);
+      color: #38a169;
+    }
+
+    /* Total Summary Card */
     .total-card {
       background: linear-gradient(135deg, var(--gold) 0%, #b7791f 100%);
       color: var(--white);
-      padding: 2rem;
+      padding: 2.5rem;
       border-radius: 20px;
       text-align: center;
       margin-bottom: 2rem;
@@ -82,25 +123,25 @@
     }
 
     .total-card h2 {
-      font-size: 1.1rem;
+      font-size: 1.2rem;
       font-weight: 500;
-      margin-bottom: 0.3rem;
+      margin-bottom: 0.5rem;
       opacity: 0.9;
     }
 
     .total-amount {
-      font-size: 3.5rem;
+      font-size: 4rem;
       font-weight: 800;
       line-height: 1;
     }
 
     .total-count {
-      font-size: 1rem;
+      font-size: 1.1rem;
       margin-top: 0.5rem;
       opacity: 0.9;
     }
 
-    /* Cards Summary Grid */
+    /* Cards Summary */
     .cards-summary {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -110,113 +151,50 @@
 
     .card-summary-item {
       background: var(--white);
-      border-radius: 16px;
       padding: 1.5rem;
+      border-radius: 15px;
       text-align: center;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
       cursor: pointer;
       transition: all 0.3s ease;
-      border: 3px solid transparent;
+      border: 2px solid transparent;
     }
 
     .card-summary-item:hover {
       transform: translateY(-3px);
-      box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+      border-color: var(--accent);
     }
 
     .card-summary-item.active {
       border-color: var(--accent);
+      background: #ebf8ff;
     }
 
-    .card-summary-item .card-icon {
-      width: 50px;
-      height: 50px;
-      border-radius: 50%;
-      margin: 0 auto 1rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+    .card-summary-item.bank {
+      border-right: 4px solid var(--green);
+    }
+
+    .card-summary-name {
+      font-size: 0.95rem;
+      color: var(--gray);
+      margin-bottom: 0.5rem;
+    }
+
+    .card-summary-amount {
       font-size: 1.5rem;
-      color: white;
-    }
-
-    .card-summary-item:nth-child(1) .card-icon { background: var(--accent); }
-    .card-summary-item:nth-child(2) .card-icon { background: var(--orange); }
-    .card-summary-item:nth-child(3) .card-icon { background: var(--purple); }
-    .card-summary-item:nth-child(4) .card-icon { background: var(--teal); }
-    .card-summary-item:nth-child(5) .card-icon { background: var(--gold); }
-
-    .card-summary-item .card-name {
-      font-size: 1.1rem;
-      font-weight: 600;
-      color: var(--primary);
-      margin-bottom: 0.3rem;
-    }
-
-    .card-summary-item .card-total {
-      font-size: 1.4rem;
       font-weight: 700;
-      color: var(--accent);
+      color: var(--primary);
     }
 
-    .card-summary-item .card-trans {
+    .card-summary-count {
       font-size: 0.85rem;
       color: var(--gray);
-    }
-
-    /* Tabs */
-    .tabs-container {
-      display: none;
-      margin-bottom: 2rem;
-    }
-
-    .tabs-container.active {
-      display: block;
-    }
-
-    .tabs {
-      display: flex;
-      gap: 0.5rem;
-      flex-wrap: wrap;
-      justify-content: center;
-      margin-bottom: 1.5rem;
-    }
-
-    .tab {
-      padding: 0.8rem 1.5rem;
-      background: var(--white);
-      border: 2px solid #e2e8f0;
-      border-radius: 30px;
-      cursor: pointer;
-      font-family: 'Heebo', sans-serif;
-      font-size: 1rem;
-      font-weight: 600;
-      color: var(--gray);
-      transition: all 0.3s ease;
-    }
-
-    .tab:hover {
-      border-color: var(--accent);
-      color: var(--accent);
-    }
-
-    .tab.active {
-      background: var(--accent);
-      border-color: var(--accent);
-      color: white;
-    }
-
-    .tab-content {
-      display: none;
-    }
-
-    .tab-content.active {
-      display: block;
+      margin-top: 0.25rem;
     }
 
     /* Categories Grid */
     .categories-title {
-      font-size: 1.4rem;
+      font-size: 1.5rem;
       font-weight: 700;
       color: var(--primary);
       margin-bottom: 1.5rem;
@@ -225,7 +203,7 @@
 
     .categories-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
       gap: 1.5rem;
       margin-bottom: 2rem;
     }
@@ -257,17 +235,17 @@
       display: flex;
       align-items: center;
       gap: 0.5rem;
-      font-size: 1.1rem;
+      font-size: 1.2rem;
       font-weight: 600;
       color: var(--primary);
     }
 
     .category-name .icon {
-      font-size: 1.3rem;
+      font-size: 1.5rem;
     }
 
     .category-total {
-      font-size: 1.3rem;
+      font-size: 1.5rem;
       font-weight: 700;
       color: var(--accent);
     }
@@ -279,7 +257,7 @@
     }
 
     .expense-list {
-      max-height: 180px;
+      max-height: 200px;
       overflow-y: auto;
     }
 
@@ -287,7 +265,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 0.5rem 0;
+      padding: 0.6rem 0;
       border-bottom: 1px dashed #e2e8f0;
     }
 
@@ -297,7 +275,13 @@
 
     .expense-name {
       color: var(--black);
-      font-size: 0.9rem;
+      font-size: 0.95rem;
+    }
+
+    .expense-note {
+      font-size: 0.8rem;
+      color: var(--orange);
+      margin-right: 0.5rem;
     }
 
     .expense-amount {
@@ -310,34 +294,34 @@
     .chart-section {
       background: var(--white);
       border-radius: 20px;
-      padding: 1.5rem;
+      padding: 2rem;
       margin-bottom: 2rem;
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
     }
 
     .chart-title {
-      font-size: 1.2rem;
+      font-size: 1.3rem;
       font-weight: 600;
       color: var(--primary);
-      margin-bottom: 1rem;
+      margin-bottom: 1.5rem;
       text-align: center;
     }
 
     .bar-chart {
       display: flex;
       flex-direction: column;
-      gap: 0.6rem;
+      gap: 0.8rem;
     }
 
     .bar-item {
       display: flex;
       align-items: center;
-      gap: 0.8rem;
+      gap: 1rem;
     }
 
     .bar-label {
-      width: 130px;
-      font-size: 0.85rem;
+      width: 150px;
+      font-size: 0.9rem;
       color: var(--black);
       text-align: left;
       white-space: nowrap;
@@ -347,22 +331,26 @@
 
     .bar-container {
       flex: 1;
-      height: 24px;
+      height: 28px;
       background: var(--gray-light);
-      border-radius: 12px;
+      border-radius: 14px;
       overflow: hidden;
     }
 
     .bar-fill {
       height: 100%;
       background: linear-gradient(90deg, var(--accent) 0%, var(--primary-light) 100%);
-      border-radius: 12px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      padding-right: 10px;
       transition: width 0.5s ease;
     }
 
     .bar-value {
-      width: 70px;
-      font-size: 0.85rem;
+      width: 80px;
+      font-size: 0.9rem;
       font-weight: 600;
       color: var(--primary);
       text-align: left;
@@ -372,14 +360,14 @@
     .actions {
       display: flex;
       justify-content: center;
-      gap: 0.8rem;
+      gap: 1rem;
       flex-wrap: wrap;
       margin-bottom: 2rem;
     }
 
     .btn {
-      padding: 0.9rem 1.5rem;
-      font-size: 1rem;
+      padding: 1rem 2rem;
+      font-size: 1.1rem;
       font-weight: 600;
       border-radius: 50px;
       cursor: pointer;
@@ -409,381 +397,329 @@
       color: var(--white);
     }
 
+    .btn-green {
+      background: linear-gradient(135deg, var(--green) 0%, #276749 100%);
+      color: var(--white);
+    }
+
+    /* Footer */
     footer {
       text-align: center;
       padding: 2rem;
       color: var(--gray);
     }
 
-    /* Modal */
-    .modal {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0,0,0,0.7);
-      z-index: 1000;
-      justify-content: center;
-      align-items: center;
-    }
-
-    .modal.active {
-      display: flex;
-    }
-
-    .modal-content {
-      background: white;
-      padding: 2rem;
-      border-radius: 20px;
-      max-width: 500px;
-      width: 90%;
-      text-align: center;
-    }
-
+    /* Print Styles */
     @media print {
-      body { background: white; }
-      .actions, .tabs-container, .cards-summary { display: none !important; }
-      .category-card { break-inside: avoid; }
+      body {
+        background: white;
+      }
+      
+      .actions {
+        display: none;
+      }
+      
+      .category-card {
+        break-inside: avoid;
+      }
     }
 
     @media (max-width: 768px) {
-      .container { padding: 1rem; }
-      .report-header { padding: 1.5rem 1rem; }
-      .report-header h1 { font-size: 1.6rem; }
-      .total-amount { font-size: 2.5rem; }
-      .categories-grid { grid-template-columns: 1fr; }
-      .bar-label { width: 90px; font-size: 0.75rem; }
-      .actions { flex-direction: column; }
-      .btn { width: 100%; }
-      .cards-summary { grid-template-columns: repeat(2, 1fr); }
+      .container {
+        padding: 1rem;
+      }
+
+      .report-header {
+        padding: 2rem 1rem;
+      }
+
+      .report-header h1 {
+        font-size: 1.8rem;
+      }
+
+      .total-amount {
+        font-size: 2.5rem;
+      }
+
+      .categories-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .bar-label {
+        width: 100px;
+        font-size: 0.8rem;
+      }
+
+      .actions {
+        flex-direction: column;
+      }
+
+      .btn {
+        width: 100%;
+      }
     }
   </style>
 </head>
 <body>
   <div class="container">
+    <!-- Header -->
     <div class="report-header">
       <h1>📊 דוח מיפוי הוצאות</h1>
-      <p id="reportSubtitle">ניתוח מפורט של ההוצאות לפי קטגוריות</p>
+      <p>ניתוח מפורט של ההוצאות לפי קטגוריות</p>
       <div class="report-date" id="reportDate"></div>
     </div>
 
-    <!-- Total Summary (for all cards) -->
+    <!-- Cards Summary -->
+    <div class="cards-summary" id="cardsSummary"></div>
+
+    <!-- Total Summary -->
     <div class="total-card">
       <h2 id="totalLabel">סך כל ההוצאות</h2>
       <div class="total-amount" id="totalAmount">0 ₪</div>
       <div class="total-count" id="totalCount">0 הוצאות נותחו</div>
     </div>
 
-    <!-- Cards Summary (multi-card mode) -->
-    <div class="cards-summary" id="cardsSummary" style="display:none;"></div>
-
-    <!-- Tabs for multi-card -->
-    <div class="tabs-container" id="tabsContainer">
-      <div class="tabs" id="tabs"></div>
+    <!-- Bar Chart -->
+    <div class="chart-section">
+      <div class="chart-title">📈 התפלגות הוצאות לפי קטגוריה</div>
+      <div class="bar-chart" id="barChart"></div>
     </div>
 
-    <!-- Report Content (single or tabbed) -->
-    <div id="reportContent">
-      <div class="chart-section">
-        <div class="chart-title">📈 התפלגות הוצאות לפי קטגוריה</div>
-        <div class="bar-chart" id="barChart"></div>
-      </div>
-
-      <h2 class="categories-title">פירוט לפי קטגוריות</h2>
-      <div class="categories-grid" id="categoriesGrid"></div>
-    </div>
+    <!-- Categories Grid -->
+    <h2 class="categories-title">פירוט לפי קטגוריות</h2>
+    <div class="categories-grid" id="categoriesGrid"></div>
 
     <!-- Actions -->
     <div class="actions">
-      <button class="btn btn-primary" onclick="downloadReportForClient()" style="background:linear-gradient(135deg, #38a169 0%, #276749 100%);">📄 הורד דוח ללקוח</button>
-      <button class="btn btn-primary" onclick="window.print()">🖨️ הדפס</button>
+      <button class="btn btn-primary" onclick="window.print()">🖨️ הדפס דוח</button>
       <button class="btn btn-primary" onclick="exportToExcel()">📥 ייצא לאקסל</button>
-      <button class="btn btn-secondary" onclick="window.location.href='index.html'">📤 דוח חדש</button>
-    </div>
-
-    <!-- Share Modal -->
-    <div class="modal" id="shareModal">
-      <div class="modal-content">
-        <h3 style="color:#1a365d; margin-bottom:1rem;">🔗 שתף דוח עם הלקוח</h3>
-        <p style="color:#718096; margin-bottom:1rem;">העתק את הקישור ושלח ללקוח</p>
-        <input type="text" id="shareUrl" readonly style="width:100%; padding:1rem; border:2px solid #e2e8f0; border-radius:10px; font-size:0.9rem; direction:ltr; margin-bottom:1rem;">
-        <div style="display:flex; gap:0.8rem; justify-content:center; flex-wrap:wrap;">
-          <button onclick="copyShareLink()" class="btn btn-primary">📋 העתק</button>
-          <button onclick="shareWhatsApp()" class="btn btn-primary" style="background:linear-gradient(135deg, #25D366 0%, #128C7E 100%);">💬 וואטסאפ</button>
-          <button onclick="closeShareModal()" class="btn btn-secondary">סגור</button>
-        </div>
-        <p id="copySuccess" style="color:#38a169; margin-top:1rem; display:none;">✅ הקישור הועתק!</p>
-      </div>
+      <button class="btn btn-green" onclick="downloadClientReport()">📤 הורד דוח ללקוח</button>
+      <button class="btn btn-secondary" onclick="shareReport()">🔗 שתף קישור</button>
+      <button class="btn btn-secondary" onclick="window.location.href='index.html'">📤 העלה דוח חדש</button>
     </div>
 
     <footer>
-      <p>דוח זה נוצר על ידי המקטרג של השקעות לצעירים בתכלס</p>
+      <p>אורי ניניו</p>
     </footer>
   </div>
 
   <script>
     const CATEGORY_ICONS = {
-      // Credit card categories
-      'מזון לבית': '🛒', 'אוכל בחוץ ובילויים': '🍽️', 'פארם': '💊',
-      'דלק וחניה': '⛽', 'מתנות': '🎁', 'ביגוד והנעלה': '👔',
-      'תחבצ': '🚌', 'כבישי אגרה': '🛣️', 'תספורת וקוסמטיקה': '💇',
-      'תחביבים': '🎨', 'סיגריות': '🚬', 'חופשה וטיול': '✈️',
-      'עוזרת ושמרטף': '🏠', 'תיקוני רכב': '🔧', 'בריאות': '🏥',
-      'בעלי חיים': '🐾', 'דמי כיס וילדים': '👶', 'יהדות וחגים': '✡️',
-      'שונות': '📦', 'ביט ללא מעקב': '📱', 'מזומן ללא מעקב': '💵',
-      'תקשורת': '📡', 'ביטוח': '🛡️', 'מיסים': '🏛️',
-      'דמי ניהול בניין': '🏢', 'עמלות בנק ואשראי': '🏦',
-      // Bank account categories
-      'שכר דירה': '🏠', 'משכנתא': '🏡', 'חשמל': '⚡',
-      'גז': '🔥', 'מים': '💧', 'ארנונה': '🏛️',
-      'ועד בית': '🏢', 'הלוואות': '💳', 'ביטוח לאומי': '🛡️',
-      'מס הכנסה': '🏛️', 'העברות בנקאיות': '🔄', 'חיסכון': '🐷',
-      'חשבונות בית': '🏠'
+      'מזון לבית': '🛒',
+      'אוכל בחוץ ובילויים': '🍽️',
+      'פארם': '💊',
+      'דלק וחניה': '⛽',
+      'מתנות': '🎁',
+      'ביגוד והנעלה': '👔',
+      'תחבצ': '🚌',
+      'כבישי אגרה': '🛣️',
+      'תספורת וקוסמטיקה': '💇',
+      'תחביבים': '🎨',
+      'חופשה וטיול': '✈️',
+      'תיקוני רכב': '🔧',
+      'בריאות': '🏥',
+      'בעלי חיים': '🐾',
+      'חינוך וקייטנות': '📚',
+      'שונות': '📦',
+      'ביט ללא מעקב': '📱',
+      'מזומן ללא מעקב': '💵',
+      'ביטוח': '🛡️',
+      'תקשורת': '📡',
+      'מיסים': '🏛️',
+      'עמלות בנק ואשראי': '🏦',
+      'דמי ניהול בניין': '🏢',
+      'משכנתא': '🏠',
+      'שכר דירה': '🏠',
+      'ארנונה': '🏛️',
+      'חשמל': '⚡',
+      'גז': '🔥',
+      'מים וביוב': '💧',
+      'קופת חולים': '🏥',
+      'ביטוח לאומי': '🛡️',
+      'תרומות': '❤️',
+      'החזר הלוואות': '💳',
+      'ריהוט והבית': '🛋️'
     };
 
-    let allData = {};
+    let reportData = null;
     let currentCard = 'all';
-    let isMultiCard = false;
 
     document.addEventListener('DOMContentLoaded', () => {
-      console.log('=== PAGE LOAD ===');
+      // קבלת הנתונים מ-localStorage
+      const data = localStorage.getItem('expenseResults');
       
-      // Check URL data first
-      const urlData = checkUrlData();
-      if (urlData) {
-        console.log('Loading from URL data');
-        handleData(urlData);
+      if (!data) {
+        alert('לא נמצאו נתונים. מעביר לעמוד ההעלאה...');
+        window.location.href = 'index.html';
         return;
       }
 
-      // Check multi-card data
-      const multiData = localStorage.getItem('multiCardResults');
-      console.log('Raw localStorage data:', multiData?.substring(0, 300));
+      reportData = JSON.parse(data);
+      console.log('Report Data:', reportData);
       
-      if (multiData) {
-        try {
-          const parsed = JSON.parse(multiData);
-          console.log('Parsed keys:', Object.keys(parsed));
-          
-          // Log each card's data
-          Object.entries(parsed).forEach(([name, data]) => {
-            console.log(`Card "${name}": type=${data.type}, expenses=${data.expenses?.length || 0}`);
-          });
-          
-          if (Object.keys(parsed).length > 0) {
-            isMultiCard = true;
-            allData = parsed;
-            renderMultiCardReport();
-            return;
-          }
-        } catch (e) {
-          console.error('Parse error:', e);
-        }
-      }
+      // תאריך
+      const now = new Date();
+      document.getElementById('reportDate').textContent = 
+        `נוצר בתאריך: ${now.toLocaleDateString('he-IL')} בשעה ${now.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}`;
 
-      // Check single card data
-      const singleData = localStorage.getItem('expenseResults');
-      if (singleData) {
-        console.log('Loading single card data');
-        handleData(JSON.parse(singleData));
-        return;
-      }
-
-      alert('לא נמצאו נתונים. מעביר לעמוד ההעלאה...');
-      window.location.href = 'index.html';
+      renderCardsSummary();
+      renderExpenses('all');
     });
 
-    function handleData(data) {
-      if (Array.isArray(data)) {
-        renderSingleReport(data);
-      } else if (typeof data === 'object') {
-        isMultiCard = true;
-        allData = data;
-        renderMultiCardReport();
-      }
-    }
-
-    function renderMultiCardReport() {
-      const now = new Date();
-      document.getElementById('reportDate').textContent = 
-        `נוצר בתאריך: ${now.toLocaleDateString('he-IL')} בשעה ${now.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}`;
-
-      const cardNames = Object.keys(allData);
-      const cardCount = cardNames.length;
+    function renderCardsSummary() {
+      const summaryContainer = document.getElementById('cardsSummary');
+      let html = '';
       
-      document.getElementById('reportSubtitle').textContent = `ניתוח ${cardCount} כרטיסי אשראי`;
-
-      // Calculate totals
-      let grandTotal = 0;
-      let grandCount = 0;
-      
-      cardNames.forEach(name => {
-        const expenses = allData[name].expenses || [];
-        expenses.forEach(e => grandTotal += e.amount);
-        grandCount += expenses.length;
-      });
-
-      document.getElementById('totalLabel').textContent = `סך הכל מ-${cardCount} כרטיסים`;
-      document.getElementById('totalAmount').textContent = grandTotal.toLocaleString('he-IL', { maximumFractionDigits: 0 }) + ' ₪';
-      document.getElementById('totalCount').textContent = grandCount + ' הוצאות נותחו';
-
-      // Cards Summary
-      const summaryHTML = cardNames.map((name, idx) => {
-        const card = allData[name];
-        const expenses = card.expenses || [];
-        const total = expenses.reduce((sum, e) => sum + e.amount, 0);
-        const isBank = card.type === 'bank' || name.includes('עו"ש') || name.includes('עו&quot;ש');
-        const icon = isBank ? '🏦' : '💳';
-        const iconStyle = isBank ? 'background:linear-gradient(135deg, #9f7aea 0%, #667eea 100%);' : '';
-        const safeName = name.replace(/"/g, '&quot;');
-        return `
-          <div class="card-summary-item ${idx === 0 ? 'active' : ''}" onclick="switchCard('${safeName}')">
-            <div class="card-icon" style="${iconStyle}">${icon}</div>
-            <div class="card-name">${name}</div>
-            <div class="card-total">${total.toLocaleString('he-IL', { maximumFractionDigits: 0 })} ₪</div>
-            <div class="card-trans">${expenses.length} ${isBank ? 'פעולות' : 'עסקאות'}</div>
+      // בדיקה אם זה פורמט חדש (עם cards ו-bank) או ישן (מערך פשוט)
+      if (reportData.cards || reportData.bank) {
+        // פורמט חדש
+        
+        // כרטיס "הכל"
+        let allExpenses = [];
+        let allTotal = 0;
+        
+        if (reportData.cards) {
+          reportData.cards.forEach(card => {
+            allExpenses = allExpenses.concat(card.expenses || []);
+            allTotal += (card.expenses || []).reduce((sum, e) => sum + e.amount, 0);
+          });
+        }
+        
+        if (reportData.bank) {
+          allExpenses = allExpenses.concat(reportData.bank.expenses || []);
+          allTotal += (reportData.bank.expenses || []).reduce((sum, e) => sum + e.amount, 0);
+        }
+        
+        html += `
+          <div class="card-summary-item active" onclick="switchCard('all')">
+            <div class="card-summary-name">📊 כל הדוחות</div>
+            <div class="card-summary-amount">${allTotal.toLocaleString('he-IL', { maximumFractionDigits: 0 })} ₪</div>
+            <div class="card-summary-count">${allExpenses.length} הוצאות</div>
           </div>
         `;
-      }).join('');
-
-      // Add "All" option
-      const allSummary = `
-        <div class="card-summary-item" onclick="switchCard('all')">
-          <div class="card-icon" style="background:var(--gold);">📊</div>
-          <div class="card-name">סיכום כולל</div>
-          <div class="card-total">${grandTotal.toLocaleString('he-IL', { maximumFractionDigits: 0 })} ₪</div>
-          <div class="card-trans">${grandCount} עסקאות</div>
-        </div>
-      `;
-
-      document.getElementById('cardsSummary').innerHTML = summaryHTML + allSummary;
-      document.getElementById('cardsSummary').style.display = 'grid';
-
-      // Tabs
-      const tabsHTML = cardNames.map((name, idx) => {
-        const safeName = name.replace(/"/g, '&quot;');
-        return `<button class="tab ${idx === 0 ? 'active' : ''}" onclick="switchCard('${safeName}')">${name}</button>`;
-      }).join('') + `<button class="tab" onclick="switchCard('all')">📊 כל הכרטיסים</button>`;
-      
-      document.getElementById('tabs').innerHTML = tabsHTML;
-      document.getElementById('tabsContainer').classList.add('active');
-
-      // Render first card
-      switchCard(cardNames[0]);
-    }
-
-    function switchCard(cardName) {
-      // Decode HTML entities back to original characters
-      const decodedName = cardName.replace(/&quot;/g, '"');
-      currentCard = decodedName;
-      console.log('=== SWITCH CARD ===');
-      console.log('Switching to:', decodedName);
-      console.log('Original cardName:', cardName);
-      console.log('All data keys:', Object.keys(allData));
-      console.log('Full allData:', JSON.stringify(allData, null, 2).substring(0, 500));
-      
-      // Update active states
-      document.querySelectorAll('.card-summary-item').forEach(el => el.classList.remove('active'));
-      document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
-      
-      document.querySelectorAll('.card-summary-item').forEach(el => {
-        const elName = el.querySelector('.card-name').textContent;
-        if (elName === decodedName || (decodedName === 'all' && elName === 'סיכום כולל')) {
-          el.classList.add('active');
+        
+        // כרטיסי אשראי
+        if (reportData.cards) {
+          reportData.cards.forEach((card, index) => {
+            const cardTotal = (card.expenses || []).reduce((sum, e) => sum + e.amount, 0);
+            const safeName = (card.name || '').replace(/"/g, '&quot;');
+            html += `
+              <div class="card-summary-item" onclick="switchCard('card_${index}')">
+                <div class="card-summary-name">💳 ${card.name || 'כרטיס ' + (index + 1)}</div>
+                <div class="card-summary-amount">${cardTotal.toLocaleString('he-IL', { maximumFractionDigits: 0 })} ₪</div>
+                <div class="card-summary-count">${(card.expenses || []).length} הוצאות</div>
+              </div>
+            `;
+          });
         }
-      });
-      
-      document.querySelectorAll('.tab').forEach(el => {
-        if (el.textContent === decodedName || (decodedName === 'all' && el.textContent.includes('כל הכרטיסים'))) {
-          el.classList.add('active');
+        
+        // עו"ש
+        if (reportData.bank) {
+          const bankTotal = (reportData.bank.expenses || []).reduce((sum, e) => sum + e.amount, 0);
+          const safeBankName = (reportData.bank.name || 'עו"ש').replace(/"/g, '&quot;');
+          html += `
+            <div class="card-summary-item bank" onclick="switchCard('bank')">
+              <div class="card-summary-name">🏦 ${reportData.bank.name || 'עו"ש'}</div>
+              <div class="card-summary-amount">${bankTotal.toLocaleString('he-IL', { maximumFractionDigits: 0 })} ₪</div>
+              <div class="card-summary-count">${(reportData.bank.expenses || []).length} הוצאות</div>
+            </div>
+          `;
         }
-      });
-
-      // Get expenses
-      let expenses = [];
-      if (decodedName === 'all') {
-        Object.values(allData).forEach(card => {
-          expenses = expenses.concat(card.expenses || []);
-        });
-        console.log('All cards total expenses:', expenses.length);
       } else {
-        // Try exact match first
-        let cardData = allData[decodedName];
-        
-        // If not found, try to find by partial match (for bank accounts)
-        if (!cardData) {
-          console.log('Exact match not found, trying partial match...');
-          const keys = Object.keys(allData);
-          for (const key of keys) {
-            if (key.includes(decodedName) || decodedName.includes(key)) {
-              console.log('Found partial match:', key);
-              cardData = allData[key];
-              break;
-            }
-          }
-        }
-        
-        console.log('Card data found:', !!cardData);
-        if (cardData) {
-          console.log('Card type:', cardData.type);
-          console.log('Expenses array:', cardData.expenses);
-          console.log('Expenses count:', cardData.expenses?.length || 0);
-        }
-        
-        expenses = cardData?.expenses || [];
+        // פורמט ישן - מערך פשוט של הוצאות
+        const total = reportData.reduce((sum, e) => sum + e.amount, 0);
+        html += `
+          <div class="card-summary-item active">
+            <div class="card-summary-name">📊 כל ההוצאות</div>
+            <div class="card-summary-amount">${total.toLocaleString('he-IL', { maximumFractionDigits: 0 })} ₪</div>
+            <div class="card-summary-count">${reportData.length} הוצאות</div>
+          </div>
+        `;
       }
       
-      console.log('Rendering expenses count:', expenses.length);
-      if (expenses.length > 0) {
-        console.log('First expense:', expenses[0]);
-      }
-      renderExpenses(expenses);
+      summaryContainer.innerHTML = html;
     }
 
-    function renderSingleReport(expenses) {
-      const now = new Date();
-      document.getElementById('reportDate').textContent = 
-        `נוצר בתאריך: ${now.toLocaleDateString('he-IL')} בשעה ${now.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}`;
-
-      const total = expenses.reduce((sum, e) => sum + e.amount, 0);
-      document.getElementById('totalAmount').textContent = total.toLocaleString('he-IL', { maximumFractionDigits: 0 }) + ' ₪';
-      document.getElementById('totalCount').textContent = expenses.length + ' הוצאות נותחו';
-
-      renderExpenses(expenses);
+    function switchCard(cardId) {
+      currentCard = cardId;
+      
+      // עדכון הכרטיס הפעיל
+      document.querySelectorAll('.card-summary-item').forEach(el => el.classList.remove('active'));
+      event.currentTarget.classList.add('active');
+      
+      renderExpenses(cardId);
     }
 
-    function renderExpenses(expenses) {
-      console.log('=== RENDER EXPENSES ===');
-      console.log('Expenses received:', expenses);
-      console.log('Is array:', Array.isArray(expenses));
-      console.log('Length:', expenses?.length);
-      
-      // Handle empty or undefined expenses
-      if (!expenses || !Array.isArray(expenses) || expenses.length === 0) {
-        console.log('No expenses to show - displaying empty message');
-        document.getElementById('barChart').innerHTML = '<p style="text-align:center;color:#718096;padding:2rem;">לא נמצאו הוצאות להצגה</p>';
-        document.getElementById('categoriesGrid').innerHTML = '<p style="text-align:center;color:#718096;padding:2rem;">אין פירוט זמין</p>';
-        return;
+    function getExpensesForCard(cardId) {
+      // פורמט ישן
+      if (Array.isArray(reportData)) {
+        return reportData;
       }
       
-      console.log('Processing', expenses.length, 'expenses...');
+      // פורמט חדש
+      if (cardId === 'all') {
+        let all = [];
+        if (reportData.cards) {
+          reportData.cards.forEach(card => {
+            all = all.concat(card.expenses || []);
+          });
+        }
+        if (reportData.bank) {
+          all = all.concat(reportData.bank.expenses || []);
+        }
+        return all;
+      }
       
-      // Group by category
+      if (cardId === 'bank') {
+        return reportData.bank ? (reportData.bank.expenses || []) : [];
+      }
+      
+      if (cardId.startsWith('card_')) {
+        const index = parseInt(cardId.replace('card_', ''));
+        return reportData.cards && reportData.cards[index] ? (reportData.cards[index].expenses || []) : [];
+      }
+      
+      return [];
+    }
+
+    function renderExpenses(cardId) {
+      const expenses = getExpensesForCard(cardId);
+      console.log(`Rendering ${expenses.length} expenses for ${cardId}`);
+
+      // חישוב סיכומים לפי קטגוריה
       const grouped = {};
+      let totalAmount = 0;
+
       expenses.forEach(expense => {
         const cat = expense.category || 'שונות';
-        if (!grouped[cat]) grouped[cat] = { items: [], total: 0 };
+        if (!grouped[cat]) {
+          grouped[cat] = { items: [], total: 0 };
+        }
         grouped[cat].items.push(expense);
         grouped[cat].total += expense.amount;
+        totalAmount += expense.amount;
       });
 
-      const sortedCategories = Object.entries(grouped).sort((a, b) => b[1].total - a[1].total);
+      // סיכום כולל
+      document.getElementById('totalAmount').textContent = totalAmount.toLocaleString('he-IL', { maximumFractionDigits: 2 }) + ' ₪';
+      document.getElementById('totalCount').textContent = expenses.length + ' הוצאות נותחו';
+      
+      // עדכון כותרת
+      if (cardId === 'all') {
+        document.getElementById('totalLabel').textContent = 'סך כל ההוצאות';
+      } else if (cardId === 'bank') {
+        document.getElementById('totalLabel').textContent = 'סך הוצאות עו"ש';
+      } else {
+        document.getElementById('totalLabel').textContent = 'סך הוצאות הכרטיס';
+      }
 
-      // Bar chart
+      // מיון לפי סכום יורד
+      const sortedCategories = Object.entries(grouped)
+        .sort((a, b) => b[1].total - a[1].total);
+
+      // גרף עמודות
       const maxAmount = sortedCategories.length > 0 ? sortedCategories[0][1].total : 1;
-      const barChartHTML = sortedCategories.slice(0, 8).map(([category, data]) => {
+      const barChartHTML = sortedCategories.slice(0, 10).map(([category, data]) => {
         const percentage = (data.total / maxAmount) * 100;
         const icon = CATEGORY_ICONS[category] || '📦';
         return `
@@ -798,17 +734,14 @@
       }).join('');
       document.getElementById('barChart').innerHTML = barChartHTML;
 
-      // Category cards
+      // כרטיסיות קטגוריות
       const cardsHTML = sortedCategories.map(([category, data]) => {
         const icon = CATEGORY_ICONS[category] || '📦';
         const itemsHTML = data.items.map(item => {
-          let installmentInfo = '';
-          if (item.installment_current && item.installment_total) {
-            installmentInfo = `<span style="font-size:0.7rem;color:#718096;display:block;">תשלום ${item.installment_current}/${item.installment_total}</span>`;
-          }
+          const note = item.display_note ? `<span class="expense-note">(${item.display_note})</span>` : '';
           return `
             <div class="expense-item">
-              <span class="expense-name">${item.description}${installmentInfo}</span>
+              <span class="expense-name">${item.description}${note}</span>
               <span class="expense-amount">${item.amount.toLocaleString('he-IL', { maximumFractionDigits: 2 })} ₪</span>
             </div>
           `;
@@ -821,7 +754,7 @@
                 <span class="icon">${icon}</span>
                 <span>${category}</span>
               </div>
-              <div class="category-total">${data.total.toLocaleString('he-IL', { maximumFractionDigits: 0 })} ₪</div>
+              <div class="category-total">${data.total.toLocaleString('he-IL', { maximumFractionDigits: 2 })} ₪</div>
             </div>
             <div class="category-count">${data.items.length} פריטים</div>
             <div class="expense-list">${itemsHTML}</div>
@@ -831,30 +764,29 @@
       document.getElementById('categoriesGrid').innerHTML = cardsHTML;
     }
 
-    function exportToExcel() {
-      let expenses = [];
-      if (isMultiCard) {
-        if (currentCard === 'all') {
-          Object.entries(allData).forEach(([cardName, card]) => {
-            (card.expenses || []).forEach(e => {
-              expenses.push({ ...e, cardName });
-            });
-          });
-        } else {
-          expenses = (allData[currentCard]?.expenses || []).map(e => ({ ...e, cardName: currentCard }));
-        }
-      } else {
-        expenses = JSON.parse(localStorage.getItem('expenseResults') || '[]');
+    function getAllExpenses() {
+      if (Array.isArray(reportData)) {
+        return reportData;
       }
-
-      let csv = isMultiCard ? 'כרטיס,קטגוריה,תיאור,סכום\n' : 'קטגוריה,תיאור,סכום\n';
       
-      expenses.forEach(e => {
-        if (isMultiCard) {
-          csv += `"${e.cardName || ''}","${e.category}","${e.description}","${e.amount.toFixed(2)}"\n`;
-        } else {
-          csv += `"${e.category}","${e.description}","${e.amount.toFixed(2)}"\n`;
-        }
+      let all = [];
+      if (reportData.cards) {
+        reportData.cards.forEach(card => {
+          all = all.concat(card.expenses || []);
+        });
+      }
+      if (reportData.bank) {
+        all = all.concat(reportData.bank.expenses || []);
+      }
+      return all;
+    }
+
+    function exportToExcel() {
+      const expenses = getExpensesForCard(currentCard);
+      let csv = 'קטגוריה,תיאור,סכום\n';
+      
+      expenses.forEach(expense => {
+        csv += `"${expense.category}","${expense.description}","${expense.amount.toFixed(2)}"\n`;
       });
 
       const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
@@ -865,75 +797,72 @@
     }
 
     function shareReport() {
-      let dataToShare;
-      if (isMultiCard) {
-        dataToShare = allData;
+      const data = encodeURIComponent(JSON.stringify(reportData));
+      const url = window.location.origin + '/report.html?data=' + data;
+      
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(url).then(() => {
+          alert('הקישור הועתק! 📋');
+        });
       } else {
-        dataToShare = JSON.parse(localStorage.getItem('expenseResults') || '[]');
+        prompt('העתק את הקישור:', url);
       }
-      
-      const dataStr = JSON.stringify(dataToShare);
-      const compressed = btoa(encodeURIComponent(dataStr));
-      const shareUrl = window.location.origin + '/report.html?data=' + compressed;
-      
-      document.getElementById('shareUrl').value = shareUrl;
-      document.getElementById('shareModal').classList.add('active');
-      document.getElementById('copySuccess').style.display = 'none';
     }
 
-    function copyShareLink() {
-      const urlInput = document.getElementById('shareUrl');
-      urlInput.select();
-      document.execCommand('copy');
-      navigator.clipboard.writeText(urlInput.value).catch(() => {});
-      document.getElementById('copySuccess').style.display = 'block';
-    }
-
-    function shareWhatsApp() {
-      const url = document.getElementById('shareUrl').value;
-      window.open('https://wa.me/?text=' + encodeURIComponent('היי! הנה הדוח של מיפוי ההוצאות שלך: ' + url), '_blank');
-    }
-
-    function closeShareModal() {
-      document.getElementById('shareModal').classList.remove('active');
-    }
-
-    function checkUrlData() {
-      const urlParams = new URLSearchParams(window.location.search);
-      const dataParam = urlParams.get('data');
-      if (dataParam) {
-        try {
-          return JSON.parse(decodeURIComponent(atob(dataParam)));
-        } catch (e) {
-          console.error('Failed to decode URL data:', e);
-        }
-      }
-      return null;
-    }
-
-    function downloadReportForClient() {
-      // Get current expenses
-      let expenses = [];
-      let reportTitle = 'דוח מיפוי הוצאות';
-      
-      if (isMultiCard) {
-        if (currentCard === 'all') {
-          Object.values(allData).forEach(card => {
-            expenses = expenses.concat(card.expenses || []);
-          });
-          reportTitle = 'דוח מיפוי הוצאות - סיכום כולל';
-        } else {
-          expenses = allData[currentCard]?.expenses || [];
-          reportTitle = 'דוח מיפוי הוצאות - ' + currentCard;
-        }
-      } else {
-        expenses = JSON.parse(localStorage.getItem('expenseResults') || '[]');
-      }
-
-      // Calculate total
+    function downloadClientReport() {
+      const expenses = getAllExpenses();
       const total = expenses.reduce((sum, e) => sum + e.amount, 0);
+      const now = new Date();
       
-      // Group by category
+      // יצירת HTML עצמאי
+      const html = `<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>דוח הוצאות - ${now.toLocaleDateString('he-IL')}</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@400;600;700&display=swap');
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Heebo', sans-serif; background: #f7fafc; padding: 2rem; }
+    .container { max-width: 900px; margin: 0 auto; }
+    h1 { text-align: center; color: #1a365d; margin-bottom: 1rem; }
+    .date { text-align: center; color: #718096; margin-bottom: 2rem; }
+    .total { background: linear-gradient(135deg, #d69e2e, #b7791f); color: white; padding: 2rem; border-radius: 15px; text-align: center; margin-bottom: 2rem; }
+    .total-amount { font-size: 3rem; font-weight: 700; }
+    .total-count { opacity: 0.9; }
+    .categories { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; }
+    .category { background: white; border-radius: 12px; padding: 1.5rem; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    .category-header { display: flex; justify-content: space-between; border-bottom: 2px solid #f7fafc; padding-bottom: 1rem; margin-bottom: 1rem; }
+    .category-name { font-weight: 600; color: #1a365d; }
+    .category-total { font-weight: 700; color: #3182ce; }
+    .expense { display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px dashed #e2e8f0; }
+    .expense:last-child { border-bottom: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📊 דוח מיפוי הוצאות</h1>
+    <div class="date">נוצר בתאריך: ${now.toLocaleDateString('he-IL')}</div>
+    <div class="total">
+      <div class="total-amount">${total.toLocaleString('he-IL', { maximumFractionDigits: 0 })} ₪</div>
+      <div class="total-count">${expenses.length} הוצאות</div>
+    </div>
+    <div class="categories">
+      ${generateCategoriesHTML(expenses)}
+    </div>
+  </div>
+</body>
+</html>`;
+
+      const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'דוח_הוצאות_' + now.toLocaleDateString('he-IL').replace(/\./g, '-') + '.html';
+      link.click();
+    }
+
+    function generateCategoriesHTML(expenses) {
       const grouped = {};
       expenses.forEach(expense => {
         const cat = expense.category || 'שונות';
@@ -941,105 +870,35 @@
         grouped[cat].items.push(expense);
         grouped[cat].total += expense.amount;
       });
-      const sortedCategories = Object.entries(grouped).sort((a, b) => b[1].total - a[1].total);
 
-      // Generate bar chart HTML
-      const maxAmount = sortedCategories.length > 0 ? sortedCategories[0][1].total : 1;
-      const barChartHTML = sortedCategories.slice(0, 8).map(([category, data]) => {
-        const percentage = (data.total / maxAmount) * 100;
-        const icon = CATEGORY_ICONS[category] || '📦';
-        return `
-          <div style="display:flex;align-items:center;gap:0.8rem;margin-bottom:0.5rem;">
-            <div style="width:120px;font-size:0.85rem;text-align:left;">${icon} ${category}</div>
-            <div style="flex:1;height:20px;background:#f7fafc;border-radius:10px;overflow:hidden;">
-              <div style="height:100%;width:${percentage}%;background:linear-gradient(90deg,#3182ce,#2c5282);border-radius:10px;"></div>
+      return Object.entries(grouped)
+        .sort((a, b) => b[1].total - a[1].total)
+        .map(([category, data]) => {
+          const itemsHTML = data.items.map(item => 
+            `<div class="expense"><span>${item.description}</span><span>${item.amount.toLocaleString('he-IL', { maximumFractionDigits: 2 })} ₪</span></div>`
+          ).join('');
+          
+          return `
+            <div class="category">
+              <div class="category-header">
+                <span class="category-name">${category}</span>
+                <span class="category-total">${data.total.toLocaleString('he-IL', { maximumFractionDigits: 0 })} ₪</span>
+              </div>
+              ${itemsHTML}
             </div>
-            <div style="width:70px;font-size:0.85rem;font-weight:600;text-align:left;">${data.total.toLocaleString('he-IL', { maximumFractionDigits: 0 })} ₪</div>
-          </div>
-        `;
-      }).join('');
+          `;
+        }).join('');
+    }
 
-      // Generate categories HTML
-      const categoriesHTML = sortedCategories.map(([category, data]) => {
-        const icon = CATEGORY_ICONS[category] || '📦';
-        const itemsHTML = data.items.map(item => `
-          <div style="display:flex;justify-content:space-between;padding:0.4rem 0;border-bottom:1px dashed #e2e8f0;">
-            <span style="font-size:0.9rem;">${item.description}</span>
-            <span style="font-weight:600;color:#2c5282;">${item.amount.toLocaleString('he-IL', { maximumFractionDigits: 2 })} ₪</span>
-          </div>
-        `).join('');
-
-        return `
-          <div style="background:white;border-radius:12px;padding:1.2rem;box-shadow:0 2px 10px rgba(0,0,0,0.08);border-right:4px solid #3182ce;">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.8rem;padding-bottom:0.8rem;border-bottom:2px solid #f7fafc;">
-              <div style="font-size:1.1rem;font-weight:600;color:#1a365d;">${icon} ${category}</div>
-              <div style="font-size:1.2rem;font-weight:700;color:#3182ce;">${data.total.toLocaleString('he-IL', { maximumFractionDigits: 0 })} ₪</div>
-            </div>
-            <div style="font-size:0.85rem;color:#718096;margin-bottom:0.5rem;">${data.items.length} פריטים</div>
-            <div style="max-height:150px;overflow-y:auto;">${itemsHTML}</div>
-          </div>
-        `;
-      }).join('');
-
-      const now = new Date();
-      const dateStr = now.toLocaleDateString('he-IL');
-
-      // Create standalone HTML
-      const htmlContent = `<!DOCTYPE html>
-<html lang="he" dir="rtl">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${reportTitle}</title>
-  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Heebo', sans-serif; background: linear-gradient(180deg, #f7fafc 0%, #edf2f7 100%); min-height: 100vh; color: #1a202c; line-height: 1.6; padding: 2rem; }
-    .container { max-width: 900px; margin: 0 auto; }
-    .header { background: linear-gradient(135deg, #1a365d 0%, #2c5282 100%); color: white; padding: 2rem; border-radius: 16px; text-align: center; margin-bottom: 1.5rem; }
-    .header h1 { font-size: 1.8rem; font-weight: 800; margin-bottom: 0.3rem; }
-    .header p { opacity: 0.9; font-size: 0.95rem; }
-    .total-box { background: linear-gradient(135deg, #d69e2e 0%, #b7791f 100%); color: white; padding: 1.5rem; border-radius: 16px; text-align: center; margin-bottom: 1.5rem; }
-    .total-box h2 { font-size: 1rem; opacity: 0.9; margin-bottom: 0.2rem; }
-    .total-amount { font-size: 2.5rem; font-weight: 800; }
-    .total-count { font-size: 0.9rem; opacity: 0.9; margin-top: 0.3rem; }
-    .chart-box { background: white; border-radius: 16px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
-    .chart-title { font-size: 1.1rem; font-weight: 600; color: #1a365d; margin-bottom: 1rem; text-align: center; }
-    .categories-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
-    @media print { body { background: white; padding: 0; } .container { max-width: 100%; } }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <h1>📊 ${reportTitle}</h1>
-      <p>תאריך: ${dateStr}</p>
-    </div>
-    
-    <div class="total-box">
-      <h2>סך כל ההוצאות</h2>
-      <div class="total-amount">${total.toLocaleString('he-IL', { maximumFractionDigits: 0 })} ₪</div>
-      <div class="total-count">${expenses.length} הוצאות</div>
-    </div>
-    
-    <div class="chart-box">
-      <div class="chart-title">📈 התפלגות הוצאות לפי קטגוריה</div>
-      ${barChartHTML}
-    </div>
-    
-    <div class="categories-grid">
-      ${categoriesHTML}
-    </div>
-  </div>
-</body>
-</html>`;
-
-      // Download the file
-      const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = 'דוח_הוצאות_' + dateStr.replace(/\./g, '-') + '.html';
-      link.click();
+    // בדיקה אם יש data ב-URL
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('data')) {
+      try {
+        reportData = JSON.parse(decodeURIComponent(urlParams.get('data')));
+        localStorage.setItem('expenseResults', JSON.stringify(reportData));
+      } catch (e) {
+        console.error('Error parsing URL data:', e);
+      }
     }
   </script>
 </body>
