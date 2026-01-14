@@ -21,19 +21,30 @@ module.exports = async (req, res) => {
   const systemMessage = `Israeli credit card analyzer. Return JSON: {"expenses":[{"description":"name","amount":123,"category":"cat"}]}
 
 CATEGORIES:
-מזון לבית, אוכל בחוץ ובילויים, תחביבים, תקשורת, ביטוח, בריאות, דלק וחניה, תחבצ, ביגוד והנעלה, פארם, תספורת וקוסמטיקה, מתנות, כבישי אגרה, חופשה וטיול, תיקוני רכב, בעלי חיים, ביט ללא מעקב, מזומן ללא מעקב, מיסים, דמי ניהול בניין, עמלות בנק ואשראי, שונות
+מזון לבית, אוכל בחוץ ובילויים, תחביבים, תקשורת, ביטוח, בריאות, דלק וחניה, תחבצ, ביגוד והנעלה, פארם, תספורת וקוסמטיקה, מתנות, כבישי אגרה, חופשה וטיול, תיקוני רכב, בעלי חיים, ביט ללא מעקב, מזומן ללא מעקב, מיסים, דמי ניהול בניין, עמלות בנק ואשראי, משכנתא, שכר דירה, ארנונה, חשמל, גז, מים וביוב, קופת חולים, חינוך וקייטנות, תרומות, החזר הלוואות, ריהוט והבית, שונות
 
-INSTALLMENT RULES (CRITICAL):
-- "amount" = the MONTHLY payment amount (NOT the total!)
-- If you see "תשלום X/Y" or "X מ-Y" = installment X of Y
-- Add: "installment_current": X, "installment_total": Y, "total_amount": full price
-- Example: "מכבידנט 1116 תשלום 11/12 סה"כ 13403" → amount: 1116, installment_current: 11, installment_total: 12, total_amount: 13403
+SPECIFIC RULES:
+Transport: Gett/גט=תחבצ (NOT דלק), פנגו/מוביט/רב קו=תחבצ
+Communication: NEXT TV/נקסט/HOT=תקשורת, Netflix/Spotify=תקשורת
+Bit: BIT/ביט/העברה בביט=ביט ללא מעקב
+Groceries: כוורת/Kovert/שופרסל/רמי לוי/ויקטורי/יוחננוף/am:pm=מזון לבית
+Food out: WOLT/ולט/מקדונלד/קפה/מסעדה/קייטרינג/bordo=אוכל בחוץ ובילויים
+Fees: דמי כרטיס/דמי ניהול/עמלת SMS/ריבית על מינוס=עמלות בנק ואשראי
+Building: מיי טאוור/My Tower/ועד בית=דמי ניהול בניין
+Utilities: חברת החשמל=חשמל, פאזגז=גז, מי גת/מים=מים וביוב
+Health: מכבי/כללית/מאוחדת/לאומית=קופת חולים, מכבידנט/דנטל/שיניים=בריאות
+Hobbies: כושר/gym/שייפ/גרייט שייפ=תחביבים
+Education: גן/קייטנה/חינוך=חינוך וקייטנות
+Fuel: דלק/סונול/פז/דור אלון/חניה=דלק וחניה
+Taxes: מס הכנסה/מעמ/נציבות/גביית מעמ=מיסים
+Donations: תרומה/הוראת קבע=תרומות
 
-OTHER RULES:
-- BIT/ביט = "ביט ללא מעקב"
-- מיי טאוור = "דמי ניהול בניין"
-- מס הכנסה/מע"מ = "מיסים"
-- IGNORE: מסגרת אשראי, יתרה, סה"כ לחיוב`;
+INSTALLMENT RULES:
+- amount=MONTHLY payment (NOT total)
+- תשלום X/Y→add installment_current:X, installment_total:Y, total_amount:full_price
+- Example: מכבידנט 1116 תשלום 11/12→amount:1116, installment_current:11, installment_total:12
+
+IGNORE: מסגרת אשראי, יתרה, סה"כ לחיוב, נקודות`;
 
   const userPrompt = `Credit card data. Categorize ALL transactions:\n${cleanText}`;
 
