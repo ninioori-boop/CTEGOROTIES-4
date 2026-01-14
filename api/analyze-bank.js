@@ -20,17 +20,29 @@ module.exports = async (req, res) => {
     .replace(/"/g, "'")
     .substring(0, 15000);
 
-  const systemMessage = `אתה מנתח דפי חשבון עו"ש ישראלי. החזר JSON בפורמט: {"expenses":[{"description":"שם","amount":123,"category":"קטגוריה"}]}
+  const systemMessage = `אתה מנתח דפי חשבון עו"ש ישראלי. החזר JSON: {"expenses":[{"description":"שם","amount":123,"category":"קטגוריה"}]}
 
-התעלם מ: תשלומי כרטיס אשראי (מקס, MAX, ישראכרט, כאל, לאומי קארד), קיזוז מטח, ריבית, עסקאות מט"ח, יתרות, סיכומים, השקעות (אלטשולר, מגדל, אקסלנס)
+⛔ התעלם לגמרי מ (אלה לא הוצאות!):
+- תשלומי כרטיס אשראי: מקס איט פיננסים, MAX, ישראכרט, כאל, לאומי קארד, דיינרס, אמריקן אקספרס
+- הכנסות: מכירה/, ריבית זכות, מופ"ת מילואים, ב"ל מילואים, משכורת, העברה לזכות
+- השקעות: קניה/אלטשולר, קניה/מגדל, קניה/אקסלנס, העברה/אקסלנס
+- המרות: קיזוז מטח, עמלות מט"ח
+- מיסים על רווחים: מס בגין ריבית, תנועת מס
+- שורות עם עמודת "זכות" (הכנסות, לא הוצאות!)
+- יתרות וסיכומים
 
-חלץ רק הוצאות אמיתיות כמו: חשבון חשמל, מים, גז, ארנונה, שכר דירה, משכנתא, קופות חולים, ביטוח לאומי, הוראות קבע, משיכות מזומן, העברות
+✅ חלץ רק הוצאות אמיתיות:
+- קופות חולים: מכבי, כללית, לאומית, מאוחדת
+- חשבונות בית: חברת חשמל, מים, גז, ארנונה
+- דיור: שכר דירה, משכנתא, ועד בית
+- ממשלתי: ביטוח לאומי
+- משיכות מזומן
 
-קטגוריות: שכר דירה, משכנתא, חשמל, גז, מים, ארנונה, ועד בית, קופת חולים, ביטוח לאומי, הלוואות, מזומן ללא מעקב, העברות, שונות
+קטגוריות: קופת חולים, חשמל, גז, מים, ארנונה, שכר דירה, משכנתא, ועד בית, ביטוח לאומי, הלוואות, מזומן ללא מעקב, שונות
 
-חשוב: אם אין הוצאות רלוונטיות, החזר {"expenses":[]}`;
+חשוב מאוד: אם אין הוצאות אמיתיות, החזר {"expenses":[]}`;
 
-  const userPrompt = `דף חשבון מבנק ${bankName || 'לא ידוע'}. חלץ את ההוצאות האמיתיות בלבד:\n${cleanText}`;
+  const userPrompt = `דף חשבון עו"ש מבנק ${bankName || 'לא ידוע'}. חלץ רק הוצאות אמיתיות (לא תשלומי אשראי, לא השקעות, לא הכנסות):\n${cleanText}`;
 
   try {
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -71,16 +83,46 @@ module.exports = async (req, res) => {
       const result = JSON.parse(cleanContent);
       if (!result.expenses) result.expenses = [];
       
-      // Filter out credit card payments and investments
+      // Comprehensive filter - remove anything that's not a real expense
+      const ignorePatterns = [
+        // Credit card payments
+        'מקס', 'max', 'ישראכרט', 'כאל', 'לאומי קארד', 'דיינרס', 'אמריקן',
+        // Investments
+        'אלטשולר', 'מגדל', 'אקסלנס', 'קניה/', 'מכירה/',
+        // Currency exchange
+        'קיזוז מטח', 'קיזוז', 'מט"ח',
+        // Income
+        'ריבית זכות', 'מילואים', 'משכורת', 'העברה לזכות',
+        // Tax on profits
+        'מס בגין ריבית', 'תנועת מס',
+        // Balance/summary
+        'יתרה', 'סה"כ', 'סיכום'
+      ];
+      
       result.expenses = result.expenses.filter(exp => {
         if (!exp.description || !exp.amount) return false;
         if (typeof exp.amount !== 'number' || exp.amount <= 0) return false;
+        
         const desc = (exp.description || '').toLowerCase();
-        const ignore = ['מקס', 'max', 'ישראכרט', 'כאל', 'אלטשולר', 'מגדל', 'אקסלנס', 'קיזוז', 'ריבית זכות', 'יתרה', 'קניה/', 'מכירה/', 'לאומי קארד'];
-        return !ignore.some(i => desc.includes(i));
+        
+        // Check against ignore patterns
+        for (const pattern of ignorePatterns) {
+          if (desc.includes(pattern.toLowerCase())) {
+            console.log('Filtered out:', exp.description);
+            return false;
+          }
+        }
+        
+        // Filter out suspiciously high amounts (likely investments)
+        if (exp.amount > 5000) {
+          console.log('Filtered high amount:', exp.description, exp.amount);
+          return false;
+        }
+        
+        return true;
       });
       
-      console.log('Returning', result.expenses.length, 'bank expenses');
+      console.log('Returning', result.expenses.length, 'bank expenses after filtering');
       return res.status(200).json(result);
     } catch (e) {
       console.error('JSON parse error:', e.message);
