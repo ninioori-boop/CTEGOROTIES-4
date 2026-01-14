@@ -451,6 +451,14 @@
 
     // ===== מאגר עסקים ישראלי MEGA - 1000+ עסקים =====
     const BUSINESS_DATABASE = {
+      // ========== עדיפות עליונה - חייב להיבדק ראשון! ==========
+      'נציבות מס הכנסה': 'מיסים', 'נציבות מס': 'מיסים', 'מס הכנסה ומיסים': 'מיסים',
+      'ביטוח לאומי ספק': 'ביטוח לאומי', 'ביטוח לאומי הוק': 'ביטוח לאומי', 
+      'ביטוח לאומי': 'ביטוח לאומי', 'בטל': 'ביטוח לאומי',
+      'דמי כרטיס': 'עמלות בנק ואשראי', 'עמלת כרטיס': 'עמלות בנק ואשראי',
+      'מ.תחבורה': 'תחבצ', 'פנגו מוביט': 'תחבצ', 'מ.תחבורה - פנגו': 'תחבצ',
+      'פרי טיוי': 'תקשורת', 'פרי טיוי פלוס': 'תקשורת',
+
       // ========== ביטוחים (30+) ==========
       'הראל': 'ביטוח', 'harel': 'ביטוח', 'הראל בריאות': 'ביטוח', 'הראל ביטוח': 'ביטוח',
       'הראל חיים': 'ביטוח', 'הראל (שלוח)': 'ביטוח', 'מגדל': 'ביטוח', 'migdal': 'ביטוח',
@@ -487,10 +495,10 @@
       'google bus': 'תקשורת', '012': 'תקשורת', '013': 'תקשורת', '014': 'תקשורת',
       'ידיעות אחרונות': 'תקשורת', 'הארץ': 'תקשורת', 'גלובס': 'תקשורת', 'כלכליסט': 'תקשורת',
 
-      // ========== ביט ומזומן ==========
-      'bit': 'ביט ללא מעקב', 'ביט': 'ביט ללא מעקב', 'העברה ב bit': 'ביט ללא מעקב',
-      'העברה בביט': 'ביט ללא מעקב', 'העברה ב-bit': 'ביט ללא מעקב',
-      'משיכת מזומן': 'מזומן ללא מעקב', 'משיכה': 'מזומן ללא מעקב',
+      // ========== ביט ומזומן (רק העברות!) ==========
+      'העברה ב bit': 'ביט ללא מעקב', 'העברה בביט': 'ביט ללא מעקב', 
+      'העברה ב-bit': 'ביט ללא מעקב', 'bit בנה"פ': 'ביט ללא מעקב',
+      'משיכת מזומן': 'מזומן ללא מעקב', 'משיכה בכספומט': 'מזומן ללא מעקב',
       'כספומט': 'מזומן ללא מעקב', 'atm': 'מזומן ללא מעקב',
 
       // ========== סופרמרקטים ומזון לבית (40+) ==========
@@ -834,7 +842,47 @@
       
       const desc = expense.description.toLowerCase();
       
-      // תיקון 1: חברות ביטוח ידועות
+      // === תיקון קריטי 0: ביטוח לאומי (חייב להיות ראשון!) ===
+      if (desc.includes('ביטוח לאומי')) {
+        if (expense.category !== 'ביטוח לאומי') {
+          console.log(`🔧 תיקון: "${expense.description}" מ-"${expense.category}" ל-"ביטוח לאומי"`);
+          expense.category = 'ביטוח לאומי';
+          expense.auto_corrected = true;
+        }
+        return expense; // יציאה מוקדמת - זה ביטוח לאומי ותו לא
+      }
+      
+      // === תיקון קריטי 1: מיסים ===
+      if (desc.includes('נציבות מס') || desc.includes('מס הכנסה') || desc.includes('גביית מעמ')) {
+        if (expense.category !== 'מיסים') {
+          console.log(`🔧 תיקון: "${expense.description}" מ-"${expense.category}" ל-"מיסים"`);
+          expense.category = 'מיסים';
+          expense.auto_corrected = true;
+        }
+        return expense;
+      }
+      
+      // === תיקון קריטי 2: עמלות כרטיס ===
+      if (desc.includes('דמי כרטיס') || desc.includes('עמלת כרטיס')) {
+        if (expense.category !== 'עמלות בנק ואשראי') {
+          console.log(`🔧 תיקון: "${expense.description}" מ-"${expense.category}" ל-"עמלות בנק ואשראי"`);
+          expense.category = 'עמלות בנק ואשראי';
+          expense.auto_corrected = true;
+        }
+        return expense;
+      }
+      
+      // === תיקון קריטי 3: תחבורה ציבורית ===
+      if (desc.includes('מ.תחבורה') || desc.includes('פנגו מוביט') || desc.includes('moovit')) {
+        if (expense.category !== 'תחבצ') {
+          console.log(`🔧 תיקון: "${expense.description}" מ-"${expense.category}" ל-"תחבצ"`);
+          expense.category = 'תחבצ';
+          expense.auto_corrected = true;
+        }
+        return expense;
+      }
+      
+      // תיקון 4: חברות ביטוח ידועות
       const insuranceCompanies = [
         'הראל', 'harel', 'מגדל', 'migdal', 'הפניקס', 'phoenix',
         'כלל', 'clal', 'מנורה', 'menora', 'איילון', 'ayalon'
@@ -851,7 +899,7 @@
         }
       }
       
-      // תיקון 2: שירותי בריאות
+      // תיקון 5: שירותי בריאות
       if ((desc.includes('מכבידנט') || desc.includes('דנטל') || desc.includes('שיניים')) 
           && expense.category !== 'בריאות') {
         console.log(`🔧 תיקון אוטומטי: "${expense.description}" מ-"${expense.category}" ל-"בריאות"`);
@@ -859,14 +907,14 @@
         expense.auto_corrected = true;
       }
       
-      // תיקון 3: גט = תחבורה
+      // תיקון 6: גט = תחבורה
       if ((desc.includes('gett') || desc.includes('גט')) && expense.category !== 'תחבצ') {
         console.log(`🔧 תיקון אוטומטי: "${expense.description}" מ-"${expense.category}" ל-"תחבצ"`);
         expense.category = 'תחבצ';
         expense.auto_corrected = true;
       }
       
-      // תיקון 4: זיהוי תשלומים שלא חולקו
+      // תיקון 8: זיהוי תשלומים שלא חולקו
       const installment = parseInstallment(expense.description, expense.amount);
       if (installment.isInstallment) {
         console.log(`🔧 חלוקה לתשלומים: "${expense.description}" → ${installment.monthly_amount}₪/חודש (${installment.installment_current}/${installment.installment_total})`);
