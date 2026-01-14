@@ -497,7 +497,7 @@
 
     <!-- Actions -->
     <div class="actions">
-      <button class="btn btn-primary" onclick="shareReport()">🔗 שתף ללקוח</button>
+      <button class="btn btn-primary" onclick="downloadReportForClient()" style="background:linear-gradient(135deg, #38a169 0%, #276749 100%);">📄 הורד דוח ללקוח</button>
       <button class="btn btn-primary" onclick="window.print()">🖨️ הדפס</button>
       <button class="btn btn-primary" onclick="exportToExcel()">📥 ייצא לאקסל</button>
       <button class="btn btn-secondary" onclick="window.location.href='index.html'">📤 דוח חדש</button>
@@ -909,6 +909,137 @@
         }
       }
       return null;
+    }
+
+    function downloadReportForClient() {
+      // Get current expenses
+      let expenses = [];
+      let reportTitle = 'דוח מיפוי הוצאות';
+      
+      if (isMultiCard) {
+        if (currentCard === 'all') {
+          Object.values(allData).forEach(card => {
+            expenses = expenses.concat(card.expenses || []);
+          });
+          reportTitle = 'דוח מיפוי הוצאות - סיכום כולל';
+        } else {
+          expenses = allData[currentCard]?.expenses || [];
+          reportTitle = 'דוח מיפוי הוצאות - ' + currentCard;
+        }
+      } else {
+        expenses = JSON.parse(localStorage.getItem('expenseResults') || '[]');
+      }
+
+      // Calculate total
+      const total = expenses.reduce((sum, e) => sum + e.amount, 0);
+      
+      // Group by category
+      const grouped = {};
+      expenses.forEach(expense => {
+        const cat = expense.category || 'שונות';
+        if (!grouped[cat]) grouped[cat] = { items: [], total: 0 };
+        grouped[cat].items.push(expense);
+        grouped[cat].total += expense.amount;
+      });
+      const sortedCategories = Object.entries(grouped).sort((a, b) => b[1].total - a[1].total);
+
+      // Generate bar chart HTML
+      const maxAmount = sortedCategories.length > 0 ? sortedCategories[0][1].total : 1;
+      const barChartHTML = sortedCategories.slice(0, 8).map(([category, data]) => {
+        const percentage = (data.total / maxAmount) * 100;
+        const icon = CATEGORY_ICONS[category] || '📦';
+        return `
+          <div style="display:flex;align-items:center;gap:0.8rem;margin-bottom:0.5rem;">
+            <div style="width:120px;font-size:0.85rem;text-align:left;">${icon} ${category}</div>
+            <div style="flex:1;height:20px;background:#f7fafc;border-radius:10px;overflow:hidden;">
+              <div style="height:100%;width:${percentage}%;background:linear-gradient(90deg,#3182ce,#2c5282);border-radius:10px;"></div>
+            </div>
+            <div style="width:70px;font-size:0.85rem;font-weight:600;text-align:left;">${data.total.toLocaleString('he-IL', { maximumFractionDigits: 0 })} ₪</div>
+          </div>
+        `;
+      }).join('');
+
+      // Generate categories HTML
+      const categoriesHTML = sortedCategories.map(([category, data]) => {
+        const icon = CATEGORY_ICONS[category] || '📦';
+        const itemsHTML = data.items.map(item => `
+          <div style="display:flex;justify-content:space-between;padding:0.4rem 0;border-bottom:1px dashed #e2e8f0;">
+            <span style="font-size:0.9rem;">${item.description}</span>
+            <span style="font-weight:600;color:#2c5282;">${item.amount.toLocaleString('he-IL', { maximumFractionDigits: 2 })} ₪</span>
+          </div>
+        `).join('');
+
+        return `
+          <div style="background:white;border-radius:12px;padding:1.2rem;box-shadow:0 2px 10px rgba(0,0,0,0.08);border-right:4px solid #3182ce;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.8rem;padding-bottom:0.8rem;border-bottom:2px solid #f7fafc;">
+              <div style="font-size:1.1rem;font-weight:600;color:#1a365d;">${icon} ${category}</div>
+              <div style="font-size:1.2rem;font-weight:700;color:#3182ce;">${data.total.toLocaleString('he-IL', { maximumFractionDigits: 0 })} ₪</div>
+            </div>
+            <div style="font-size:0.85rem;color:#718096;margin-bottom:0.5rem;">${data.items.length} פריטים</div>
+            <div style="max-height:150px;overflow-y:auto;">${itemsHTML}</div>
+          </div>
+        `;
+      }).join('');
+
+      const now = new Date();
+      const dateStr = now.toLocaleDateString('he-IL');
+
+      // Create standalone HTML
+      const htmlContent = `<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${reportTitle}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Heebo', sans-serif; background: linear-gradient(180deg, #f7fafc 0%, #edf2f7 100%); min-height: 100vh; color: #1a202c; line-height: 1.6; padding: 2rem; }
+    .container { max-width: 900px; margin: 0 auto; }
+    .header { background: linear-gradient(135deg, #1a365d 0%, #2c5282 100%); color: white; padding: 2rem; border-radius: 16px; text-align: center; margin-bottom: 1.5rem; }
+    .header h1 { font-size: 1.8rem; font-weight: 800; margin-bottom: 0.3rem; }
+    .header p { opacity: 0.9; font-size: 0.95rem; }
+    .total-box { background: linear-gradient(135deg, #d69e2e 0%, #b7791f 100%); color: white; padding: 1.5rem; border-radius: 16px; text-align: center; margin-bottom: 1.5rem; }
+    .total-box h2 { font-size: 1rem; opacity: 0.9; margin-bottom: 0.2rem; }
+    .total-amount { font-size: 2.5rem; font-weight: 800; }
+    .total-count { font-size: 0.9rem; opacity: 0.9; margin-top: 0.3rem; }
+    .chart-box { background: white; border-radius: 16px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
+    .chart-title { font-size: 1.1rem; font-weight: 600; color: #1a365d; margin-bottom: 1rem; text-align: center; }
+    .categories-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
+    @media print { body { background: white; padding: 0; } .container { max-width: 100%; } }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>📊 ${reportTitle}</h1>
+      <p>תאריך: ${dateStr}</p>
+    </div>
+    
+    <div class="total-box">
+      <h2>סך כל ההוצאות</h2>
+      <div class="total-amount">${total.toLocaleString('he-IL', { maximumFractionDigits: 0 })} ₪</div>
+      <div class="total-count">${expenses.length} הוצאות</div>
+    </div>
+    
+    <div class="chart-box">
+      <div class="chart-title">📈 התפלגות הוצאות לפי קטגוריה</div>
+      ${barChartHTML}
+    </div>
+    
+    <div class="categories-grid">
+      ${categoriesHTML}
+    </div>
+  </div>
+</body>
+</html>`;
+
+      // Download the file
+      const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'דוח_הוצאות_' + dateStr.replace(/\./g, '-') + '.html';
+      link.click();
     }
   </script>
 </body>
