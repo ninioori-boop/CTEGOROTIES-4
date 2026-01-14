@@ -379,13 +379,13 @@
       <div class="upload-section">
         <h3>💳 כרטיסי אשראי (Excel/CSV)</h3>
         <div class="upload-grid" id="creditCardsGrid">
-          <div class="upload-box" onclick="document.getElementById('cardInput1').click()">
+          <div class="upload-box" id="cardBox1" onclick="console.log('Click card 1'); document.getElementById('cardInput1').click();">
             <div class="icon" id="cardIcon1">📄</div>
             <h4 id="cardTitle1">כרטיס אשראי 1</h4>
             <p id="cardDesc1">לחץ לבחירת קובץ</p>
             <input type="file" id="cardInput1" accept=".xlsx,.xls,.csv" onchange="handleCardFile(1, this)">
           </div>
-          <div class="add-card-btn" onclick="addCardSlot()">
+          <div class="add-card-btn" onclick="console.log('Add card clicked'); addCardSlot();">
             <div class="icon">➕</div>
             <h4>הוסף כרטיס</h4>
           </div>
@@ -398,7 +398,7 @@
       <div class="upload-section">
         <h3>🏦 חשבון עו"ש (Excel/CSV)</h3>
         <div class="upload-grid">
-          <div class="upload-box" onclick="document.getElementById('bankInput').click()">
+          <div class="upload-box" id="bankBox" onclick="console.log('Click bank'); document.getElementById('bankInput').click();">
             <div class="icon" id="bankIcon">📄</div>
             <h4 id="bankTitle">דוח תנועות עו"ש</h4>
             <p id="bankDesc">לחץ לבחירת קובץ Excel/CSV</p>
@@ -421,6 +421,34 @@
   </div>
 
   <script>
+    // ===== בדיקת טעינת הדף והספריות =====
+    console.log('🔄 Script starting...');
+    
+    window.onerror = function(msg, url, lineNo, columnNo, error) {
+      console.error('❌ JavaScript Error:', msg, 'at line', lineNo);
+      alert('שגיאת JavaScript: ' + msg);
+      return false;
+    };
+    
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('📄 Page loaded successfully');
+      
+      // בדיקה שספריית XLSX נטענה
+      if (typeof XLSX === 'undefined') {
+        console.error('❌ XLSX library not loaded!');
+        document.getElementById('errorMessage').textContent = 'שגיאה: ספריית Excel לא נטענה. נסה לרענן את הדף (Ctrl+F5).';
+        document.getElementById('errorMessage').classList.add('active');
+      } else {
+        console.log('✅ XLSX library loaded successfully');
+      }
+      
+      // בדיקה שהאלמנטים קיימים
+      const cardInput = document.getElementById('cardInput1');
+      const bankInput = document.getElementById('bankInput');
+      console.log('📋 cardInput1 exists:', !!cardInput);
+      console.log('📋 bankInput exists:', !!bankInput);
+    });
+
     // ===== מאגר עסקים ישראלי MEGA - 500+ עסקים =====
     const BUSINESS_DATABASE = {
       // === ביטוח - כל החברות (40+) ===
@@ -772,29 +800,43 @@
 
     function addCardSlot() {
       cardCount++;
+      const currentCardNum = cardCount; // שמירת הערך הנוכחי למניעת בעיית closure
+      console.log(`➕ Adding card slot ${currentCardNum}`);
+      
       const grid = document.getElementById('creditCardsGrid');
       const addBtn = grid.querySelector('.add-card-btn');
       
       const newCard = document.createElement('div');
       newCard.className = 'upload-box';
-      newCard.id = `cardBox${cardCount}`;
-      newCard.onclick = function() { document.getElementById(`cardInput${cardCount}`).click(); };
+      newCard.id = `cardBox${currentCardNum}`;
+      newCard.onclick = function() { 
+        console.log(`🖱️ Click on card ${currentCardNum}`);
+        document.getElementById(`cardInput${currentCardNum}`).click(); 
+      };
       newCard.innerHTML = `
-        <div class="icon" id="cardIcon${cardCount}">📄</div>
-        <h4 id="cardTitle${cardCount}">כרטיס אשראי ${cardCount}</h4>
-        <p id="cardDesc${cardCount}">לחץ לבחירת קובץ</p>
-        <input type="file" id="cardInput${cardCount}" accept=".xlsx,.xls,.csv" onchange="handleCardFile(${cardCount}, this)">
+        <div class="icon" id="cardIcon${currentCardNum}">📄</div>
+        <h4 id="cardTitle${currentCardNum}">כרטיס אשראי ${currentCardNum}</h4>
+        <p id="cardDesc${currentCardNum}">לחץ לבחירת קובץ</p>
+        <input type="file" id="cardInput${currentCardNum}" accept=".xlsx,.xls,.csv" onchange="handleCardFile(${currentCardNum}, this)">
       `;
       
       grid.insertBefore(newCard, addBtn);
     }
 
     async function handleCardFile(cardNum, input) {
+      console.log(`📁 handleCardFile called for card ${cardNum}`);
       const file = input.files[0];
-      if (!file) return;
+      if (!file) {
+        console.log('❌ No file selected');
+        return;
+      }
+
+      console.log(`📄 File selected: ${file.name}, size: ${file.size} bytes`);
       
       try {
         const data = await readExcelFile(file);
+        console.log(`✅ File read successfully: ${data.length} rows`);
+        
         cardFiles[cardNum] = {
           name: file.name,
           data: data
@@ -805,28 +847,40 @@
         document.getElementById(`cardDesc${cardNum}`).textContent = `${data.length} שורות`;
         document.getElementById(`cardBox${cardNum}`).classList.add('has-file');
         
+        showSuccess(`✅ קובץ "${file.name}" נטען בהצלחה - ${data.length} שורות`);
         checkReadyToAnalyze();
       } catch (error) {
+        console.error('❌ Error reading file:', error);
         showError('שגיאה בקריאת הקובץ: ' + error.message);
       }
     }
 
     async function handleBankFile(input) {
+      console.log('📁 handleBankFile called');
       const file = input.files[0];
-      if (!file) return;
+      if (!file) {
+        console.log('❌ No bank file selected');
+        return;
+      }
+      
+      console.log(`📄 Bank file selected: ${file.name}, size: ${file.size} bytes`);
       
       try {
         const data = await readExcelFile(file);
+        console.log(`✅ Bank file read successfully: ${data.length} rows`);
+        
         bankFile = file;
         bankData = data;
         
         document.getElementById('bankIcon').textContent = '✅';
         document.getElementById('bankTitle').textContent = file.name.substring(0, 20);
         document.getElementById('bankDesc').textContent = `${data.length} שורות`;
-        document.querySelector('.upload-section:nth-child(3) .upload-box').classList.add('has-file');
+        document.getElementById('bankBox').classList.add('has-file');
         
+        showSuccess(`✅ קובץ עו"ש "${file.name}" נטען בהצלחה - ${data.length} שורות`);
         checkReadyToAnalyze();
       } catch (error) {
+        console.error('❌ Error reading bank file:', error);
         showError('שגיאה בקריאת הקובץ: ' + error.message);
       }
     }
@@ -924,7 +978,7 @@
           const response = await fetch('/api/analyze', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ text: text.substring(0, 20000) }) // הגבלה ל-20K תווים
+            body: JSON.stringify({ text: text.substring(0, 20000) })
           });
 
           if (!response.ok) {
