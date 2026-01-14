@@ -840,6 +840,57 @@
       return formatted;
     }
 
+    // Special function for bank data - filters out non-expenses BEFORE sending to AI
+    function formatBankDataForAI(data) {
+      const headers = data[0] || [];
+      let formatted = 'כותרות: ' + headers.join(' | ') + '\n\nעסקאות (רק הוצאות):\n';
+      
+      // Patterns to EXCLUDE (not real expenses)
+      const excludePatterns = [
+        // Credit card payments
+        'מקס איט', 'max', 'ישראכרט', 'ישראל כרט', 'כאל', 'לאומי קארד', 'דיינרס',
+        // Investments - buying/selling
+        'מכירה/', 'קניה/', 'אלטשולר', 'מגדל', 'אקסלנס',
+        // Currency exchange
+        'קיזוז מטח', 'קיזוז',
+        // Income
+        'ריבית זכות', 'מילואים', 'משכורת',
+        // Tax on profits
+        'מס בגין ריבית', 'תנועת מס',
+        // Other non-expenses
+        'יתרה', 'סה"כ', 'העברה/אקסלנס'
+      ];
+      
+      let includedCount = 0;
+      let excludedCount = 0;
+      
+      for (let i = 1; i < data.length; i++) {
+        const row = data[i];
+        if (!row || row.length === 0) continue;
+        
+        const rowText = row.join(' ').toLowerCase();
+        
+        // Check if this row should be excluded
+        let shouldExclude = false;
+        for (const pattern of excludePatterns) {
+          if (rowText.includes(pattern.toLowerCase())) {
+            shouldExclude = true;
+            excludedCount++;
+            break;
+          }
+        }
+        
+        // Only include if it's not excluded and has actual content
+        if (!shouldExclude && row.some(cell => cell !== null && cell !== '')) {
+          formatted += row.join(' | ') + '\n';
+          includedCount++;
+        }
+      }
+      
+      console.log('Bank pre-filter: included', includedCount, 'rows, excluded', excludedCount, 'rows');
+      return formatted;
+    }
+
     async function analyzeAllCards() {
       hideError();
       
@@ -899,10 +950,11 @@
         if (hasBankData) {
           updateLoading('מנתח עו"ש ' + bankData.name + '...', 'ניתוח חשבון בנק');
           
-          const textData = formatDataForAI(bankData.data);
+          // Use special bank formatter with pre-filtering
+          const textData = formatBankDataForAI(bankData.data);
           console.log('=== BANK ANALYSIS ===');
           console.log('Bank name:', bankData.name);
-          console.log('Sending bank data, length:', textData.length);
+          console.log('Sending FILTERED bank data, length:', textData.length);
           console.log('First 500 chars:', textData.substring(0, 500));
           
           const response = await fetch('/api/analyze-bank', {
