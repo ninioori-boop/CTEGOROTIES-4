@@ -556,7 +556,7 @@
 
       reportData = JSON.parse(data);
       console.log('Report Data:', reportData);
-      
+
       // תאריך
       const now = new Date();
       document.getElementById('reportDate').textContent = 
@@ -740,10 +740,10 @@
         const itemsHTML = data.items.map(item => {
           const note = item.display_note ? `<span class="expense-note">(${item.display_note})</span>` : '';
           return `
-            <div class="expense-item">
+          <div class="expense-item">
               <span class="expense-name">${item.description}${note}</span>
-              <span class="expense-amount">${item.amount.toLocaleString('he-IL', { maximumFractionDigits: 2 })} ₪</span>
-            </div>
+            <span class="expense-amount">${item.amount.toLocaleString('he-IL', { maximumFractionDigits: 2 })} ₪</span>
+          </div>
           `;
         }).join('');
 
