@@ -1491,16 +1491,33 @@
       };
       
       headerRow.forEach((cell, index) => {
-        const cellText = String(cell || '').trim().toLowerCase();
-        if (cellText.includes('שם בית עסק') || cellText.includes('שם בית העסק')) columns.description = index;
-        if (cellText.includes('סכום עסקה')) columns.transactionAmount = index;
-        if (cellText.includes('סכום חיוב')) columns.chargeAmount = index;
-        if (cellText.includes('סוג עסקה')) columns.transactionType = index;
-        if (cellText.includes('הערות')) columns.notes = index;
-        if (cellText.includes('ענף')) columns.category = index;
+        const cellText = String(cell || '').trim();
+        
+        // שם בית עסק - וריאציות שונות
+        if (cellText.includes('שם בית עסק') || cellText.includes('שם בית העסק') || 
+            cellText.includes('בית עסק') || cellText.includes('תיאור') || cellText.includes('פרטים')) {
+          if (columns.description === -1) columns.description = index;
+        }
+        
+        // סכום חיוב (חודשי) - עדיפות ראשונה
+        if (cellText.includes('סכום חיוב') || cellText.includes('חיוב')) {
+          columns.chargeAmount = index;
+        }
+        // סכום עסקה (כולל) - עדיפות שניה
+        else if (cellText.includes('סכום עסקה')) {
+          columns.transactionAmount = index;
+        }
+        // סכום גנרי - אם לא נמצא סכום ספציפי
+        else if (cellText.includes('סכום') && columns.chargeAmount === -1 && columns.transactionAmount === -1) {
+          columns.chargeAmount = index;
+        }
+        
+        if (cellText.includes('סוג עסקה') || cellText.includes('סוג')) columns.transactionType = index;
+        if (cellText.includes('הערות') || cellText.includes('הערה')) columns.notes = index;
+        if (cellText.includes('ענף') || cellText.includes('קטגוריה')) columns.category = index;
       });
       
-      console.log('🔍 Detected columns:', columns);
+      console.log('🔍 Detected columns:', columns, 'from header:', headerRow);
       return columns;
     }
 
@@ -1568,6 +1585,12 @@
       // אם לא מצאנו כותרות - חזור לפונקציה הישנה
       if (!columns || columns.description === -1) {
         console.log('⚠️ Could not detect columns, using old formatter');
+        return oldFormatDataForAI(data, cardName);
+      }
+      
+      // אם לא מצאנו עמודת סכום - חזור לפונקציה הישנה
+      if (columns.chargeAmount === -1 && columns.transactionAmount === -1) {
+        console.log('⚠️ No amount column found, using old formatter');
         return oldFormatDataForAI(data, cardName);
       }
       
