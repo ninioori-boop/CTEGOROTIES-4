@@ -701,6 +701,8 @@
       'גנטלמן': 'מתנות', 'soho': 'מתנות', 'gadget shop': 'מתנות', 'gift': 'מתנות',
 
       // ========== ביגוד והנעלה (30+) ==========
+      'אינטימה און ליין': 'ביגוד והנעלה', 'אינטימה': 'ביגוד והנעלה', 'intima': 'ביגוד והנעלה',
+      'או מיי בוקס': 'ביגוד והנעלה', 'oh my box': 'ביגוד והנעלה',
       'בלוברי': 'ביגוד והנעלה', 'bluberi': 'ביגוד והנעלה', 'בלוברי טי אל וי': 'ביגוד והנעלה',
       'איניטה': 'ביגוד והנעלה',
       'קסטרו': 'ביגוד והנעלה', 'castro': 'ביגוד והנעלה', 'פוקס': 'ביגוד והנעלה',
@@ -904,6 +906,13 @@
       if (!expense || !expense.description) return expense;
       
       const desc = expense.description.toLowerCase();
+      
+      // === זיהוי החזרים כספיים (סכומים שליליים) ===
+      if (expense.amount < 0) {
+        expense.isRefund = true;
+        expense.refund_note = 'החזר כספי';
+        console.log(`💰 החזר כספי זוהה: "${expense.description}" - ${expense.amount}₪`);
+      }
       
       // === תיקון קטגוריית "אופנה" ל"ביגוד והנעלה" ===
       if (expense.category === 'אופנה' || expense.category === 'fashion') {

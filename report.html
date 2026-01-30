@@ -290,6 +290,19 @@
       white-space: nowrap;
     }
 
+    .expense-amount.refund {
+      color: var(--green);
+    }
+
+    .refund-badge {
+      background: #c6f6d5;
+      color: #276749;
+      font-size: 0.7rem;
+      padding: 0.15rem 0.4rem;
+      border-radius: 10px;
+      margin-right: 0.5rem;
+    }
+
     /* Chart Section */
     .chart-section {
       background: var(--white);
@@ -739,10 +752,12 @@
         const icon = CATEGORY_ICONS[category] || '📦';
         const itemsHTML = data.items.map(item => {
           const note = item.display_note ? `<span class="expense-note">(${item.display_note})</span>` : '';
+          const refundBadge = item.isRefund ? `<span class="refund-badge">החזר</span>` : '';
+          const refundClass = item.isRefund ? ' refund' : '';
           return `
           <div class="expense-item">
-              <span class="expense-name">${item.description}${note}</span>
-            <span class="expense-amount">${item.amount.toLocaleString('he-IL', { maximumFractionDigits: 2 })} ₪</span>
+              <span class="expense-name">${refundBadge}${item.description}${note}</span>
+            <span class="expense-amount${refundClass}">${item.amount.toLocaleString('he-IL', { maximumFractionDigits: 2 })} ₪</span>
           </div>
           `;
         }).join('');
@@ -838,6 +853,8 @@
     .category-total { font-weight: 700; color: #3182ce; }
     .expense { display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px dashed #e2e8f0; }
     .expense:last-child { border-bottom: none; }
+    .refund { color: #38a169; }
+    .refund-badge { background: #c6f6d5; color: #276749; font-size: 0.7rem; padding: 0.1rem 0.3rem; border-radius: 8px; margin-left: 0.3rem; }
   </style>
 </head>
 <body>
@@ -874,9 +891,11 @@
       return Object.entries(grouped)
         .sort((a, b) => b[1].total - a[1].total)
         .map(([category, data]) => {
-          const itemsHTML = data.items.map(item => 
-            `<div class="expense"><span>${item.description}</span><span>${item.amount.toLocaleString('he-IL', { maximumFractionDigits: 2 })} ₪</span></div>`
-          ).join('');
+          const itemsHTML = data.items.map(item => {
+            const refundBadge = item.isRefund ? `<span class="refund-badge">החזר</span>` : '';
+            const refundClass = item.isRefund ? ' class="refund"' : '';
+            return `<div class="expense"><span>${refundBadge}${item.description}</span><span${refundClass}>${item.amount.toLocaleString('he-IL', { maximumFractionDigits: 2 })} ₪</span></div>`;
+          }).join('');
           
           return `
             <div class="category">
