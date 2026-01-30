@@ -754,10 +754,11 @@
           const note = item.display_note ? `<span class="expense-note">(${item.display_note})</span>` : '';
           const refundBadge = item.isRefund ? `<span class="refund-badge">החזר</span>` : '';
           const refundClass = item.isRefund ? ' refund' : '';
+          const installmentMarker = item.installment_info ? '*' : '';
           return `
           <div class="expense-item">
               <span class="expense-name">${refundBadge}${item.description}${note}</span>
-            <span class="expense-amount${refundClass}">${item.amount.toLocaleString('he-IL', { maximumFractionDigits: 2 })} ₪</span>
+            <span class="expense-amount${refundClass}">${item.amount.toLocaleString('he-IL', { maximumFractionDigits: 2 })}${installmentMarker} ₪</span>
           </div>
           `;
         }).join('');
@@ -894,7 +895,9 @@
           const itemsHTML = data.items.map(item => {
             const refundBadge = item.isRefund ? `<span class="refund-badge">החזר</span>` : '';
             const refundClass = item.isRefund ? ' class="refund"' : '';
-            return `<div class="expense"><span>${refundBadge}${item.description}</span><span${refundClass}>${item.amount.toLocaleString('he-IL', { maximumFractionDigits: 2 })} ₪</span></div>`;
+            const installmentMarker = item.installment_info ? '*' : '';
+            const noteText = item.display_note ? ` (${item.display_note})` : '';
+            return `<div class="expense"><span>${refundBadge}${item.description}${noteText}</span><span${refundClass}>${item.amount.toLocaleString('he-IL', { maximumFractionDigits: 2 })}${installmentMarker} ₪</span></div>`;
           }).join('');
           
           return `
