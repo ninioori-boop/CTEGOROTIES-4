@@ -848,16 +848,14 @@
       if (!description) return null;
       const lowerDesc = description.toLowerCase().trim();
       
-      // #region agent log - בדיקת מילות מפתח ספציפיות
-      const testKeywords = ['באביס', 'בלוברי', 'ליבי', 'כרטיס נטען', 'בול אשדוד', 'עיריית אשדוד'];
-      for (const tk of testKeywords) {
-        if (lowerDesc.includes(tk)) {
-          console.log(`🔍 DEBUG MATCH TEST: "${description}" contains "${tk}" → expected: ${BUSINESS_DATABASE[tk]}`);
-        }
-      }
+      // #region agent log
+      console.log(`🔍 categorizeByDatabase checking: "${description}"`);
       // #endregion
       
-      for (const [keyword, category] of Object.entries(BUSINESS_DATABASE)) {
+      // מיון לפי אורך - מילים ארוכות קודם! (כדי ש"בלוברי" יתאים לפני "בר")
+      const sortedEntries = Object.entries(BUSINESS_DATABASE).sort((a, b) => b[0].length - a[0].length);
+      
+      for (const [keyword, category] of sortedEntries) {
         if (lowerDesc.includes(keyword.toLowerCase())) {
           console.log(`✅ מאגר: "${description}" → ${category} (מילה: "${keyword}")`);
           return category;
