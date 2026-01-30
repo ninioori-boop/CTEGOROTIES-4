@@ -525,6 +525,7 @@
       'זול סטוק': 'מזון לבית',
 
       // ========== פארם ובתי מרקחת (20+) ==========
+      'igreen': 'פארם', 'סופרפארם': 'פארם',
       'סופר-פארם': 'פארם', 'super-pharm': 'פארם', 'סופר פארם': 'פארם',
       'be ': 'פארם',
       'be פארם': 'פארם', 'גוד פארם': 'פארם', 'good pharm': 'פארם',
@@ -885,6 +886,13 @@
       if (!expense || !expense.description) return expense;
       
       const desc = expense.description.toLowerCase();
+      
+      // === תיקון קטגוריית "אופנה" ל"ביגוד והנעלה" ===
+      if (expense.category === 'אופנה' || expense.category === 'fashion') {
+        console.log(`🔄 Auto-correct: "${expense.description}" אופנה → ביגוד והנעלה`);
+        expense.category = 'ביגוד והנעלה';
+        expense.auto_corrected = true;
+      }
       
       // === תיקון קריטי 0: ביטוח לאומי (חייב להיות ראשון!) ===
       if (desc.includes('ביטוח לאומי')) {
