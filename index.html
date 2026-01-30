@@ -1479,8 +1479,59 @@
       document.getElementById('analyzeBtn').disabled = !(hasCards || hasBank);
     }
 
-    function formatDataForAI(data, cardName) {
-      // המרת מערך לטקסט לניתוח
+    // === פרסור חכם של אקסל - זיהוי עמודות ===
+    function detectColumns(headerRow) {
+      const columns = {
+        description: -1,       // שם בית עסק
+        transactionAmount: -1, // סכום עסקה (סה"כ - לא להשתמש!)
+        chargeAmount: -1,      // סכום חיוב (חודשי - להשתמש בזה!)
+        transactionType: -1,   // סוג עסקה
+        notes: -1,             // הערות
+        category: -1           // ענף
+      };
+      
+      headerRow.forEach((cell, index) => {
+        const cellText = String(cell || '').trim().toLowerCase();
+        if (cellText.includes('שם בית עסק') || cellText.includes('שם בית העסק')) columns.description = index;
+        if (cellText.includes('סכום עסקה')) columns.transactionAmount = index;
+        if (cellText.includes('סכום חיוב')) columns.chargeAmount = index;
+        if (cellText.includes('סוג עסקה')) columns.transactionType = index;
+        if (cellText.includes('הערות')) columns.notes = index;
+        if (cellText.includes('ענף')) columns.category = index;
+      });
+      
+      console.log('🔍 Detected columns:', columns);
+      return columns;
+    }
+
+    // === חילוץ מידע על תשלומים מעמודת הערות ===
+    function extractInstallmentInfoFromNotes(notes) {
+      if (!notes) return null;
+      const notesStr = String(notes);
+      
+      // Match "תשלום X מתוך Y" pattern
+      const match = notesStr.match(/תשלום\s*(\d+)\s*מתוך\s*(\d+)/);
+      if (match) {
+        return {
+          current: parseInt(match[1]),
+          total: parseInt(match[2])
+        };
+      }
+      
+      // Match "הסכום יחולק ל-X תשלומים"
+      const splitMatch = notesStr.match(/יחולק\s*ל[־-]?\s*(\d+)\s*תשלומים/);
+      if (splitMatch) {
+        return {
+          current: 1,
+          total: parseInt(splitMatch[1])
+        };
+      }
+      
+      return null;
+    }
+
+    // === פונקציה ישנה לגיבוי ===
+    function oldFormatDataForAI(data, cardName) {
       let text = `דוח הוצאות - ${cardName}\n`;
       text += '='.repeat(50) + '\n';
       
@@ -1493,6 +1544,82 @@
         }
       }
       
+      return text;
+    }
+
+    // === פרסור חכם - לוקח סכום חיוב ולא סכום עסקה ===
+    function formatDataForAI(data, cardName) {
+      console.log('🔄 Smart formatDataForAI called for:', cardName);
+      
+      // מצא את שורת הכותרות
+      let headerRowIndex = -1;
+      let columns = null;
+      
+      for (let i = 0; i < Math.min(10, data.length); i++) {
+        const row = data[i];
+        if (row && row.some(cell => String(cell || '').includes('שם בית עסק'))) {
+          headerRowIndex = i;
+          columns = detectColumns(row);
+          console.log(`📋 Header found at row ${i}`);
+          break;
+        }
+      }
+      
+      // אם לא מצאנו כותרות - חזור לפונקציה הישנה
+      if (!columns || columns.description === -1) {
+        console.log('⚠️ Could not detect columns, using old formatter');
+        return oldFormatDataForAI(data, cardName);
+      }
+      
+      let text = `דוח הוצאות - ${cardName}\n`;
+      text += '='.repeat(50) + '\n';
+      text += 'הסכומים הם חודשיים (לא סה"כ העסקה)\n';
+      text += '='.repeat(50) + '\n';
+      
+      let processedCount = 0;
+      let skippedCount = 0;
+      
+      for (let i = headerRowIndex + 1; i < data.length; i++) {
+        const row = data[i];
+        if (!row || row.length === 0) continue;
+        
+        const description = row[columns.description];
+        const transactionType = columns.transactionType !== -1 ? row[columns.transactionType] : '';
+        const notes = columns.notes !== -1 ? row[columns.notes] : '';
+        
+        // דלג על שורות "רכישה בתשלומים" - התשלומים הבודדים נספרים בנפרד
+        if (transactionType && String(transactionType).includes('רכישה בתשלומים')) {
+          console.log(`⏭️ Skipping installment purchase row: ${description}`);
+          skippedCount++;
+          continue;
+        }
+        
+        // השתמש בסכום חיוב (חודשי), לא בסכום עסקה (כולל)
+        let amount = null;
+        if (columns.chargeAmount !== -1 && row[columns.chargeAmount] !== undefined && row[columns.chargeAmount] !== null && row[columns.chargeAmount] !== '') {
+          amount = row[columns.chargeAmount];
+        } else if (columns.transactionAmount !== -1) {
+          amount = row[columns.transactionAmount];
+        }
+        
+        if (!description || amount === null || amount === undefined) continue;
+        
+        // חלץ מידע על תשלומים
+        const installment = extractInstallmentInfoFromNotes(notes);
+        let installmentNote = '';
+        if (installment) {
+          installmentNote = ` (תשלום ${installment.current}/${installment.total})`;
+        }
+        
+        // הוסף את הענף אם קיים
+        const category = columns.category !== -1 ? row[columns.category] : '';
+        const categoryNote = category ? ` [${category}]` : '';
+        
+        text += `${description} | ${amount}${installmentNote}${categoryNote}\n`;
+        processedCount++;
+      }
+      
+      console.log(`✅ Processed ${processedCount} rows, skipped ${skippedCount} installment purchase rows`);
       return text;
     }
 
