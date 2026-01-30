@@ -1643,6 +1643,13 @@
       }
       
       console.log(`✅ Processed ${processedCount} rows, skipped ${skippedCount} installment purchase rows`);
+      
+      // אם לא עובדו שורות - חזור לפונקציה הישנה
+      if (processedCount === 0) {
+        console.log('⚠️ No rows processed by smart parser, falling back to old formatter');
+        return oldFormatDataForAI(data, cardName);
+      }
+      
       return text;
     }
 
