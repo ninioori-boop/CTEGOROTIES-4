@@ -845,25 +845,26 @@
 
     // פונקציה לקטלוג מהמאגר
     function categorizeByDatabase(description) {
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/ef5def03-32a1-4f73-a362-288fa396ae83',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.html:categorizeByDatabase',message:'ENTRY',data:{description:description},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'B'})}).catch(()=>{});
-      // #endregion
       if (!description) return null;
       const lowerDesc = description.toLowerCase().trim();
       
+      // #region agent log - בדיקת מילות מפתח ספציפיות
+      const testKeywords = ['באביס', 'בלוברי', 'ליבי', 'כרטיס נטען', 'בול אשדוד', 'עיריית אשדוד'];
+      for (const tk of testKeywords) {
+        if (lowerDesc.includes(tk)) {
+          console.log(`🔍 DEBUG MATCH TEST: "${description}" contains "${tk}" → expected: ${BUSINESS_DATABASE[tk]}`);
+        }
+      }
+      // #endregion
+      
       for (const [keyword, category] of Object.entries(BUSINESS_DATABASE)) {
         if (lowerDesc.includes(keyword.toLowerCase())) {
-          // #region agent log
-          fetch('http://127.0.0.1:7242/ingest/ef5def03-32a1-4f73-a362-288fa396ae83',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.html:categorizeByDatabase',message:'MATCH_FOUND',data:{description:description,keyword:keyword,category:category},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'C'})}).catch(()=>{});
-          // #endregion
           console.log(`✅ מאגר: "${description}" → ${category} (מילה: "${keyword}")`);
           return category;
         }
       }
       
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/ef5def03-32a1-4f73-a362-288fa396ae83',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.html:categorizeByDatabase',message:'NO_MATCH',data:{description:description,lowerDesc:lowerDesc},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'C'})}).catch(()=>{});
-      // #endregion
+      console.log(`❌ NO MATCH in DB: "${description}"`);
       return null;
     }
 
@@ -1272,22 +1273,26 @@
     // עיבוד אחרי AI
     function postProcessCategories(expenses) {
       // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/ef5def03-32a1-4f73-a362-288fa396ae83',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.html:postProcessCategories',message:'ENTRY',data:{expenseCount:expenses.length,firstFive:expenses.slice(0,5).map(e=>({desc:e.description,cat:e.category}))},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A'})}).catch(()=>{});
+      console.log(`🔄 postProcessCategories called with ${expenses.length} expenses`);
       // #endregion
-      return expenses.map(exp => {
+      return expenses.map((exp, index) => {
         const originalCategory = exp.category;
         // קודם נסה מהמאגר
         const dbCategory = categorizeByDatabase(exp.description);
         if (dbCategory && dbCategory !== exp.category) {
           console.log(`🔧 תיקון ממאגר: "${exp.description}" מ-"${exp.category}" ל-"${dbCategory}"`);
           exp.category = dbCategory;
+        } else if (dbCategory === null) {
+          // #region agent log
+          console.log(`⚠️ No DB match for: "${exp.description}" - keeping AI category: "${exp.category}"`);
+          // #endregion
         }
         
         // אחר כך תיקון אוטומטי ווולידציה
         const result = autoCorrectAndValidate(exp);
         // #region agent log
         if (result.category !== originalCategory) {
-          fetch('http://127.0.0.1:7242/ingest/ef5def03-32a1-4f73-a362-288fa396ae83',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.html:postProcessCategories',message:'CATEGORY_CHANGED',data:{desc:result.description,from:originalCategory,to:result.category},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'D'})}).catch(()=>{});
+          console.log(`🔀 Category changed: "${result.description}" from "${originalCategory}" to "${result.category}"`);
         }
         // #endregion
         return result;
