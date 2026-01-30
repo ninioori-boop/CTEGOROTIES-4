@@ -907,11 +907,23 @@
       
       const desc = expense.description.toLowerCase();
       
-      // === זיהוי החזרים כספיים (סכומים שליליים) ===
+      // === זיהוי החזרים כספיים (סכומים שליליים או מילות מפתח) ===
       if (expense.amount < 0) {
         expense.isRefund = true;
         expense.refund_note = 'החזר כספי';
-        console.log(`💰 החזר כספי זוהה: "${expense.description}" - ${expense.amount}₪`);
+        console.log(`💰 החזר כספי זוהה (סכום שלילי): "${expense.description}" - ${expense.amount}₪`);
+      }
+      
+      // זיהוי החזרים לפי מילות מפתח בתיאור
+      const refundKeywords = ['ביטול עסקה', 'ביטול', 'החזר', 'זיכוי', 'refund', 'cancel'];
+      if (refundKeywords.some(keyword => desc.includes(keyword.toLowerCase()))) {
+        expense.isRefund = true;
+        expense.refund_note = 'החזר כספי';
+        // הפוך את הסכום לשלילי אם הוא חיובי
+        if (expense.amount > 0) {
+          expense.amount = -Math.abs(expense.amount);
+        }
+        console.log(`💰 החזר כספי זוהה (מילת מפתח): "${expense.description}" - ${expense.amount}₪`);
       }
       
       // === תיקון קטגוריית "אופנה" ל"ביגוד והנעלה" ===
