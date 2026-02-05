@@ -1496,32 +1496,56 @@
         category: -1           // ענף
       };
       
+      // מעבר ראשון - זיהוי כל העמודות
       headerRow.forEach((cell, index) => {
-        const cellText = String(cell || '').trim();
+        const cellText = String(cell || '').trim().toLowerCase();
+        const originalText = String(cell || '').trim();
         
         // שם בית עסק - וריאציות שונות
-        if (cellText.includes('שם בית עסק') || cellText.includes('שם בית העסק') || 
-            cellText.includes('בית עסק') || cellText.includes('תיאור') || cellText.includes('פרטים')) {
+        if (originalText.includes('שם בית עסק') || originalText.includes('שם בית העסק') || 
+            originalText.includes('בית עסק') || originalText.includes('תיאור') || 
+            originalText.includes('פרטים') || originalText.includes('שם העסק')) {
           if (columns.description === -1) columns.description = index;
         }
         
-        // סכום חיוב (חודשי) - עדיפות ראשונה
-        if (cellText.includes('סכום חיוב') || cellText.includes('חיוב')) {
+        // סכום חיוב (חודשי) - עדיפות ראשונה - וריאציות רבות
+        if (originalText.includes('סכום חיוב') || 
+            originalText.includes('סה"כ לחיוב') || 
+            originalText.includes('סהכ לחיוב') ||
+            originalText.includes('לחיוב בש') ||
+            originalText.includes('סכום בש"ח') ||
+            originalText.includes('סכום בשח') ||
+            (originalText.includes('חיוב') && !originalText.includes('תאריך') && !originalText.includes('מועד'))) {
           columns.chargeAmount = index;
         }
         // סכום עסקה (כולל) - עדיפות שניה
-        else if (cellText.includes('סכום עסקה')) {
+        else if (originalText.includes('סכום עסקה') || originalText.includes('סכום העסקה')) {
           columns.transactionAmount = index;
         }
-        // סכום גנרי - אם לא נמצא סכום ספציפי
-        else if (cellText.includes('סכום') && columns.chargeAmount === -1 && columns.transactionAmount === -1) {
-          columns.chargeAmount = index;
-        }
         
-        if (cellText.includes('סוג עסקה') || cellText.includes('סוג')) columns.transactionType = index;
-        if (cellText.includes('הערות') || cellText.includes('הערה')) columns.notes = index;
-        if (cellText.includes('ענף') || cellText.includes('קטגוריה')) columns.category = index;
+        if (originalText.includes('סוג עסקה') || (originalText.includes('סוג') && !originalText.includes('מטבע'))) {
+          columns.transactionType = index;
+        }
+        if (originalText.includes('הערות') || originalText.includes('הערה') || originalText.includes('פירוט')) {
+          columns.notes = index;
+        }
+        if (originalText.includes('ענף') || originalText.includes('קטגוריה')) {
+          columns.category = index;
+        }
       });
+      
+      // מעבר שני - אם לא מצאנו סכום חיוב, נחפש סכום גנרי
+      if (columns.chargeAmount === -1 && columns.transactionAmount === -1) {
+        headerRow.forEach((cell, index) => {
+          const originalText = String(cell || '').trim();
+          // סכום גנרי - רק אם לא מצאנו שום סכום קודם
+          if ((originalText.includes('סכום') || originalText.includes('₪') || originalText.includes('ש"ח')) && 
+              columns.chargeAmount === -1 && 
+              !originalText.includes('תאריך') && !originalText.includes('מועד')) {
+            columns.chargeAmount = index;
+          }
+        });
+      }
       
       console.log('🔍 Detected columns:', columns, 'from header:', headerRow);
       return columns;
@@ -1579,17 +1603,24 @@
     // === פרסור חכם - לוקח סכום חיוב ולא סכום עסקה ===
     function formatDataForAI(data, cardName) {
       console.log('🔄 Smart formatDataForAI called for:', cardName);
+      console.log('📊 Data preview (first 5 rows):', data.slice(0, 5));
       
-      // מצא את שורת הכותרות
+      // מצא את שורת הכותרות - חיפוש מורחב
       let headerRowIndex = -1;
       let columns = null;
       
-      for (let i = 0; i < Math.min(10, data.length); i++) {
+      // מילות מפתח לזיהוי שורת כותרות
+      const headerKeywords = ['שם בית עסק', 'שם בית העסק', 'בית עסק', 'תיאור', 'פרטים', 'שם העסק'];
+      
+      for (let i = 0; i < Math.min(15, data.length); i++) {
         const row = data[i];
-        if (row && row.some(cell => String(cell || '').includes('שם בית עסק'))) {
+        if (!row) continue;
+        
+        const rowText = row.map(cell => String(cell || '')).join(' ');
+        if (headerKeywords.some(keyword => rowText.includes(keyword))) {
           headerRowIndex = i;
           columns = detectColumns(row);
-          console.log(`📋 Header found at row ${i}`);
+          console.log(`📋 Header found at row ${i}:`, row);
           break;
         }
       }
@@ -1600,11 +1631,34 @@
         return oldFormatDataForAI(data, cardName);
       }
       
-      // אם לא מצאנו עמודת סכום - חזור לפונקציה הישנה
+      // אם לא מצאנו עמודת סכום - ננסה לזהות לפי מיקום (עמודות אחרונות בד"כ מכילות סכומים)
       if (columns.chargeAmount === -1 && columns.transactionAmount === -1) {
-        console.log('⚠️ No amount column found, using old formatter');
+        console.log('⚠️ No amount column found by header, trying to find numeric column...');
+        
+        // נחפש עמודה עם ערכים מספריים
+        const firstDataRow = data[headerRowIndex + 1];
+        if (firstDataRow) {
+          for (let col = firstDataRow.length - 1; col >= 0; col--) {
+            const val = firstDataRow[col];
+            if (val !== null && val !== undefined && val !== '') {
+              const numVal = typeof val === 'number' ? val : parseFloat(String(val).replace(/,/g, ''));
+              if (!isNaN(numVal) && numVal > 0 && col !== columns.description) {
+                columns.chargeAmount = col;
+                console.log(`📍 Found numeric column at index ${col} with value ${numVal}`);
+                break;
+              }
+            }
+          }
+        }
+      }
+      
+      // אם עדיין לא מצאנו סכום - חזור לפונקציה הישנה
+      if (columns.chargeAmount === -1 && columns.transactionAmount === -1) {
+        console.log('⚠️ Still no amount column found, using old formatter');
         return oldFormatDataForAI(data, cardName);
       }
+      
+      console.log('✅ Final columns detected:', columns);
       
       let text = `דוח הוצאות - ${cardName}\n`;
       text += '='.repeat(50) + '\n';
@@ -1613,6 +1667,7 @@
       
       let processedCount = 0;
       let skippedCount = 0;
+      let zeroAmountCount = 0;
       
       for (let i = headerRowIndex + 1; i < data.length; i++) {
         const row = data[i];
@@ -1633,11 +1688,33 @@
         let amount = null;
         if (columns.chargeAmount !== -1 && row[columns.chargeAmount] !== undefined && row[columns.chargeAmount] !== null && row[columns.chargeAmount] !== '') {
           amount = row[columns.chargeAmount];
-        } else if (columns.transactionAmount !== -1) {
+        } else if (columns.transactionAmount !== -1 && row[columns.transactionAmount] !== undefined && row[columns.transactionAmount] !== null && row[columns.transactionAmount] !== '') {
           amount = row[columns.transactionAmount];
         }
         
+        // אם הסכום הוא 0 או ריק, ננסה למצוא סכום בעמודות אחרות
+        if ((amount === null || amount === undefined || amount === '' || amount === 0) && description) {
+          for (let col = 0; col < row.length; col++) {
+            if (col === columns.description) continue;
+            const val = row[col];
+            if (val !== null && val !== undefined && val !== '') {
+              const numVal = typeof val === 'number' ? val : parseFloat(String(val).replace(/,/g, ''));
+              if (!isNaN(numVal) && numVal > 0) {
+                amount = numVal;
+                console.log(`💰 Found amount ${amount} in column ${col} for "${description}"`);
+                break;
+              }
+            }
+          }
+        }
+        
         if (!description || amount === null || amount === undefined) continue;
+        
+        // ספירת סכומים אפסיים לדיבאג
+        if (amount === 0 || amount === '0') {
+          zeroAmountCount++;
+          console.log(`⚠️ Zero amount for: ${description}, row:`, row);
+        }
         
         // חלץ מידע על תשלומים: קודם מהערות, אחר כך מתיאור (דוח מיפוי)
         let installment = extractInstallmentInfoFromNotes(notes);
@@ -1661,7 +1738,13 @@
         processedCount++;
       }
       
-      console.log(`✅ Processed ${processedCount} rows, skipped ${skippedCount} installment purchase rows`);
+      console.log(`✅ Processed ${processedCount} rows, skipped ${skippedCount} installment purchase rows, ${zeroAmountCount} zero amounts`);
+      
+      // אם יותר מדי סכומים אפסיים - כנראה יש בעיה בזיהוי העמודות
+      if (zeroAmountCount > processedCount * 0.5 && processedCount > 5) {
+        console.log('⚠️ Too many zero amounts, something is wrong with column detection. Using old formatter.');
+        return oldFormatDataForAI(data, cardName);
+      }
       
       // אם לא עובדו שורות - חזור לפונקציה הישנה
       if (processedCount === 0) {
@@ -1669,6 +1752,7 @@
         return oldFormatDataForAI(data, cardName);
       }
       
+      console.log('📝 Text preview (first 500 chars):', text.substring(0, 500));
       return text;
     }
 
