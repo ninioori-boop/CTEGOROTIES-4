@@ -1,0 +1,26 @@
+=== העתק שורה־שורה לטרמינל (Ctrl+`) ===
+
+שלב 2 - נווט לתיקייה:
+cd "c:\Users\ninio\OneDrive\הכלכלן של הבית\CTEGOROTIES-4-main"
+
+שלב 3 - בדיקה:
+git --version
+
+שלב 4:
+
+git init
+
+שלב 5:
+git add .
+
+שלב 6:
+git commit -m "עדכון פרויקט המקטרג"
+
+שלב 8 - הריפו שלך:
+git remote add origin https://github.com/ninioori-boop/CTEGOROTIES-4.git
+
+שלב 9:
+git branch -M main
+
+שלב 9 המשך:
+git push -u origin main

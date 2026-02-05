@@ -1,0 +1,4 @@
+cd "c:\Users\ninio\OneDrive\הכלכלן של הבית\CTEGOROTIES-4-main"
+git remote remove origin
+git remote add origin https://github.com/ninioori-boop/CTEGOROTIES-4.git
+git push -u origin main

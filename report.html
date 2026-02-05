@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>דוח מיפוי הוצאות</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap');
+
+    :root {
+      --primary: #1a365d;
+      --primary-light: #2c5282;
+      --accent: #3182ce;
+      --gold: #d69e2e;
+      --white: #ffffff;
+      --gray-light: #f7fafc;
+      --gray: #718096;
+      --black: #1a202c;
+      --green: #38a169;
+      --red: #e53e3e;
+      --orange: #dd6b20;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Heebo', sans-serif;
+      background: linear-gradient(180deg, var(--gray-light) 0%, #edf2f7 100%);
+      min-height: 100vh;
+      color: var(--black);
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    /* Header */
+    .report-header {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+      color: var(--white);
+      padding: 3rem 2rem;
+      border-radius: 20px;
+      text-align: center;
+      margin-bottom: 2rem;
+      box-shadow: 0 10px 40px rgba(26, 54, 93, 0.3);
+    }
+
+    .report-header h1 {
+      font-size: 2.5rem;
+      font-weight: 800;
+      margin-bottom: 0.5rem;
+    }
+
+    .report-header p {
+      font-size: 1.1rem;
+      opacity: 0.9;
+    }
+
+    .report-date {
+      margin-top: 1rem;
+      font-size: 0.95rem;
+      opacity: 0.8;
+    }
+
+    /* Card Tabs */
+    .card-tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .card-tab {
+      padding: 0.8rem 1.5rem;
+      background: var(--white);
+      border: 2px solid #e2e8f0;
+      border-radius: 50px;
+      cursor: pointer;
+      font-family: 'Heebo', sans-serif;
+      font-size: 1rem;
+      font-weight: 500;
+      transition: all 0.3s ease;
+    }
+
+    .card-tab:hover {
+      border-color: var(--accent);
+    }
+
+    .card-tab.active {
+      background: var(--accent);
+      color: var(--white);
+      border-color: var(--accent);
+    }
+
+    .card-tab.bank {
+      background: linear-gradient(135deg, #38a169, #276749);
+      color: white;
+      border-color: #38a169;
+    }
+
+    .card-tab.bank:not(.active) {
+      background: var(--white);
+      color: #38a169;
+    }
+
+    /* Total Summary Card */
+    .total-card {
+      background: linear-gradient(135deg, var(--gold) 0%, #b7791f 100%);
+      color: var(--white);
+      padding: 2.5rem;
+      border-radius: 20px;
+      text-align: center;
+      margin-bottom: 2rem;
+      box-shadow: 0 10px 40px rgba(214, 158, 46, 0.3);
+    }
+
+    .total-card h2 {
+      font-size: 1.2rem;
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+      opacity: 0.9;
+    }
+
+    .total-amount {
+      font-size: 4rem;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .total-count {
+      font-size: 1.1rem;
+      margin-top: 0.5rem;
+      opacity: 0.9;
+    }
+
+    .report-legend {
+      text-align: center;
+      color: var(--gray);
+      font-size: 0.9rem;
+      margin: -1rem 0 1.5rem;
+    }
+
+    /* Cards Summary */
+    .cards-summary {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .card-summary-item {
+      background: var(--white);
+      padding: 1.5rem;
+      border-radius: 15px;
+      text-align: center;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border: 2px solid transparent;
+    }
+
+    .card-summary-item:hover {
+      transform: translateY(-3px);
+      border-color: var(--accent);
+    }
+
+    .card-summary-item.active {
+      border-color: var(--accent);
+      background: #ebf8ff;
+    }
+
+    .card-summary-item.bank {
+      border-right: 4px solid var(--green);
+    }
+
+    .card-summary-name {
+      font-size: 0.95rem;
+      color: var(--gray);
+      margin-bottom: 0.5rem;
+    }
+
+    .card-summary-amount {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .card-summary-count {
+      font-size: 0.85rem;
+      color: var(--gray);
+      margin-top: 0.25rem;
+    }
+
+    /* Categories Grid */
+    .categories-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 1.5rem;
+      text-align: center;
+    }
+
+    .categories-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .category-card {
+      background: var(--white);
+      border-radius: 16px;
+      padding: 1.5rem;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      border-right: 5px solid var(--accent);
+    }
+
+    .category-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+    }
+
+    .category-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      padding-bottom: 1rem;
+      border-bottom: 2px solid var(--gray-light);
+    }
+
+    .category-name {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: var(--primary);
+    }
+
+    .category-name .icon {
+      font-size: 1.5rem;
+    }
+
+    .category-total {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .category-count {
+      font-size: 0.85rem;
+      color: var(--gray);
+      margin-bottom: 0.5rem;
+    }
+
+    .expense-list {
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .expense-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.6rem 0;
+      border-bottom: 1px dashed #e2e8f0;
+    }
+
+    .expense-item:last-child {
+      border-bottom: none;
+    }
+
+    .expense-name {
+      color: var(--black);
+      font-size: 0.95rem;
+    }
+
+    .expense-note {
+      font-size: 0.8rem;
+      color: var(--orange);
+      margin-right: 0.5rem;
+    }
+
+    .expense-amount {
+      font-weight: 600;
+      color: var(--primary-light);
+      white-space: nowrap;
+    }
+
+    .expense-amount.refund {
+      color: var(--green);
+    }
+
+    .refund-badge {
+      background: #c6f6d5;
+      color: #276749;
+      font-size: 0.7rem;
+      padding: 0.15rem 0.4rem;
+      border-radius: 10px;
+      margin-right: 0.5rem;
+    }
+
+    /* Chart Section */
+    .chart-section {
+      background: var(--white);
+      border-radius: 20px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+
+    .chart-title {
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: var(--primary);
+      margin-bottom: 1.5rem;
+      text-align: center;
+    }
+
+    .bar-chart {
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+    }
+
+    .bar-item {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .bar-label {
+      width: 150px;
+      font-size: 0.9rem;
+      color: var(--black);
+      text-align: left;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .bar-container {
+      flex: 1;
+      height: 28px;
+      background: var(--gray-light);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent) 0%, var(--primary-light) 100%);
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      padding-right: 10px;
+      transition: width 0.5s ease;
+    }
+
+    .bar-value {
+      width: 80px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--primary);
+      text-align: left;
+    }
+
+    /* Actions */
+    .actions {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-bottom: 2rem;
+    }
+
+    .btn {
+      padding: 1rem 2rem;
+      font-size: 1.1rem;
+      font-weight: 600;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-family: 'Heebo', sans-serif;
+      border: none;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent) 0%, var(--primary-light) 100%);
+      color: var(--white);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(49, 130, 206, 0.4);
+    }
+
+    .btn-secondary {
+      background: var(--white);
+      color: var(--primary);
+      border: 2px solid var(--primary);
+    }
+
+    .btn-secondary:hover {
+      background: var(--primary);
+      color: var(--white);
+    }
+
+    .btn-green {
+      background: linear-gradient(135deg, var(--green) 0%, #276749 100%);
+      color: var(--white);
+    }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      padding: 2rem;
+      color: var(--gray);
+    }
+
+    /* Print Styles */
+    @media print {
+      body {
+        background: white;
+      }
+      
+      .actions {
+        display: none;
+      }
+      
+      .category-card {
+        break-inside: avoid;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        padding: 1rem;
+      }
+
+      .report-header {
+        padding: 2rem 1rem;
+      }
+
+      .report-header h1 {
+        font-size: 1.8rem;
+      }
+
+      .total-amount {
+        font-size: 2.5rem;
+      }
+
+      .categories-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .bar-label {
+        width: 100px;
+        font-size: 0.8rem;
+      }
+
+      .actions {
+        flex-direction: column;
+      }
+
+      .btn {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="report-header">
+      <h1>📊 דוח מיפוי הוצאות</h1>
+      <p>ניתוח מפורט של ההוצאות לפי קטגוריות</p>
+      <div class="report-date" id="reportDate"></div>
+    </div>
+
+    <!-- Cards Summary -->
+    <div class="cards-summary" id="cardsSummary"></div>
+
+    <!-- Total Summary -->
+    <div class="total-card">
+      <h2 id="totalLabel">סך כל ההוצאות</h2>
+      <div class="total-amount" id="totalAmount">0 ₪</div>
+      <div class="total-count" id="totalCount">0 הוצאות נותחו</div>
+    </div>
+
+    <p class="report-legend">* = עסקה בתשלומים (הסכום המוצג הוא התשלום החודשי)</p>
+
+    <!-- Bar Chart -->
+    <div class="chart-section">
+      <div class="chart-title">📈 התפלגות הוצאות לפי קטגוריה</div>
+      <div class="bar-chart" id="barChart"></div>
+    </div>
+
+    <!-- Categories Grid -->
+    <h2 class="categories-title">פירוט לפי קטגוריות</h2>
+    <div class="categories-grid" id="categoriesGrid"></div>
+
+    <!-- Actions -->
+    <div class="actions">
+      <button class="btn btn-primary" onclick="window.print()">🖨️ הדפס דוח</button>
+      <button class="btn btn-primary" onclick="exportToExcel()">📥 ייצא לאקסל</button>
+      <button class="btn btn-green" onclick="downloadClientReport()">📤 הורד דוח ללקוח</button>
+      <button class="btn btn-secondary" onclick="shareReport()">🔗 שתף קישור</button>
+      <button class="btn btn-secondary" onclick="window.location.href='index.html'">📤 העלה דוח חדש</button>
+    </div>
+
+    <footer>
+      <p>אורי ניניו</p>
+    </footer>
+  </div>
+
+  <script>
+    const CATEGORY_ICONS = {
+      'מזון לבית': '🛒',
+      'אוכל בחוץ ובילויים': '🍽️',
+      'פארם': '💊',
+      'דלק וחניה': '⛽',
+      'מתנות': '🎁',
+      'ביגוד והנעלה': '👔',
+      'תחבצ': '🚌',
+      'כבישי אגרה': '🛣️',
+      'תספורת וקוסמטיקה': '💇',
+      'תחביבים': '🎨',
+      'חופשה וטיול': '✈️',
+      'תיקוני רכב': '🔧',
+      'בריאות': '🏥',
+      'בעלי חיים': '🐾',
+      'חינוך וקייטנות': '📚',
+      'שונות': '📦',
+      'ביט ללא מעקב': '📱',
+      'מזומן ללא מעקב': '💵',
+      'ביטוח': '🛡️',
+      'תקשורת': '📡',
+      'הוצאות בית': '🏠',
+      'מיסים': '🏛️',
+      'עמלות בנק ואשראי': '🏦',
+      'דמי ניהול בניין': '🏢',
+      'משכנתא': '🏠',
+      'שכר דירה': '🏠',
+      'ארנונה': '🏛️',
+      'חשמל': '⚡',
+      'גז': '🔥',
+      'מים וביוב': '💧',
+      'קופת חולים': '🏥',
+      'ביטוח לאומי': '🛡️',
+      'תרומות': '❤️',
+      'החזר הלוואות': '💳',
+      'ריהוט והבית': '🛋️'
+    };
+
+    let reportData = null;
+    let currentCard = 'all';
+
+    document.addEventListener('DOMContentLoaded', () => {
+      // קבלת הנתונים מ-localStorage
+      const data = localStorage.getItem('expenseResults');
+      
+      if (!data) {
+        alert('לא נמצאו נתונים. מעביר לעמוד ההעלאה...');
+        window.location.href = 'index.html';
+        return;
+      }
+
+      reportData = JSON.parse(data);
+      console.log('Report Data:', reportData);
+
+      // תאריך
+      const now = new Date();
+      document.getElementById('reportDate').textContent = 
+        `נוצר בתאריך: ${now.toLocaleDateString('he-IL')} בשעה ${now.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}`;
+
+      renderCardsSummary();
+      renderExpenses('all');
+    });
+
+    function renderCardsSummary() {
+      const summaryContainer = document.getElementById('cardsSummary');
+      let html = '';
+      
+      // בדיקה אם זה פורמט חדש (עם cards ו-bank) או ישן (מערך פשוט)
+      if (reportData.cards || reportData.bank) {
+        // פורמט חדש
+        
+        // כרטיס "הכל"
+        let allExpenses = [];
+        let allTotal = 0;
+        
+        if (reportData.cards) {
+          reportData.cards.forEach(card => {
+            allExpenses = allExpenses.concat(card.expenses || []);
+            allTotal += (card.expenses || []).reduce((sum, e) => sum + e.amount, 0);
+          });
+        }
+        
+        if (reportData.bank) {
+          allExpenses = allExpenses.concat(reportData.bank.expenses || []);
+          allTotal += (reportData.bank.expenses || []).reduce((sum, e) => sum + e.amount, 0);
+        }
+        
+        html += `
+          <div class="card-summary-item active" onclick="switchCard('all')">
+            <div class="card-summary-name">📊 כל הדוחות</div>
+            <div class="card-summary-amount">${allTotal.toLocaleString('he-IL', { maximumFractionDigits: 0 })} ₪</div>
+            <div class="card-summary-count">${allExpenses.length} הוצאות</div>
+          </div>
+        `;
+        
+        // כרטיסי אשראי
+        if (reportData.cards) {
+          reportData.cards.forEach((card, index) => {
+            const cardTotal = (card.expenses || []).reduce((sum, e) => sum + e.amount, 0);
+            const safeName = (card.name || '').replace(/"/g, '&quot;');
+            html += `
+              <div class="card-summary-item" onclick="switchCard('card_${index}')">
+                <div class="card-summary-name">💳 ${card.name || 'כרטיס ' + (index + 1)}</div>
+                <div class="card-summary-amount">${cardTotal.toLocaleString('he-IL', { maximumFractionDigits: 0 })} ₪</div>
+                <div class="card-summary-count">${(card.expenses || []).length} הוצאות</div>
+              </div>
+            `;
+          });
+        }
+        
+        // עו"ש
+        if (reportData.bank) {
+          const bankTotal = (reportData.bank.expenses || []).reduce((sum, e) => sum + e.amount, 0);
+          const safeBankName = (reportData.bank.name || 'עו"ש').replace(/"/g, '&quot;');
+          html += `
+            <div class="card-summary-item bank" onclick="switchCard('bank')">
+              <div class="card-summary-name">🏦 ${reportData.bank.name || 'עו"ש'}</div>
+              <div class="card-summary-amount">${bankTotal.toLocaleString('he-IL', { maximumFractionDigits: 0 })} ₪</div>
+              <div class="card-summary-count">${(reportData.bank.expenses || []).length} הוצאות</div>
+            </div>
+          `;
+        }
+      } else {
+        // פורמט ישן - מערך פשוט של הוצאות
+        const total = reportData.reduce((sum, e) => sum + e.amount, 0);
+        html += `
+          <div class="card-summary-item active">
+            <div class="card-summary-name">📊 כל ההוצאות</div>
+            <div class="card-summary-amount">${total.toLocaleString('he-IL', { maximumFractionDigits: 0 })} ₪</div>
+            <div class="card-summary-count">${reportData.length} הוצאות</div>
+          </div>
+        `;
+      }
+      
+      summaryContainer.innerHTML = html;
+    }
+
+    function switchCard(cardId) {
+      currentCard = cardId;
+      
+      // עדכון הכרטיס הפעיל
+      document.querySelectorAll('.card-summary-item').forEach(el => el.classList.remove('active'));
+      event.currentTarget.classList.add('active');
+      
+      renderExpenses(cardId);
+    }
+
+    function getExpensesForCard(cardId) {
+      // פורמט ישן
+      if (Array.isArray(reportData)) {
+        return reportData;
+      }
+      
+      // פורמט חדש
+      if (cardId === 'all') {
+        let all = [];
+        if (reportData.cards) {
+          reportData.cards.forEach(card => {
+            all = all.concat(card.expenses || []);
+          });
+        }
+        if (reportData.bank) {
+          all = all.concat(reportData.bank.expenses || []);
+        }
+        return all;
+      }
+      
+      if (cardId === 'bank') {
+        return reportData.bank ? (reportData.bank.expenses || []) : [];
+      }
+      
+      if (cardId.startsWith('card_')) {
+        const index = parseInt(cardId.replace('card_', ''));
+        return reportData.cards && reportData.cards[index] ? (reportData.cards[index].expenses || []) : [];
+      }
+      
+      return [];
+    }
+
+    function renderExpenses(cardId) {
+      const expenses = getExpensesForCard(cardId);
+      console.log(`Rendering ${expenses.length} expenses for ${cardId}`);
+
+      // חישוב סיכומים לפי קטגוריה
+      const grouped = {};
+      let totalAmount = 0;
+
+      expenses.forEach(expense => {
+        const cat = expense.category || 'שונות';
+        if (!grouped[cat]) {
+          grouped[cat] = { items: [], total: 0 };
+        }
+        grouped[cat].items.push(expense);
+        grouped[cat].total += expense.amount;
+        totalAmount += expense.amount;
+      });
+
+      // סיכום כולל
+      document.getElementById('totalAmount').textContent = totalAmount.toLocaleString('he-IL', { maximumFractionDigits: 2 }) + ' ₪';
+      document.getElementById('totalCount').textContent = expenses.length + ' הוצאות נותחו';
+      
+      // עדכון כותרת
+      if (cardId === 'all') {
+        document.getElementById('totalLabel').textContent = 'סך כל ההוצאות';
+      } else if (cardId === 'bank') {
+        document.getElementById('totalLabel').textContent = 'סך הוצאות עו"ש';
+      } else {
+        document.getElementById('totalLabel').textContent = 'סך הוצאות הכרטיס';
+      }
+
+      // מיון לפי סכום יורד
+      const sortedCategories = Object.entries(grouped)
+        .sort((a, b) => b[1].total - a[1].total);
+
+      // גרף עמודות
+      const maxAmount = sortedCategories.length > 0 ? sortedCategories[0][1].total : 1;
+      const barChartHTML = sortedCategories.slice(0, 10).map(([category, data]) => {
+        const percentage = (data.total / maxAmount) * 100;
+        const icon = CATEGORY_ICONS[category] || '📦';
+        return `
+          <div class="bar-item">
+            <div class="bar-label">${icon} ${category}</div>
+            <div class="bar-container">
+              <div class="bar-fill" style="width: ${percentage}%"></div>
+            </div>
+            <div class="bar-value">${data.total.toLocaleString('he-IL', { maximumFractionDigits: 0 })} ₪</div>
+          </div>
+        `;
+      }).join('');
+      document.getElementById('barChart').innerHTML = barChartHTML;
+
+      // כרטיסיות קטגוריות
+      const cardsHTML = sortedCategories.map(([category, data]) => {
+        const icon = CATEGORY_ICONS[category] || '📦';
+        const itemsHTML = data.items.map(item => {
+          const note = item.display_note ? `<span class="expense-note">(${item.display_note})</span>` : '';
+          const refundBadge = item.isRefund ? `<span class="refund-badge">החזר</span>` : '';
+          const refundClass = item.isRefund ? ' refund' : '';
+          const installmentMarker = item.installment_info ? '*' : '';
+          return `
+          <div class="expense-item">
+              <span class="expense-name">${refundBadge}${item.description}${note}</span>
+            <span class="expense-amount${refundClass}">${item.amount.toLocaleString('he-IL', { maximumFractionDigits: 2 })}${installmentMarker} ₪</span>
+          </div>
+          `;
+        }).join('');
+
+        return `
+          <div class="category-card">
+            <div class="category-header">
+              <div class="category-name">
+                <span class="icon">${icon}</span>
+                <span>${category}</span>
+              </div>
+              <div class="category-total">${data.total.toLocaleString('he-IL', { maximumFractionDigits: 2 })} ₪</div>
+            </div>
+            <div class="category-count">${data.items.length} פריטים</div>
+            <div class="expense-list">${itemsHTML}</div>
+          </div>
+        `;
+      }).join('');
+      document.getElementById('categoriesGrid').innerHTML = cardsHTML;
+    }
+
+    function getAllExpenses() {
+      if (Array.isArray(reportData)) {
+        return reportData;
+      }
+      
+      let all = [];
+      if (reportData.cards) {
+        reportData.cards.forEach(card => {
+          all = all.concat(card.expenses || []);
+        });
+      }
+      if (reportData.bank) {
+        all = all.concat(reportData.bank.expenses || []);
+      }
+      return all;
+    }
+
+    function exportToExcel() {
+      const expenses = getExpensesForCard(currentCard);
+      let csv = 'קטגוריה,תיאור,סכום\n';
+      
+      expenses.forEach(expense => {
+        csv += `"${expense.category}","${expense.description}","${expense.amount.toFixed(2)}"\n`;
+      });
+
+      const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'מיפוי_הוצאות_' + new Date().toLocaleDateString('he-IL').replace(/\./g, '-') + '.csv';
+      link.click();
+    }
+
+    function shareReport() {
+      const data = encodeURIComponent(JSON.stringify(reportData));
+      const url = window.location.origin + '/report.html?data=' + data;
+      
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(url).then(() => {
+          alert('הקישור הועתק! 📋');
+        });
+      } else {
+        prompt('העתק את הקישור:', url);
+      }
+    }
+
+    function downloadClientReport() {
+      const expenses = getAllExpenses();
+      const total = expenses.reduce((sum, e) => sum + e.amount, 0);
+      const now = new Date();
+      
+      // יצירת HTML עצמאי
+      const html = `<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>דוח הוצאות - ${now.toLocaleDateString('he-IL')}</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@400;600;700&display=swap');
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Heebo', sans-serif; background: #f7fafc; padding: 2rem; }
+    .container { max-width: 900px; margin: 0 auto; }
+    h1 { text-align: center; color: #1a365d; margin-bottom: 1rem; }
+    .date { text-align: center; color: #718096; margin-bottom: 2rem; }
+    .total { background: linear-gradient(135deg, #d69e2e, #b7791f); color: white; padding: 2rem; border-radius: 15px; text-align: center; margin-bottom: 2rem; }
+    .total-amount { font-size: 3rem; font-weight: 700; }
+    .total-count { opacity: 0.9; }
+    .categories { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; }
+    .category { background: white; border-radius: 12px; padding: 1.5rem; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    .category-header { display: flex; justify-content: space-between; border-bottom: 2px solid #f7fafc; padding-bottom: 1rem; margin-bottom: 1rem; }
+    .category-name { font-weight: 600; color: #1a365d; }
+    .category-total { font-weight: 700; color: #3182ce; }
+    .expense { display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px dashed #e2e8f0; }
+    .expense:last-child { border-bottom: none; }
+    .refund { color: #38a169; }
+    .refund-badge { background: #c6f6d5; color: #276749; font-size: 0.7rem; padding: 0.1rem 0.3rem; border-radius: 8px; margin-left: 0.3rem; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📊 דוח מיפוי הוצאות</h1>
+    <div class="date">נוצר בתאריך: ${now.toLocaleDateString('he-IL')}</div>
+    <div class="total">
+      <div class="total-amount">${total.toLocaleString('he-IL', { maximumFractionDigits: 0 })} ₪</div>
+      <div class="total-count">${expenses.length} הוצאות</div>
+    </div>
+    <div class="categories">
+      ${generateCategoriesHTML(expenses)}
+    </div>
+  </div>
+</body>
+</html>`;
+
+      const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'דוח_הוצאות_' + now.toLocaleDateString('he-IL').replace(/\./g, '-') + '.html';
+      link.click();
+    }
+
+    function generateCategoriesHTML(expenses) {
+      const grouped = {};
+      expenses.forEach(expense => {
+        const cat = expense.category || 'שונות';
+        if (!grouped[cat]) grouped[cat] = { items: [], total: 0 };
+        grouped[cat].items.push(expense);
+        grouped[cat].total += expense.amount;
+      });
+
+      return Object.entries(grouped)
+        .sort((a, b) => b[1].total - a[1].total)
+        .map(([category, data]) => {
+          const itemsHTML = data.items.map(item => {
+            const refundBadge = item.isRefund ? `<span class="refund-badge">החזר</span>` : '';
+            const refundClass = item.isRefund ? ' class="refund"' : '';
+            const installmentMarker = item.installment_info ? '*' : '';
+            const noteText = item.display_note ? ` (${item.display_note})` : '';
+            return `<div class="expense"><span>${refundBadge}${item.description}${noteText}</span><span${refundClass}>${item.amount.toLocaleString('he-IL', { maximumFractionDigits: 2 })}${installmentMarker} ₪</span></div>`;
+          }).join('');
+          
+          return `
+            <div class="category">
+              <div class="category-header">
+                <span class="category-name">${category}</span>
+                <span class="category-total">${data.total.toLocaleString('he-IL', { maximumFractionDigits: 0 })} ₪</span>
+              </div>
+              ${itemsHTML}
+            </div>
+          `;
+        }).join('');
+    }
+
+    // בדיקה אם יש data ב-URL
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('data')) {
+      try {
+        reportData = JSON.parse(decodeURIComponent(urlParams.get('data')));
+        localStorage.setItem('expenseResults', JSON.stringify(reportData));
+      } catch (e) {
+        console.error('Error parsing URL data:', e);
+      }
+    }
+  </script>
+</body>
+</html>

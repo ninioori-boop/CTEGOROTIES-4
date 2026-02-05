@@ -1,0 +1,13 @@
+ריפו: https://github.com/ninioori-boop/CTEGOROTIES-4
+===============================================
+
+אם יש לך Git בטרמינל – פתח טרמינל, הדבק כל שורה ולחץ Enter (שורה אחת בכל פעם):
+
+cd "c:\Users\ninio\OneDrive\הכלכלן של הבית\CTEGOROTIES-4-main"
+git add .
+git commit -m "עדכון"
+git push origin main
+
+---
+אם אתה משתמש ב-GitHub Desktop:
+פתח GitHub Desktop → File → Add local repository → בחר את התיקייה הזו (CTEGOROTIES-4-main) → Commit → Push origin.
