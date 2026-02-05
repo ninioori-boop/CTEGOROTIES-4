@@ -1783,6 +1783,41 @@
       console.log('🔄 Smart formatDataForAI called for:', cardName);
       console.log('📊 Data preview (first 5 rows):', data.slice(0, 5));
       
+      // ניסיון ראשון: זיהוי עמודות לפי תוכן (עובד גם ללא כותרות)
+      const contentCols = detectColumnsByContent(data);
+      if (contentCols) {
+        console.log('✅ Content detection successful, using it directly');
+        let text = `דוח הוצאות - ${cardName}\n`;
+        text += '='.repeat(50) + '\n';
+        text += 'הסכומים הם חודשיים\n';
+        text += '='.repeat(50) + '\n';
+        
+        let processedCount = 0;
+        for (const row of data) {
+          if (!row || row.length === 0) continue;
+          
+          const description = row[contentCols.description];
+          const amount = row[contentCols.amount];
+          
+          // דלג על שורות סיכום
+          if (description && String(description).includes('סה"כ')) continue;
+          
+          if (description && amount !== null && amount !== undefined) {
+            const numAmount = typeof amount === 'number' ? amount : parseFloat(String(amount).replace(/,/g, ''));
+            if (!isNaN(numAmount) && numAmount > 0) {
+              text += `${description} | ${numAmount}\n`;
+              processedCount++;
+            }
+          }
+        }
+        
+        if (processedCount > 0) {
+          console.log(`✅ Processed ${processedCount} rows with content detection`);
+          console.log('📝 Text sample:', text.substring(0, 500));
+          return text;
+        }
+      }
+      
       // מצא את שורת הכותרות - חיפוש מורחב
       let headerRowIndex = -1;
       let columns = null;
