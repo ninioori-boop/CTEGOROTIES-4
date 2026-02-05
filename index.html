@@ -1600,6 +1600,9 @@
         let dateCount = 0;
         let hebrewTextCount = 0;
         let currencyCount = 0;
+        let sumValues = 0;
+        let decimalCount = 0;
+        let numericValues = [];
         
         for (const row of sampleRows) {
           const val = row[col];
@@ -1623,6 +1626,12 @@
           const numVal = typeof val === 'number' ? val : parseFloat(strVal.replace(/,/g, ''));
           if (!isNaN(numVal) && strVal.match(/^[\d,.-]+$/)) {
             numberCount++;
+            sumValues += Math.abs(numVal);
+            numericValues.push(Math.abs(numVal));
+            // בדיקה אם יש נקודה עשרונית (סכומים בד"כ יש להם אגורות)
+            if (strVal.includes('.') && numVal < 100000) {
+              decimalCount++;
+            }
             continue;
           }
           
@@ -1635,6 +1644,9 @@
           }
         }
         
+        // חישוב ממוצע וסטיית תקן
+        const avgValue = numberCount > 0 ? sumValues / numberCount : 0;
+        
         columnTypes.push({
           col,
           textCount,
@@ -1642,6 +1654,8 @@
           dateCount,
           hebrewTextCount,
           currencyCount,
+          decimalCount,
+          avgValue,
           total: sampleRows.length
         });
       }
@@ -1658,19 +1672,44 @@
         }
       }
       
-      // מצא את עמודת הסכום (עמודת מספרים שהיא לא תאריך, קרובה לעמודת התיאור)
+      // מצא את עמודת הסכום - עם פילטרים חכמים
       let amountCol = -1;
       let bestAmountScore = 0;
+      
       for (const ct of columnTypes) {
         if (ct.col === descriptionCol) continue;
-        if (ct.numberCount > ct.total * 0.5 && ct.dateCount < ct.total * 0.3) {
-          // עדיפות לעמודות קרובות לעמודת התיאור
-          const distance = Math.abs(ct.col - descriptionCol);
-          const score = ct.numberCount / (distance + 1);
-          if (score > bestAmountScore) {
-            bestAmountScore = score;
-            amountCol = ct.col;
-          }
+        if (ct.numberCount < ct.total * 0.3) continue; // צריך לפחות 30% מספרים
+        if (ct.dateCount > ct.total * 0.3) continue; // לא עמודת תאריכים
+        
+        // סינון מספרי אסמכתא - ממוצע גבוה מדי (מעל 100,000)
+        if (ct.avgValue > 100000) {
+          console.log(`⏭️ Skipping col ${ct.col} - avg too high (${ct.avgValue.toFixed(0)}) - likely reference numbers`);
+          continue;
+        }
+        
+        // חישוב ניקוד
+        let score = ct.numberCount;
+        
+        // בונוס לעמודות עם ערכים עשרוניים (סכומים אמיתיים כמו 15.52)
+        if (ct.decimalCount > ct.total * 0.2) {
+          score *= 3;
+          console.log(`💰 Col ${ct.col} has decimals (${ct.decimalCount}) - likely amounts`);
+        }
+        
+        // בונוס לממוצע בטווח סביר לעסקאות (1-10000)
+        if (ct.avgValue > 1 && ct.avgValue < 10000) {
+          score *= 2;
+        }
+        
+        // עדיפות קלה לעמודות קרובות לתיאור
+        const distance = Math.abs(ct.col - descriptionCol);
+        score = score / (distance * 0.5 + 1);
+        
+        console.log(`📊 Col ${ct.col}: score=${score.toFixed(1)}, avg=${ct.avgValue.toFixed(1)}, decimals=${ct.decimalCount}`);
+        
+        if (score > bestAmountScore) {
+          bestAmountScore = score;
+          amountCol = ct.col;
         }
       }
       
