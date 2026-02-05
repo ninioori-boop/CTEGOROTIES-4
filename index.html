@@ -1583,8 +1583,147 @@
       return null;
     }
 
-    // === פונקציה ישנה לגיבוי ===
+    // === זיהוי עמודות לפי תוכן (ללא כותרות) ===
+    function detectColumnsByContent(data) {
+      console.log('🔍 Trying to detect columns by content analysis...');
+      
+      // נבדוק כמה שורות ראשונות כדי לזהות את סוג כל עמודה
+      const sampleRows = data.slice(0, Math.min(20, data.length)).filter(row => row && row.length > 0);
+      if (sampleRows.length === 0) return null;
+      
+      const numCols = Math.max(...sampleRows.map(r => r.length));
+      const columnTypes = [];
+      
+      for (let col = 0; col < numCols; col++) {
+        let textCount = 0;
+        let numberCount = 0;
+        let dateCount = 0;
+        let hebrewTextCount = 0;
+        let currencyCount = 0;
+        
+        for (const row of sampleRows) {
+          const val = row[col];
+          if (val === null || val === undefined || val === '') continue;
+          
+          const strVal = String(val).trim();
+          
+          // בדיקת תאריך
+          if (/^\d{1,2}[./-]\d{1,2}[./-]\d{2,4}$/.test(strVal)) {
+            dateCount++;
+            continue;
+          }
+          
+          // בדיקת סימן מטבע
+          if (strVal === '₪' || strVal === '$' || strVal === 'ש"ח') {
+            currencyCount++;
+            continue;
+          }
+          
+          // בדיקת מספר
+          const numVal = typeof val === 'number' ? val : parseFloat(strVal.replace(/,/g, ''));
+          if (!isNaN(numVal) && strVal.match(/^[\d,.-]+$/)) {
+            numberCount++;
+            continue;
+          }
+          
+          // בדיקת טקסט עברי (שם בית עסק)
+          if (/[\u0590-\u05FF]/.test(strVal) && strVal.length > 3) {
+            hebrewTextCount++;
+            textCount++;
+          } else if (strVal.length > 2) {
+            textCount++;
+          }
+        }
+        
+        columnTypes.push({
+          col,
+          textCount,
+          numberCount,
+          dateCount,
+          hebrewTextCount,
+          currencyCount,
+          total: sampleRows.length
+        });
+      }
+      
+      console.log('📊 Column analysis:', columnTypes);
+      
+      // מצא את עמודת התיאור (הכי הרבה טקסט עברי)
+      let descriptionCol = -1;
+      let maxHebrewText = 0;
+      for (const ct of columnTypes) {
+        if (ct.hebrewTextCount > maxHebrewText) {
+          maxHebrewText = ct.hebrewTextCount;
+          descriptionCol = ct.col;
+        }
+      }
+      
+      // מצא את עמודת הסכום (עמודת מספרים שהיא לא תאריך, קרובה לעמודת התיאור)
+      let amountCol = -1;
+      let bestAmountScore = 0;
+      for (const ct of columnTypes) {
+        if (ct.col === descriptionCol) continue;
+        if (ct.numberCount > ct.total * 0.5 && ct.dateCount < ct.total * 0.3) {
+          // עדיפות לעמודות קרובות לעמודת התיאור
+          const distance = Math.abs(ct.col - descriptionCol);
+          const score = ct.numberCount / (distance + 1);
+          if (score > bestAmountScore) {
+            bestAmountScore = score;
+            amountCol = ct.col;
+          }
+        }
+      }
+      
+      if (descriptionCol === -1 || amountCol === -1) {
+        console.log('⚠️ Could not detect columns by content');
+        return null;
+      }
+      
+      console.log(`✅ Detected by content: description=${descriptionCol}, amount=${amountCol}`);
+      return { description: descriptionCol, amount: amountCol };
+    }
+
+    // === פונקציה ישנה לגיבוי - משופרת ===
     function oldFormatDataForAI(data, cardName) {
+      console.log('🔄 oldFormatDataForAI called, trying content detection first...');
+      
+      // ננסה לזהות עמודות לפי תוכן
+      const detectedCols = detectColumnsByContent(data);
+      
+      if (detectedCols) {
+        // מצאנו עמודות - נעבד את הנתונים בצורה מסודרת
+        let text = `דוח הוצאות - ${cardName}\n`;
+        text += '='.repeat(50) + '\n';
+        text += 'הסכומים הם חודשיים\n';
+        text += '='.repeat(50) + '\n';
+        
+        let processedCount = 0;
+        for (const row of data) {
+          if (!row || row.length === 0) continue;
+          
+          const description = row[detectedCols.description];
+          const amount = row[detectedCols.amount];
+          
+          // דלג על שורות סיכום
+          if (description && String(description).includes('סה"כ')) continue;
+          
+          if (description && amount !== null && amount !== undefined) {
+            const numAmount = typeof amount === 'number' ? amount : parseFloat(String(amount).replace(/,/g, ''));
+            if (!isNaN(numAmount) && numAmount > 0) {
+              text += `${description} | ${numAmount}\n`;
+              processedCount++;
+            }
+          }
+        }
+        
+        console.log(`✅ Processed ${processedCount} rows with content detection`);
+        if (processedCount > 0) {
+          return text;
+        }
+      }
+      
+      // אם לא הצלחנו - נשתמש בפורמט הגולמי
+      console.log('⚠️ Falling back to raw format');
       let text = `דוח הוצאות - ${cardName}\n`;
       text += '='.repeat(50) + '\n';
       
