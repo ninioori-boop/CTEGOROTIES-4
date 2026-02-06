@@ -2011,6 +2011,11 @@
           headerRowIndex = i;
           columns = detectColumns(row);
           console.log(`📋 Header found at row ${i}:`, row);
+          // === DEBUG זמני: הצג את הכותרות והעמודות שזוהו ===
+          const headerCells = row.map((c, idx) => `[${idx}] ${String(c || '').trim()}`).join('\n');
+          const firstDataRow = data[i + 1] || [];
+          const dataCells = firstDataRow.map((c, idx) => `[${idx}] ${String(c || '').trim()}`).join('\n');
+          alert(`🔍 DEBUG - Header row ${i}:\n${headerCells}\n\n📊 First data row:\n${dataCells}\n\n🎯 Detected columns:\ndescription=${columns.description}\nchargeAmount=${columns.chargeAmount}\ntransactionAmount=${columns.transactionAmount}\ncategory=${columns.category}\nnotes=${columns.notes}`);
           break;
         }
       }
@@ -2081,6 +2086,13 @@
             columns.description = bestCol;
           }
         }
+        
+        // === DEBUG זמני: הצג תוצאות ולידציה ===
+        const sampleDescs = [];
+        for (let si = headerRowIndex + 1; si < Math.min(data.length, headerRowIndex + 6); si++) {
+          if (data[si]) sampleDescs.push(String(data[si][columns.description] || ''));
+        }
+        alert(`🔍 AFTER VALIDATION:\ndescription column = ${columns.description}\ncategory column = ${columns.category}\nchargeAmount = ${columns.chargeAmount}\n\nSample descriptions:\n${sampleDescs.join('\n')}`);
         
         // אם לא מצאנו עמודת סכום - ננסה לזהות לפי מיקום (עמודות אחרונות בד"כ מכילות סכומים)
         if (columns.chargeAmount === -1 && columns.transactionAmount === -1) {
