@@ -1611,16 +1611,23 @@
         category: -1           // ענף
       };
       
-      // מעבר ראשון - זיהוי כל העמודות
+      // מעבר ראשון - זיהוי כל העמודות (חוץ מתיאור)
+      // חשוב! עמודת תיאור מזוהה בשני שלבים: קודם ספציפי ("שם בית עסק"), אח"כ גנרי ("תיאור"/"פרטים")
+      let specificDescCol = -1;  // "שם בית עסק" / "שם בית העסק" / "שם העסק" / "בית עסק"
+      let genericDescCol = -1;   // "תיאור" / "פרטים" (עלולים להכיל קטגוריות!)
+      
       headerRow.forEach((cell, index) => {
         const cellText = String(cell || '').trim().toLowerCase();
         const originalText = String(cell || '').trim();
         
-        // שם בית עסק - וריאציות שונות
+        // שם בית עסק - ספציפי (עדיפות גבוהה!)
         if (originalText.includes('שם בית עסק') || originalText.includes('שם בית העסק') || 
-            originalText.includes('בית עסק') || originalText.includes('תיאור') || 
-            originalText.includes('פרטים') || originalText.includes('שם העסק')) {
-          if (columns.description === -1) columns.description = index;
+            originalText.includes('בית עסק') || originalText.includes('שם העסק')) {
+          if (specificDescCol === -1) specificDescCol = index;
+        }
+        // תיאור / פרטים - גנרי (עדיפות נמוכה - עלול להכיל קטגוריה!)
+        else if (originalText.includes('תיאור') || originalText.includes('פרטים')) {
+          if (genericDescCol === -1) genericDescCol = index;
         }
         
         // סכום חיוב (חודשי) - עדיפות ראשונה - וריאציות רבות
@@ -1651,6 +1658,15 @@
           columns.category = index;
         }
       });
+      
+      // עדיפות לעמודה ספציפית ("שם בית עסק") על פני גנרית ("תיאור"/"פרטים")
+      if (specificDescCol !== -1) {
+        columns.description = specificDescCol;
+        console.log(`✅ Description column: specific ("שם בית עסק") at index ${specificDescCol}`);
+      } else if (genericDescCol !== -1) {
+        columns.description = genericDescCol;
+        console.log(`⚠️ Description column: generic ("תיאור"/"פרטים") at index ${genericDescCol} - may contain categories`);
+      }
       
       // מעבר שני - אם לא מצאנו סכום חיוב, נחפש סכום גנרי
       if (columns.chargeAmount === -1 && columns.transactionAmount === -1) {
@@ -2000,6 +2016,72 @@
       }
       
       if (columns && columns.description !== -1) {
+        // ===== ולידציה: האם עמודת התיאור מכילה קטגוריות ולא שמות חנויות? =====
+        // אם רוב הערכים חוזרים על עצמם (cardinality נמוכה), כנראה זו עמודת ענף/קטגוריה
+        const descValues = {};
+        let descTotalRows = 0;
+        for (let i = headerRowIndex + 1; i < Math.min(data.length, headerRowIndex + 60); i++) {
+          const row = data[i];
+          if (!row || row.length === 0) continue;
+          const val = String(row[columns.description] || '').trim();
+          if (!val) continue;
+          descValues[val] = (descValues[val] || 0) + 1;
+          descTotalRows++;
+        }
+        const descUniqueCount = Object.keys(descValues).length;
+        const descRepeatRatio = descTotalRows > 0 ? descUniqueCount / descTotalRows : 1;
+        console.log(`🔍 Description column ${columns.description} cardinality: ${descUniqueCount} unique out of ${descTotalRows} rows (ratio: ${descRepeatRatio.toFixed(2)})`);
+        
+        // אם פחות מ-30% ייחודיים = כנראה זו עמודת קטגוריה, חפש עמודה עם cardinality גבוהה יותר
+        if (descRepeatRatio < 0.3 && descTotalRows > 10) {
+          console.log(`⚠️ Description column ${columns.description} looks like a category column! Searching for a better one...`);
+          let bestCol = -1;
+          let bestRatio = descRepeatRatio;
+          
+          for (let col = 0; col < headerRow.length; col++) {
+            // דלג על עמודות שכבר ממופות (סכום, סוג, הערות, קטגוריה) ועל העמודה הנוכחית
+            if (col === columns.description || col === columns.chargeAmount || col === columns.transactionAmount ||
+                col === columns.transactionType || col === columns.notes || col === columns.category ||
+                col === columns.creditAmount) continue;
+            
+            const colValues = {};
+            let colTotal = 0;
+            let hasHebrew = false;
+            let allNumeric = true;
+            
+            for (let i = headerRowIndex + 1; i < Math.min(data.length, headerRowIndex + 60); i++) {
+              const row = data[i];
+              if (!row || row.length === 0 || col >= row.length) continue;
+              const val = String(row[col] || '').trim();
+              if (!val) continue;
+              colValues[val] = (colValues[val] || 0) + 1;
+              colTotal++;
+              if (/[\u0590-\u05FF]/.test(val)) hasHebrew = true;
+              if (isNaN(parseFloat(val.replace(/[,₪\s]/g, '')))) allNumeric = false;
+            }
+            
+            if (colTotal < 5 || allNumeric || !hasHebrew) continue;
+            
+            const colUniqueCount = Object.keys(colValues).length;
+            const colRatio = colUniqueCount / colTotal;
+            console.log(`   Column ${col} ("${String(headerRow[col] || '').trim()}"): ${colUniqueCount}/${colTotal} unique (${colRatio.toFixed(2)})`);
+            
+            if (colRatio > bestRatio) {
+              bestRatio = colRatio;
+              bestCol = col;
+            }
+          }
+          
+          if (bestCol !== -1 && bestRatio > descRepeatRatio * 1.5) {
+            console.log(`✅ Switching description column from ${columns.description} to ${bestCol} (ratio ${descRepeatRatio.toFixed(2)} → ${bestRatio.toFixed(2)})`);
+            // העמודה הישנה הופכת לעמודת קטגוריה (אם אין כבר)
+            if (columns.category === -1) {
+              columns.category = columns.description;
+            }
+            columns.description = bestCol;
+          }
+        }
+        
         // אם לא מצאנו עמודת סכום - ננסה לזהות לפי מיקום (עמודות אחרונות בד"כ מכילות סכומים)
         if (columns.chargeAmount === -1 && columns.transactionAmount === -1) {
           console.log('⚠️ No amount column found by header, trying to find numeric column...');
