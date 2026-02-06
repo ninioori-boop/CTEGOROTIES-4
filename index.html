@@ -966,6 +966,13 @@
         console.log(`💰 החזר כספי זוהה (מילת מפתח): "${expense.description}" - ${expense.amount}₪`);
       }
       
+      // === זיהוי הוראות קבע ===
+      const standingOrderKeywords = ['הוראת קבע', 'הוראות קבע', 'הוראת קבע חודשית', 'standing order', 'תשלום חודשי קבוע'];
+      if (standingOrderKeywords.some(keyword => desc.includes(keyword.toLowerCase()))) {
+        expense.isStandingOrder = true;
+        expense.standing_order_note = 'הוראת קבע';
+      }
+      
       // === תיקון קטגוריות לא תקינות שה-AI יוצר ===
       const invalidCategoryMapping = {
         'אופנה': 'ביגוד והנעלה',
