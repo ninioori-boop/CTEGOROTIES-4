@@ -1357,7 +1357,7 @@
       // #region agent log
       console.log(`🔄 postProcessCategories called with ${expenses.length} expenses`);
       // #endregion
-      return expenses.map((exp, index) => {
+      const processed = expenses.map((exp, index) => {
         const originalCategory = exp.category;
         // קודם נסה מהמאגר
         const dbCategory = categorizeByDatabase(exp.description);
@@ -1379,6 +1379,17 @@
         // #endregion
         return result;
       });
+      // סימון הוראת קבע לפי דפוס: אותו עסק + אותו סכום חוזר
+      const keyCount = {};
+      processed.forEach(exp => {
+        const key = `${String(exp.description || '').trim().toLowerCase()}|${exp.amount}`;
+        keyCount[key] = (keyCount[key] || 0) + 1;
+      });
+      processed.forEach(exp => {
+        const key = `${String(exp.description || '').trim().toLowerCase()}|${exp.amount}`;
+        if (keyCount[key] >= 2) exp.isStandingOrder = true;
+      });
+      return processed;
     }
 
     // Credit cards data
@@ -1506,6 +1517,7 @@
         description: -1,       // שם בית עסק
         transactionAmount: -1, // סכום עסקה (סה"כ - לא להשתמש!)
         chargeAmount: -1,      // סכום חיוב (חודשי - להשתמש בזה!)
+        creditAmount: -1,      // זיכוי/החזר (אופציונלי)
         transactionType: -1,   // סוג עסקה
         notes: -1,             // הערות
         category: -1           // ענף
@@ -1541,6 +1553,9 @@
         if (originalText.includes('סוג עסקה') || (originalText.includes('סוג') && !originalText.includes('מטבע'))) {
           columns.transactionType = index;
         }
+        if ((originalText.includes('זיכוי') || originalText.includes('החזר')) && !originalText.includes('הערות')) {
+          if (columns.creditAmount === -1) columns.creditAmount = index;
+        }
         if (originalText.includes('הערות') || originalText.includes('הערה') || originalText.includes('פירוט')) {
           columns.notes = index;
         }
@@ -1564,6 +1579,19 @@
       
       console.log('🔍 Detected columns:', columns, 'from header:', headerRow);
       return columns;
+    }
+
+    // === פרסור סכום מתא – תמיכה ב-(X) כהחזר ===
+    function parseAmount(val) {
+      if (val === null || val === undefined) return NaN;
+      if (typeof val === 'number') return val;
+      const str = String(val).trim();
+      if (!str) return NaN;
+      const hasParens = /^\([^)]*\)$/.test(str) || str.includes('(');
+      const cleaned = str.replace(/[(),]/g, '').replace(/\s/g, '');
+      const num = parseFloat(cleaned);
+      if (isNaN(num)) return NaN;
+      return hasParens ? -Math.abs(num) : num;
     }
 
     // === חילוץ מידע על תשלומים מעמודת הערות (דוח מיפוי) ===
@@ -1989,14 +2017,14 @@
           amount = row[columns.transactionAmount];
         }
         
-        // אם הסכום הוא 0 או ריק, ננסה למצוא סכום בעמודות אחרות
+        // אם הסכום הוא 0 או ריק, ננסה למצוא סכום בעמודות אחרות (כולל שלילי/החזר)
         if ((amount === null || amount === undefined || amount === '' || amount === 0) && description) {
           for (let col = 0; col < row.length; col++) {
             if (col === columns.description) continue;
             const val = row[col];
             if (val !== null && val !== undefined && val !== '') {
-              const numVal = typeof val === 'number' ? val : parseFloat(String(val).replace(/,/g, ''));
-              if (!isNaN(numVal) && numVal > 0) {
+              const numVal = parseAmount(val);
+              if (!isNaN(numVal) && numVal !== 0) {
                 amount = numVal;
                 console.log(`💰 Found amount ${amount} in column ${col} for "${description}"`);
                 break;
@@ -2007,8 +2035,20 @@
         
         if (!description || amount === null || amount === undefined) continue;
         
+        // נרמול סכום (כולל פורמט (X) = החזר) וכפיית שלילי לפי הערות או עמודת זיכוי
+        let amountNum = parseAmount(amount);
+        if (isNaN(amountNum)) amountNum = 0;
+        const notesStr = String(notes || '').trim();
+        if (columns.creditAmount !== -1 && row[columns.creditAmount] !== undefined && row[columns.creditAmount] !== null && row[columns.creditAmount] !== '') {
+          const creditVal = parseAmount(row[columns.creditAmount]);
+          if (!isNaN(creditVal) && creditVal !== 0) amountNum = -Math.abs(creditVal);
+        }
+        if (notesStr && (notesStr.includes('ביטול עסקה') || notesStr.includes('זיכוי'))) {
+          amountNum = -Math.abs(amountNum);
+        }
+        
         // ספירת סכומים אפסיים לדיבאג
-        if (amount === 0 || amount === '0') {
+        if (amountNum === 0) {
           zeroAmountCount++;
           console.log(`⚠️ Zero amount for: ${description}, row:`, row);
         }
@@ -2016,8 +2056,7 @@
         // חלץ מידע על תשלומים: קודם מהערות, אחר כך מתיאור (דוח מיפוי)
         let installment = extractInstallmentInfoFromNotes(notes);
         if (!installment) {
-          const numAmount = typeof amount === 'number' ? amount : parseFloat(String(amount).replace(/,/g, '')) || 0;
-          const parsed = parseInstallment(String(description), numAmount);
+          const parsed = parseInstallment(String(description), amountNum);
           if (parsed.isInstallment) {
             installment = { current: parsed.installment_current, total: parsed.installment_total };
           }
@@ -2027,11 +2066,12 @@
           installmentNote = ` (תשלום ${installment.current}/${installment.total})`;
         }
         
-        // הוסף את הענף אם קיים
+        // הוסף את הענף אם קיים והערות כדי שה-AI יזהה החזרים
         const category = columns.category !== -1 ? row[columns.category] : '';
         const categoryNote = category ? ` [${category}]` : '';
+        const notesNote = notesStr ? ` | הערות: ${notesStr}` : '';
         
-        text += `${description} | ${amount}${installmentNote}${categoryNote}\n`;
+        text += `${description} | ${amountNum}${installmentNote}${categoryNote}${notesNote}\n`;
         processedCount++;
       }
       
@@ -2058,7 +2098,7 @@
       const ignorePatterns = [
         'מקס', 'max', 'ישראכרט', 'כאל', 'לאומי קארד', 'דיינרס', // כרטיסי אשראי
         'קניה/', 'מכירה/', 'אלטשולר', 'מגדל', 'אקסלנס', 'מיטב', // השקעות
-        'ריבית זכות', 'מילואים', 'משכורת', 'זיכוי', // הכנסות
+        'ריבית זכות', 'מילואים', 'משכורת', // הכנסות (לא זיכוי – החזרים נכללים)
         'קיזוז מטח', 'מט"ח', 'המרה', // המרות
         'מס בגין', 'תנועת מס', // מיסים על רווחים
         'יתרה', 'סה"כ', 'סיכום' // יתרות
