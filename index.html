@@ -1895,52 +1895,13 @@
       console.log('🔄 Smart formatDataForAI called for:', cardName);
       console.log('📊 Data preview (first 5 rows):', data.slice(0, 5));
       
-      // ניסיון ראשון: פורמט מוכר (כרטיסי אשראי), אחר כך זיהוי לפי תוכן
-      const contentCols = detectKnownFormat(data) || detectColumnsByContent(data);
-      if (contentCols) {
-        console.log('✅ Using detected columns (known format or content)');
-        let text = `דוח הוצאות - ${cardName}\n`;
-        text += '='.repeat(50) + '\n';
-        text += 'הסכומים הם חודשיים\n';
-        text += '='.repeat(50) + '\n';
-        
-        let processedCount = 0;
-        for (const row of data) {
-          if (!row || row.length === 0) continue;
-          
-          const description = row[contentCols.description];
-          const amount = row[contentCols.amount];
-          
-          // דלג על שורות סיכום
-          if (description && String(description).includes('סה"כ')) continue;
-          
-          if (description && amount !== null && amount !== undefined) {
-            const numAmount = typeof amount === 'number' ? amount : parseFloat(String(amount).replace(/,/g, ''));
-            if (!isNaN(numAmount) && numAmount !== 0) {
-              text += `${description} | ${numAmount}\n`;
-              processedCount++;
-            }
-          }
-        }
-        
-        if (processedCount > 0) {
-          console.log(`✅ Processed ${processedCount} rows with content detection`);
-          console.log('📝 Text sample:', text.substring(0, 500));
-          return text;
-        }
-      }
-      
-      // מצא את שורת הכותרות - חיפוש מורחב
+      // ניסיון ראשון: שורת כותרות (כולל הערות, זיכוי, החזרים)
       let headerRowIndex = -1;
       let columns = null;
-      
-      // מילות מפתח לזיהוי שורת כותרות
       const headerKeywords = ['שם בית עסק', 'שם בית העסק', 'בית עסק', 'תיאור', 'פרטים', 'שם העסק'];
-      
       for (let i = 0; i < Math.min(15, data.length); i++) {
         const row = data[i];
         if (!row) continue;
-        
         const rowText = row.map(cell => String(cell || '')).join(' ');
         if (headerKeywords.some(keyword => rowText.includes(keyword))) {
           headerRowIndex = i;
@@ -1950,147 +1911,168 @@
         }
       }
       
-      // אם לא מצאנו כותרות - חזור לפונקציה הישנה
-      if (!columns || columns.description === -1) {
-        console.log('⚠️ Could not detect columns, using old formatter');
-        return oldFormatDataForAI(data, cardName);
-      }
-      
-      // אם לא מצאנו עמודת סכום - ננסה לזהות לפי מיקום (עמודות אחרונות בד"כ מכילות סכומים)
-      if (columns.chargeAmount === -1 && columns.transactionAmount === -1) {
-        console.log('⚠️ No amount column found by header, trying to find numeric column...');
-        
-        // נחפש עמודה עם ערכים מספריים
-        const firstDataRow = data[headerRowIndex + 1];
-        if (firstDataRow) {
-          for (let col = firstDataRow.length - 1; col >= 0; col--) {
-            const val = firstDataRow[col];
-            if (val !== null && val !== undefined && val !== '') {
-              const numVal = typeof val === 'number' ? val : parseFloat(String(val).replace(/,/g, ''));
-              if (!isNaN(numVal) && numVal > 0 && col !== columns.description) {
-                columns.chargeAmount = col;
-                console.log(`📍 Found numeric column at index ${col} with value ${numVal}`);
-                break;
+      if (columns && columns.description !== -1) {
+        // אם לא מצאנו עמודת סכום - ננסה לזהות לפי מיקום (עמודות אחרונות בד"כ מכילות סכומים)
+        if (columns.chargeAmount === -1 && columns.transactionAmount === -1) {
+          console.log('⚠️ No amount column found by header, trying to find numeric column...');
+          const firstDataRow = data[headerRowIndex + 1];
+          if (firstDataRow) {
+            for (let col = firstDataRow.length - 1; col >= 0; col--) {
+              const val = firstDataRow[col];
+              if (val !== null && val !== undefined && val !== '') {
+                const numVal = typeof val === 'number' ? val : parseFloat(String(val).replace(/,/g, ''));
+                if (!isNaN(numVal) && numVal > 0 && col !== columns.description) {
+                  columns.chargeAmount = col;
+                  console.log(`📍 Found numeric column at index ${col} with value ${numVal}`);
+                  break;
+                }
               }
             }
           }
         }
-      }
-      
-      // אם עדיין לא מצאנו סכום - חזור לפונקציה הישנה
-      if (columns.chargeAmount === -1 && columns.transactionAmount === -1) {
-        console.log('⚠️ Still no amount column found, using old formatter');
-        return oldFormatDataForAI(data, cardName);
-      }
-      
-      console.log('✅ Final columns detected:', columns);
-      
-      let text = `דוח הוצאות - ${cardName}\n`;
-      text += '='.repeat(50) + '\n';
-      text += 'הסכומים הם חודשיים (לא סה"כ העסקה)\n';
-      text += '='.repeat(50) + '\n';
-      
-      let processedCount = 0;
-      let skippedCount = 0;
-      let zeroAmountCount = 0;
-      
-      for (let i = headerRowIndex + 1; i < data.length; i++) {
-        const row = data[i];
-        if (!row || row.length === 0) continue;
-        
-        const description = row[columns.description];
-        const transactionType = columns.transactionType !== -1 ? row[columns.transactionType] : '';
-        const notes = columns.notes !== -1 ? row[columns.notes] : '';
-        
-        // דלג על שורות "רכישה בתשלומים" - התשלומים הבודדים נספרים בנפרד
-        if (transactionType && String(transactionType).includes('רכישה בתשלומים')) {
-          console.log(`⏭️ Skipping installment purchase row: ${description}`);
-          skippedCount++;
-          continue;
-        }
-        
-        // השתמש בסכום חיוב (חודשי), לא בסכום עסקה (כולל)
-        let amount = null;
-        if (columns.chargeAmount !== -1 && row[columns.chargeAmount] !== undefined && row[columns.chargeAmount] !== null && row[columns.chargeAmount] !== '') {
-          amount = row[columns.chargeAmount];
-        } else if (columns.transactionAmount !== -1 && row[columns.transactionAmount] !== undefined && row[columns.transactionAmount] !== null && row[columns.transactionAmount] !== '') {
-          amount = row[columns.transactionAmount];
-        }
-        
-        // אם הסכום הוא 0 או ריק, ננסה למצוא סכום בעמודות אחרות (כולל שלילי/החזר)
-        if ((amount === null || amount === undefined || amount === '' || amount === 0) && description) {
-          for (let col = 0; col < row.length; col++) {
-            if (col === columns.description) continue;
-            const val = row[col];
-            if (val !== null && val !== undefined && val !== '') {
-              const numVal = parseAmount(val);
-              if (!isNaN(numVal) && numVal !== 0) {
-                amount = numVal;
-                console.log(`💰 Found amount ${amount} in column ${col} for "${description}"`);
-                break;
+        // אם יש עמודת סכום - בונים מנתיב כותרות (הערות, זיכוי, החזרים)
+        if (columns.chargeAmount !== -1 || columns.transactionAmount !== -1) {
+          console.log('✅ Final columns detected:', columns);
+          
+          let text = `דוח הוצאות - ${cardName}\n`;
+          text += '='.repeat(50) + '\n';
+          text += 'הסכומים הם חודשיים (לא סה"כ העסקה)\n';
+          text += '='.repeat(50) + '\n';
+          
+          let processedCount = 0;
+          let skippedCount = 0;
+          let zeroAmountCount = 0;
+          
+          for (let i = headerRowIndex + 1; i < data.length; i++) {
+            const row = data[i];
+            if (!row || row.length === 0) continue;
+            
+            const description = row[columns.description];
+            const transactionType = columns.transactionType !== -1 ? row[columns.transactionType] : '';
+            const notes = columns.notes !== -1 ? row[columns.notes] : '';
+            
+            // דלג על שורות "רכישה בתשלומים" - התשלומים הבודדים נספרים בנפרד
+            if (transactionType && String(transactionType).includes('רכישה בתשלומים')) {
+              console.log(`⏭️ Skipping installment purchase row: ${description}`);
+              skippedCount++;
+              continue;
+            }
+            
+            // השתמש בסכום חיוב (חודשי), לא בסכום עסקה (כולל)
+            let amount = null;
+            if (columns.chargeAmount !== -1 && row[columns.chargeAmount] !== undefined && row[columns.chargeAmount] !== null && row[columns.chargeAmount] !== '') {
+              amount = row[columns.chargeAmount];
+            } else if (columns.transactionAmount !== -1 && row[columns.transactionAmount] !== undefined && row[columns.transactionAmount] !== null && row[columns.transactionAmount] !== '') {
+              amount = row[columns.transactionAmount];
+            }
+            
+            // אם הסכום הוא 0 או ריק, ננסה למצוא סכום בעמודות אחרות (כולל שלילי/החזר)
+            if ((amount === null || amount === undefined || amount === '' || amount === 0) && description) {
+              for (let col = 0; col < row.length; col++) {
+                if (col === columns.description) continue;
+                const val = row[col];
+                if (val !== null && val !== undefined && val !== '') {
+                  const numVal = parseAmount(val);
+                  if (!isNaN(numVal) && numVal !== 0) {
+                    amount = numVal;
+                    console.log(`💰 Found amount ${amount} in column ${col} for "${description}"`);
+                    break;
+                  }
+                }
               }
+            }
+            
+            if (!description || amount === null || amount === undefined) continue;
+            
+            // נרמול סכום (כולל פורמט (X) = החזר) וכפיית שלילי לפי הערות או עמודת זיכוי
+            let amountNum = parseAmount(amount);
+            if (isNaN(amountNum)) amountNum = 0;
+            const notesStr = String(notes || '').trim();
+            if (columns.creditAmount !== -1 && row[columns.creditAmount] !== undefined && row[columns.creditAmount] !== null && row[columns.creditAmount] !== '') {
+              const creditVal = parseAmount(row[columns.creditAmount]);
+              if (!isNaN(creditVal) && creditVal !== 0) amountNum = -Math.abs(creditVal);
+            }
+            if (notesStr && (notesStr.includes('ביטול עסקה') || notesStr.includes('זיכוי'))) {
+              amountNum = -Math.abs(amountNum);
+            }
+            
+            // ספירת סכומים אפסיים לדיבאג
+            if (amountNum === 0) {
+              zeroAmountCount++;
+              console.log(`⚠️ Zero amount for: ${description}, row:`, row);
+            }
+            
+            // חלץ מידע על תשלומים: קודם מהערות, אחר כך מתיאור (דוח מיפוי)
+            let installment = extractInstallmentInfoFromNotes(notes);
+            if (!installment) {
+              const parsed = parseInstallment(String(description), amountNum);
+              if (parsed.isInstallment) {
+                installment = { current: parsed.installment_current, total: parsed.installment_total };
+              }
+            }
+            let installmentNote = '';
+            if (installment) {
+              installmentNote = ` (תשלום ${installment.current}/${installment.total})`;
+            }
+            
+            // הוסף את הענף אם קיים והערות כדי שה-AI יזהה החזרים
+            const category = columns.category !== -1 ? row[columns.category] : '';
+            const categoryNote = category ? ` [${category}]` : '';
+            const notesNote = notesStr ? ` | הערות: ${notesStr}` : '';
+            
+            text += `${description} | ${amountNum}${installmentNote}${categoryNote}${notesNote}\n`;
+            processedCount++;
+          }
+          
+          console.log(`✅ Processed ${processedCount} rows, skipped ${skippedCount} installment purchase rows, ${zeroAmountCount} zero amounts`);
+          
+          // אם יותר מדי סכומים אפסיים - כנראה יש בעיה בזיהוי העמודות
+          if (zeroAmountCount > processedCount * 0.5 && processedCount > 5) {
+            console.log('⚠️ Too many zero amounts, something is wrong with column detection. Using old formatter.');
+            return oldFormatDataForAI(data, cardName);
+          }
+          
+          // אם לא עובדו שורות - חזור לפונקציה הישנה
+          if (processedCount === 0) {
+            console.log('⚠️ No rows processed by smart parser, falling back to old formatter');
+            return oldFormatDataForAI(data, cardName);
+          }
+          
+          console.log('📝 Text preview (first 500 chars):', text.substring(0, 500));
+          return text;
+        }
+      }
+      
+      // ניסיון שני: פורמט מוכר או זיהוי לפי תוכן (רק אם לא היה נתיב כותרות)
+      const contentCols = detectKnownFormat(data) || detectColumnsByContent(data);
+      if (contentCols) {
+        console.log('✅ Using detected columns (known format or content)');
+        let text = `דוח הוצאות - ${cardName}\n`;
+        text += '='.repeat(50) + '\n';
+        text += 'הסכומים הם חודשיים\n';
+        text += '='.repeat(50) + '\n';
+        let processedCount = 0;
+        for (const row of data) {
+          if (!row || row.length === 0) continue;
+          const description = row[contentCols.description];
+          const amount = row[contentCols.amount];
+          if (description && String(description).includes('סה"כ')) continue;
+          if (description && amount !== null && amount !== undefined) {
+            const numAmount = typeof amount === 'number' ? amount : parseFloat(String(amount).replace(/,/g, ''));
+            if (!isNaN(numAmount) && numAmount !== 0) {
+              text += `${description} | ${numAmount}\n`;
+              processedCount++;
             }
           }
         }
-        
-        if (!description || amount === null || amount === undefined) continue;
-        
-        // נרמול סכום (כולל פורמט (X) = החזר) וכפיית שלילי לפי הערות או עמודת זיכוי
-        let amountNum = parseAmount(amount);
-        if (isNaN(amountNum)) amountNum = 0;
-        const notesStr = String(notes || '').trim();
-        if (columns.creditAmount !== -1 && row[columns.creditAmount] !== undefined && row[columns.creditAmount] !== null && row[columns.creditAmount] !== '') {
-          const creditVal = parseAmount(row[columns.creditAmount]);
-          if (!isNaN(creditVal) && creditVal !== 0) amountNum = -Math.abs(creditVal);
+        if (processedCount > 0) {
+          console.log(`✅ Processed ${processedCount} rows with content detection`);
+          console.log('📝 Text sample:', text.substring(0, 500));
+          return text;
         }
-        if (notesStr && (notesStr.includes('ביטול עסקה') || notesStr.includes('זיכוי'))) {
-          amountNum = -Math.abs(amountNum);
-        }
-        
-        // ספירת סכומים אפסיים לדיבאג
-        if (amountNum === 0) {
-          zeroAmountCount++;
-          console.log(`⚠️ Zero amount for: ${description}, row:`, row);
-        }
-        
-        // חלץ מידע על תשלומים: קודם מהערות, אחר כך מתיאור (דוח מיפוי)
-        let installment = extractInstallmentInfoFromNotes(notes);
-        if (!installment) {
-          const parsed = parseInstallment(String(description), amountNum);
-          if (parsed.isInstallment) {
-            installment = { current: parsed.installment_current, total: parsed.installment_total };
-          }
-        }
-        let installmentNote = '';
-        if (installment) {
-          installmentNote = ` (תשלום ${installment.current}/${installment.total})`;
-        }
-        
-        // הוסף את הענף אם קיים והערות כדי שה-AI יזהה החזרים
-        const category = columns.category !== -1 ? row[columns.category] : '';
-        const categoryNote = category ? ` [${category}]` : '';
-        const notesNote = notesStr ? ` | הערות: ${notesStr}` : '';
-        
-        text += `${description} | ${amountNum}${installmentNote}${categoryNote}${notesNote}\n`;
-        processedCount++;
       }
-      
-      console.log(`✅ Processed ${processedCount} rows, skipped ${skippedCount} installment purchase rows, ${zeroAmountCount} zero amounts`);
-      
-      // אם יותר מדי סכומים אפסיים - כנראה יש בעיה בזיהוי העמודות
-      if (zeroAmountCount > processedCount * 0.5 && processedCount > 5) {
-        console.log('⚠️ Too many zero amounts, something is wrong with column detection. Using old formatter.');
-        return oldFormatDataForAI(data, cardName);
-      }
-      
-      // אם לא עובדו שורות - חזור לפונקציה הישנה
-      if (processedCount === 0) {
-        console.log('⚠️ No rows processed by smart parser, falling back to old formatter');
-        return oldFormatDataForAI(data, cardName);
-      }
-      
-      console.log('📝 Text preview (first 500 chars):', text.substring(0, 500));
-      return text;
+      console.log('⚠️ Could not detect columns or no header, using old formatter');
+      return oldFormatDataForAI(data, cardName);
     }
 
     function formatBankDataForAI(data) {

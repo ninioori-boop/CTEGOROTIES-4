@@ -1,0 +1,14 @@
+דחיפה ל-GitHub – רק מהנתיב הקצר (בלי עברית)
+=============================================
+
+1. פתח CMD או Git Bash (לא הטרמינל של Cursor – שם Git לא ב-PATH).
+
+2. עבור לנתיב הקצר:
+   cd /d C:\Users\ninio\OneDrive\B7A3~1\CTEGOROTIES-4-main
+
+3. הרץ:
+   push-short-path.bat
+
+   (או בלחיצה כפולה על push-short-path.bat מתוך התיקייה בנתיב הקצר.)
+
+הקובץ push-short-path.bat משתמש רק בנתיב B7A3~1 (לא בנתיב בעברית).
