@@ -1382,15 +1382,19 @@
       const sourceLines = parseSentTextToLines(sentText);
       console.log(`🔗 mergeDescriptions: ${expenses.length} expenses, ${sourceLines.length} source lines`);
       if (!sourceLines.length) return expenses;
-      const used = {};
 
-      // בדוק אם תיאור מופיע בטקסט שנשלח (= שם חנות אמיתי מהאקסל)
-      function descExistsInSource(desc) {
+      // בנה סט של שמות בתי עסק אמיתיים (רק מה שפורסר כתיאור, לא קטגוריות/הערות)
+      const realDescriptions = new Set();
+      sourceLines.forEach(function(sl) { realDescriptions.add(sl.description); });
+
+      // בדוק אם תיאור הוא שם בית עסק אמיתי (ולא קטגוריה שה-AI המציא)
+      function isRealDescription(desc) {
         if (!desc) return false;
-        return sentText.includes(desc);
+        return realDescriptions.has(desc);
       }
 
-      // סבב 1: התאמה לפי סכום – סף רחב (10% או 10 ש"ח)
+      // סבב 1: התאמה לפי סכום – לכל expense, חפש שורת מקור עם סכום תואם
+      const used = {};
       expenses.forEach(function(exp, idx) {
         const amount = typeof exp.amount === 'number' ? exp.amount : parseFloat(exp.amount);
         if (isNaN(amount)) return;
@@ -1420,13 +1424,13 @@
         }
       });
 
-      // סבב 2: כל תיאור שלא מופיע בטקסט המקורי = ה-AI המציא אותו – להחליף
+      // סבב 2: כל תיאור שאינו שם בית עסק מהמקור = ה-AI המציא אותו – להחליף
       let unusedSrc = [];
       for (let i = 0; i < sourceLines.length; i++) { if (!used[i]) unusedSrc.push(i); }
       let ui = 0;
       expenses.forEach(function(exp) {
         const desc = String(exp.description || '');
-        if (!descExistsInSource(desc) && ui < unusedSrc.length) {
+        if (!isRealDescription(desc) && ui < unusedSrc.length) {
           console.log(`🔄 Replacing AI description "${desc}" with source "${sourceLines[unusedSrc[ui]].description}"`);
           exp.description = sourceLines[unusedSrc[ui]].description;
           ui++;
