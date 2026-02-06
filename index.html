@@ -1384,27 +1384,27 @@
       if (!sourceLines.length) return expenses;
       const used = {};
 
-      // סבב 1: התאמה לפי אינדקס (סדר זהה) עם סף רחב (5% או 5 ש"ח)
-      expenses.forEach(function(exp, idx) {
-        if (idx >= sourceLines.length || used[idx]) return;
-        const amount = typeof exp.amount === 'number' ? exp.amount : parseFloat(exp.amount);
-        if (isNaN(amount)) return;
-        const src = sourceLines[idx].amount;
-        const diff = Math.abs(src - amount);
-        const pct = Math.abs(src) > 0 ? diff / Math.abs(src) : diff;
-        if (diff < 5 || pct < 0.05) {
-          exp.description = sourceLines[idx].description;
-          used[idx] = true;
-        }
-      });
+      // בדוק אם תיאור מופיע בטקסט שנשלח (= שם חנות אמיתי מהאקסל)
+      function descExistsInSource(desc) {
+        if (!desc) return false;
+        return sentText.includes(desc);
+      }
 
-      // סבב 2: התאמה לפי סכום (סף 5% או 5 ש"ח) – לאלה שלא הותאמו בסבב 1
-      expenses.forEach(function(exp) {
-        if (exp._merged) return;
+      // סבב 1: התאמה לפי סכום – סף רחב (10% או 10 ש"ח)
+      expenses.forEach(function(exp, idx) {
         const amount = typeof exp.amount === 'number' ? exp.amount : parseFloat(exp.amount);
         if (isNaN(amount)) return;
-        // בדוק אם כבר הותאם
-        for (var k in used) { if (used[k] && sourceLines[k].description === exp.description) { exp._merged = true; return; } }
+        // קודם נסה אותו אינדקס
+        if (idx < sourceLines.length && !used[idx]) {
+          const diff = Math.abs(sourceLines[idx].amount - amount);
+          const pct = Math.abs(sourceLines[idx].amount) > 0 ? diff / Math.abs(sourceLines[idx].amount) : diff;
+          if (diff < 10 || pct < 0.1) {
+            exp.description = sourceLines[idx].description;
+            used[idx] = true;
+            return;
+          }
+        }
+        // אחרת חפש הכי קרוב
         let bestIdx = -1, bestDiff = Infinity;
         for (let i = 0; i < sourceLines.length; i++) {
           if (used[i]) continue;
@@ -1413,29 +1413,26 @@
         }
         if (bestIdx !== -1) {
           const pct = Math.abs(sourceLines[bestIdx].amount) > 0 ? bestDiff / Math.abs(sourceLines[bestIdx].amount) : bestDiff;
-          if (bestDiff < 5 || pct < 0.05) {
+          if (bestDiff < 10 || pct < 0.1) {
             exp.description = sourceLines[bestIdx].description;
             used[bestIdx] = true;
           }
         }
       });
 
-      // סבב 3: כל מה שנשאר ללא התאמה – אם יש שורות מקור לא משומשות, התאם לפי סדר
+      // סבב 2: כל תיאור שלא מופיע בטקסט המקורי = ה-AI המציא אותו – להחליף
       let unusedSrc = [];
       for (let i = 0; i < sourceLines.length; i++) { if (!used[i]) unusedSrc.push(i); }
       let ui = 0;
       expenses.forEach(function(exp) {
-        // אם התיאור כבר שם בית עסק מוכר (מכיל אותיות לטיניות או יותר מ-3 מילים) – לא מחליפים
         const desc = String(exp.description || '');
-        const isGeneric = /^(אופנה|מזון|בריאות|ביטוח|תחבורה|שונות|פארם|דלק|תקשורת|בילוי|ספורט|טכנולוגיה|מסעדה|קפה|סופר)/i.test(desc);
-        if (isGeneric && ui < unusedSrc.length) {
+        if (!descExistsInSource(desc) && ui < unusedSrc.length) {
+          console.log(`🔄 Replacing AI description "${desc}" with source "${sourceLines[unusedSrc[ui]].description}"`);
           exp.description = sourceLines[unusedSrc[ui]].description;
           ui++;
         }
       });
 
-      // ניקוי שדה עזר
-      expenses.forEach(function(exp) { delete exp._merged; });
       return expenses;
     }
 
