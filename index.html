@@ -1352,6 +1352,62 @@
       return expense;
     }
 
+    // חילוץ תיאור + סכום מהטקסט שנשלח ל-AI (מקור האקסל) כדי להבטיח ששם בית העסק יופיע בדוח
+    function parseSentTextToLines(text) {
+      const lines = [];
+      text.split('\n').forEach(function(line) {
+        line = line.trim();
+        if (!line || line.includes('דוח הוצאות') || line.includes('===') || line.includes('הסכומים הם')) return;
+        const parts = line.split(/\s\|\s/);
+        if (parts.length < 2) return;
+        // מצא את החלק הראשון שמתחיל במספר – זה הסכום; כל מה שלפניו הוא התיאור
+        for (let i = 1; i < parts.length; i++) {
+          const numMatch = parts[i].match(/^(-?\d+(?:\.\d+)?)/);
+          if (numMatch) {
+            const amount = parseFloat(numMatch[1]);
+            if (!isNaN(amount)) {
+              const description = parts.slice(0, i).join(' | ')
+                .replace(/\s*\(\s*תשלום\s+\d+.*$/, '').replace(/\s*\[.*\]\s*$/, '').trim();
+              if (description) lines.push({ description: description, amount: amount });
+            }
+            break;
+          }
+        }
+      });
+      return lines;
+    }
+
+    // מיזוג תיאורים מהמקור (אקסל) לתשובת ה-AI – כך ששם בית העסק תמיד מהאקסל
+    function mergeDescriptionsFromSource(expenses, sentText) {
+      const sourceLines = parseSentTextToLines(sentText);
+      if (!sourceLines.length) return expenses;
+      const used = {};
+      expenses.forEach(function(exp, idx) {
+        const amount = typeof exp.amount === 'number' ? exp.amount : parseFloat(exp.amount);
+        if (isNaN(amount)) return;
+        // קודם נסה לפי אותו אינדקס (סדר זהה)
+        if (idx < sourceLines.length && !used[idx]) {
+          const diff = Math.abs(sourceLines[idx].amount - amount);
+          if (diff < 0.02) {
+            exp.description = sourceLines[idx].description;
+            used[idx] = true;
+            return;
+          }
+        }
+        // אחרת חפש שורה עם אותו סכום
+        for (let i = 0; i < sourceLines.length; i++) {
+          if (used[i]) continue;
+          const diff = Math.abs(sourceLines[i].amount - amount);
+          if (diff < 0.02) {
+            exp.description = sourceLines[i].description;
+            used[i] = true;
+            break;
+          }
+        }
+      });
+      return expenses;
+    }
+
     // עיבוד אחרי AI
     function postProcessCategories(expenses) {
       // #region agent log
@@ -2134,7 +2190,8 @@
           }
 
         const data = await response.json();
-          
+          // שמירת שמות החנויות מהאקסל (הטקסט שנשלח) – כך שהדוח יציג תמיד את שם בית העסק
+          mergeDescriptionsFromSource(data.expenses || [], text);
           // עיבוד אחרי AI
           const processedExpenses = postProcessCategories(data.expenses || []);
           
