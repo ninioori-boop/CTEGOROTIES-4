@@ -1352,7 +1352,7 @@
       return expense;
     }
 
-    // חילוץ תיאור + סכום מהטקסט שנשלח ל-AI (מקור האקסל) כדי להבטיח ששם בית העסק יופיע בדוח
+    // חילוץ תיאור + סכום + מידע תשלומים מהטקסט שנשלח ל-AI (מקור האקסל) כדי להבטיח ששם בית העסק יופיע בדוח
     function parseSentTextToLines(text) {
       const lines = [];
       text.split('\n').forEach(function(line) {
@@ -1366,9 +1366,24 @@
           if (numMatch) {
             const amount = parseFloat(numMatch[1]);
             if (!isNaN(amount)) {
-              const description = parts.slice(0, i).join(' | ')
+              const rawDesc = parts.slice(0, i).join(' | ');
+              // חלץ מידע תשלומים מהתיאור לפני ניקוי (תשלום X/Y)
+              let installment = null;
+              const instMatch = rawDesc.match(/\(\s*תשלום\s+(\d+)\s*[\/\-]\s*(\d+)\s*\)/);
+              if (instMatch) {
+                installment = { current: parseInt(instMatch[1]), total: parseInt(instMatch[2]) };
+              }
+              // גם מההערות בסוף השורה
+              if (!installment) {
+                const fullLine = parts.join(' | ');
+                const notesMatch = fullLine.match(/הערות:\s*תשלום\s*(\d+)\s*מתוך\s*(\d+)/);
+                if (notesMatch) {
+                  installment = { current: parseInt(notesMatch[1]), total: parseInt(notesMatch[2]) };
+                }
+              }
+              const description = rawDesc
                 .replace(/\s*\(\s*תשלום\s+\d+.*$/, '').replace(/\s*\[.*\]\s*$/, '').trim();
-              if (description) lines.push({ description: description, amount: amount });
+              if (description) lines.push({ description: description, amount: amount, installment: installment });
             }
             break;
           }
@@ -1377,7 +1392,7 @@
       return lines;
     }
 
-    // מיזוג תיאורים מהמקור (אקסל) לתשובת ה-AI – כך ששם בית העסק תמיד מהאקסל
+    // מיזוג תיאורים + מידע תשלומים מהמקור (אקסל) לתשובת ה-AI – כך ששם בית העסק תמיד מהאקסל
     function mergeDescriptionsFromSource(expenses, sentText) {
       const sourceLines = parseSentTextToLines(sentText);
       console.log(`🔗 mergeDescriptions: ${expenses.length} expenses, ${sourceLines.length} source lines`);
@@ -1393,6 +1408,15 @@
         return realDescriptions.has(desc);
       }
 
+      // פונקציית עזר: העתק מידע תשלומים מהמקור ל-expense (תצוגה בלבד — לא משנה סכומים!)
+      function applyInstallmentFromSource(exp, srcLine) {
+        if (srcLine.installment && srcLine.installment.current && srcLine.installment.total) {
+          exp.display_note = `עסקה בתשלומים ${srcLine.installment.current}/${srcLine.installment.total}`;
+          exp.installment_info = srcLine.installment;
+          console.log(`💳 סימון תשלומים מהמקור: "${exp.description}" → ${srcLine.installment.current}/${srcLine.installment.total}`);
+        }
+      }
+
       // סבב 1: התאמה לפי סכום – לכל expense, חפש שורת מקור עם סכום תואם
       const used = {};
       expenses.forEach(function(exp, idx) {
@@ -1404,6 +1428,7 @@
           const pct = Math.abs(sourceLines[idx].amount) > 0 ? diff / Math.abs(sourceLines[idx].amount) : diff;
           if (diff < 10 || pct < 0.1) {
             exp.description = sourceLines[idx].description;
+            applyInstallmentFromSource(exp, sourceLines[idx]);
             used[idx] = true;
             return;
           }
@@ -1419,6 +1444,7 @@
           const pct = Math.abs(sourceLines[bestIdx].amount) > 0 ? bestDiff / Math.abs(sourceLines[bestIdx].amount) : bestDiff;
           if (bestDiff < 10 || pct < 0.1) {
             exp.description = sourceLines[bestIdx].description;
+            applyInstallmentFromSource(exp, sourceLines[bestIdx]);
             used[bestIdx] = true;
           }
         }
@@ -1433,6 +1459,7 @@
         if (!isRealDescription(desc) && ui < unusedSrc.length) {
           console.log(`🔄 Replacing AI description "${desc}" with source "${sourceLines[unusedSrc[ui]].description}"`);
           exp.description = sourceLines[unusedSrc[ui]].description;
+          applyInstallmentFromSource(exp, sourceLines[unusedSrc[ui]]);
           ui++;
         }
       });
@@ -1708,9 +1735,12 @@
     function extractInstallmentInfoFromNotes(notes) {
       if (!notes) return null;
       const notesStr = String(notes).trim();
+      if (!notesStr) return null;
       
-      // "תשלום X מתוך Y"
-      let m = notesStr.match(/תשלום\s*(\d+)\s*מתוך\s*(\d+)/);
+      let m;
+      
+      // "תשלום X מתוך Y" / "תשלומים X מתוך Y"
+      m = notesStr.match(/תשלומ?י?ם?\s*(\d+)\s*מתוך\s*(\d+)/);
       if (m) return { current: parseInt(m[1]), total: parseInt(m[2]) };
       
       // "חלק X מתוך Y"
@@ -1718,20 +1748,32 @@
       if (m) return { current: parseInt(m[1]), total: parseInt(m[2]) };
       
       // "X מתוך Y תשלומים"
-      m = notesStr.match(/(\d+)\s*מתוך\s*(\d+)\s*תשלומים/);
+      m = notesStr.match(/(\d+)\s*מתוך\s*(\d+)\s*תשלומ/);
       if (m) return { current: parseInt(m[1]), total: parseInt(m[2]) };
       
-      // "תשלום X/Y" או "X/Y" (בהערות)
-      m = notesStr.match(/תשלום\s*(\d+)\s*[\/\-]\s*(\d+)/i) || notesStr.match(/(\d+)\s*[\/\-]\s*(\d+)\s*תשלום/);
+      // "תשלום X/Y" או "תשלומים X/Y" או "X/Y תשלום"
+      m = notesStr.match(/תשלומ?י?ם?\s*(\d+)\s*[\/\-]\s*(\d+)/i) || notesStr.match(/(\d+)\s*[\/\-]\s*(\d+)\s*תשלומ/);
+      if (m) return { current: parseInt(m[1]), total: parseInt(m[2]) };
+      
+      // "מס' תשלום X מתוך Y" / "מספר תשלום X מתוך Y"
+      m = notesStr.match(/מס[פ']?\s*תשלום\s*(\d+)\s*מתוך\s*(\d+)/);
       if (m) return { current: parseInt(m[1]), total: parseInt(m[2]) };
       
       // "הסכום יחולק ל-X תשלומים" או "ל-X תשלומים"
-      m = notesStr.match(/יחולק\s*ל[־-]?\s*(\d+)\s*תשלומים/) || notesStr.match(/ל[־-]?\s*(\d+)\s*תשלומים/);
+      m = notesStr.match(/יחולק\s*ל[־-]?\s*(\d+)\s*תשלומ/) || notesStr.match(/ל[־-]?\s*(\d+)\s*תשלומ/);
       if (m) return { current: 1, total: parseInt(m[1]) };
       
-      // "פריסה ל-X תשלומים"
-      m = notesStr.match(/פריסה\s*ל[־-]?\s*(\d+)\s*תשלומים/i);
+      // "פריסה ל-X תשלומים" / "פריסה X/Y"
+      m = notesStr.match(/פריסה\s*ל[־-]?\s*(\d+)\s*תשלומ/i) || notesStr.match(/פריסה\s*(\d+)\s*[\/\-]\s*(\d+)/i);
+      if (m && m[2]) return { current: parseInt(m[1]), total: parseInt(m[2]) };
       if (m) return { current: 1, total: parseInt(m[1]) };
+      
+      // "X מתוך Y" (גנרי — אבל רק אם שניהם סבירים כתשלום)
+      m = notesStr.match(/^(\d+)\s*מתוך\s*(\d+)$/);
+      if (m) {
+        const c = parseInt(m[1]), t = parseInt(m[2]);
+        if (c > 0 && t > 1 && t <= 60 && c <= t) return { current: c, total: t };
+      }
       
       return null;
     }

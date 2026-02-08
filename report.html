@@ -316,6 +316,14 @@
       font-size: 0.7rem;
       padding: 0.15rem 0.4rem;
       border-radius: 10px;
+    }
+
+    .installment-badge {
+      background: #fef3c7;
+      color: #92400e;
+      font-size: 0.7rem;
+      padding: 0.15rem 0.4rem;
+      border-radius: 10px;
       margin-right: 0.5rem;
     }
 
@@ -770,15 +778,14 @@
       const cardsHTML = sortedCategories.map(([category, data]) => {
         const icon = CATEGORY_ICONS[category] || '📦';
         const itemsHTML = data.items.map(item => {
-          const note = item.display_note ? `<span class="expense-note">(${item.display_note})</span>` : '';
           const refundBadge = item.isRefund ? `<span class="refund-badge">החזר</span>` : '';
           const standingOrderBadge = item.isStandingOrder ? `<span class="standing-order-badge">הוראת קבע</span>` : '';
+          const installmentBadge = item.installment_info ? `<span class="installment-badge">${item.display_note || 'תשלומים'}</span>` : '';
           const refundClass = item.isRefund ? ' refund' : '';
-          const installmentMarker = item.installment_info ? '*' : '';
           return `
           <div class="expense-item">
-              <span class="expense-name">${refundBadge}${standingOrderBadge}${item.description}${note}</span>
-            <span class="expense-amount${refundClass}">${item.amount.toLocaleString('he-IL', { maximumFractionDigits: 2 })}${installmentMarker} ₪</span>
+              <span class="expense-name">${refundBadge}${standingOrderBadge}${installmentBadge}${item.description}</span>
+            <span class="expense-amount${refundClass}">${item.amount.toLocaleString('he-IL', { maximumFractionDigits: 2 })} ₪</span>
           </div>
           `;
         }).join('');
@@ -877,6 +884,7 @@
     .refund { color: #38a169; }
     .refund-badge { background: #c6f6d5; color: #276749; font-size: 0.7rem; padding: 0.1rem 0.3rem; border-radius: 8px; margin-left: 0.3rem; }
     .standing-order-badge { background: #e0e7ff; color: #3730a3; font-size: 0.7rem; padding: 0.1rem 0.3rem; border-radius: 8px; margin-left: 0.3rem; }
+    .installment-badge { background: #fef3c7; color: #92400e; font-size: 0.7rem; padding: 0.1rem 0.3rem; border-radius: 8px; margin-left: 0.3rem; }
   </style>
 </head>
 <body>
@@ -916,10 +924,9 @@
           const itemsHTML = data.items.map(item => {
             const refundBadge = item.isRefund ? `<span class="refund-badge">החזר</span>` : '';
             const standingOrderBadge = item.isStandingOrder ? `<span class="standing-order-badge">הוראת קבע</span>` : '';
+            const installmentBadge = item.installment_info ? `<span class="installment-badge">${item.display_note || 'תשלומים'}</span>` : '';
             const refundClass = item.isRefund ? ' class="refund"' : '';
-            const installmentMarker = item.installment_info ? '*' : '';
-            const noteText = item.display_note ? ` (${item.display_note})` : '';
-            return `<div class="expense"><span>${refundBadge}${standingOrderBadge}${item.description}${noteText}</span><span${refundClass}>${item.amount.toLocaleString('he-IL', { maximumFractionDigits: 2 })}${installmentMarker} ₪</span></div>`;
+            return `<div class="expense"><span>${refundBadge}${standingOrderBadge}${installmentBadge}${item.description}</span><span${refundClass}>${item.amount.toLocaleString('he-IL', { maximumFractionDigits: 2 })} ₪</span></div>`;
           }).join('');
           
           return `
