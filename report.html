@@ -532,8 +532,7 @@
     <div class="actions">
       <button class="btn btn-primary" onclick="window.print()">🖨️ הדפס דוח</button>
       <button class="btn btn-primary" onclick="exportToExcel()">📥 ייצא לאקסל</button>
-      <button class="btn btn-green" onclick="downloadClientReport()">📤 הורד דוח ללקוח</button>
-      <button class="btn btn-secondary" onclick="shareReport()">🔗 שתף קישור</button>
+      <button class="btn btn-green" onclick="downloadAsPdf()">📄 הורד כ-PDF</button>
       <button class="btn btn-secondary" onclick="window.location.href='index.html'">📤 העלה דוח חדש</button>
     </div>
 
@@ -839,106 +838,8 @@
       link.click();
     }
 
-    function shareReport() {
-      const data = encodeURIComponent(JSON.stringify(reportData));
-      const url = window.location.origin + '/report.html?data=' + data;
-      
-      if (navigator.clipboard) {
-        navigator.clipboard.writeText(url).then(() => {
-          alert('הקישור הועתק! 📋');
-        });
-      } else {
-        prompt('העתק את הקישור:', url);
-      }
-    }
-
-    function downloadClientReport() {
-      const expenses = getAllExpenses();
-      const total = expenses.reduce((sum, e) => sum + e.amount, 0);
-      const now = new Date();
-      
-      // יצירת HTML עצמאי
-      const html = `<!DOCTYPE html>
-<html lang="he" dir="rtl">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>דוח הוצאות - ${now.toLocaleDateString('he-IL')}</title>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@400;600;700&display=swap');
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Heebo', sans-serif; background: #f7fafc; padding: 2rem; }
-    .container { max-width: 900px; margin: 0 auto; }
-    h1 { text-align: center; color: #1a365d; margin-bottom: 1rem; }
-    .date { text-align: center; color: #718096; margin-bottom: 2rem; }
-    .total { background: linear-gradient(135deg, #d69e2e, #b7791f); color: white; padding: 2rem; border-radius: 15px; text-align: center; margin-bottom: 2rem; }
-    .total-amount { font-size: 3rem; font-weight: 700; }
-    .total-count { opacity: 0.9; }
-    .categories { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; }
-    .category { background: white; border-radius: 12px; padding: 1.5rem; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-    .category-header { display: flex; justify-content: space-between; border-bottom: 2px solid #f7fafc; padding-bottom: 1rem; margin-bottom: 1rem; }
-    .category-name { font-weight: 600; color: #1a365d; }
-    .category-total { font-weight: 700; color: #3182ce; }
-    .expense { display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px dashed #e2e8f0; }
-    .expense:last-child { border-bottom: none; }
-    .refund { color: #38a169; }
-    .refund-badge { background: #c6f6d5; color: #276749; font-size: 0.7rem; padding: 0.1rem 0.3rem; border-radius: 8px; margin-left: 0.3rem; }
-    .standing-order-badge { background: #e0e7ff; color: #3730a3; font-size: 0.7rem; padding: 0.1rem 0.3rem; border-radius: 8px; margin-left: 0.3rem; }
-    .installment-badge { background: #fef3c7; color: #92400e; font-size: 0.7rem; padding: 0.1rem 0.3rem; border-radius: 8px; margin-left: 0.3rem; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <h1>📊 דוח מיפוי הוצאות</h1>
-    <div class="date">נוצר בתאריך: ${now.toLocaleDateString('he-IL')}</div>
-    <div class="total">
-      <div class="total-amount">${total.toLocaleString('he-IL', { maximumFractionDigits: 0 })} ₪</div>
-      <div class="total-count">${expenses.length} הוצאות</div>
-    </div>
-    <div class="categories">
-      ${generateCategoriesHTML(expenses)}
-    </div>
-  </div>
-</body>
-</html>`;
-
-      const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = 'דוח_הוצאות_' + now.toLocaleDateString('he-IL').replace(/\./g, '-') + '.html';
-      link.click();
-    }
-
-    function generateCategoriesHTML(expenses) {
-      const grouped = {};
-      expenses.forEach(expense => {
-        const cat = expense.category || 'שונות';
-        if (!grouped[cat]) grouped[cat] = { items: [], total: 0 };
-        grouped[cat].items.push(expense);
-        grouped[cat].total += expense.amount;
-      });
-
-      return Object.entries(grouped)
-        .sort((a, b) => b[1].total - a[1].total)
-        .map(([category, data]) => {
-          const itemsHTML = data.items.map(item => {
-            const refundBadge = item.isRefund ? `<span class="refund-badge">החזר</span>` : '';
-            const standingOrderBadge = item.isStandingOrder ? `<span class="standing-order-badge">הוראת קבע</span>` : '';
-            const installmentBadge = item.installment_info ? `<span class="installment-badge">${item.display_note || 'תשלומים'}</span>` : '';
-            const refundClass = item.isRefund ? ' class="refund"' : '';
-            return `<div class="expense"><span>${refundBadge}${standingOrderBadge}${installmentBadge}${item.description}</span><span${refundClass}>${item.amount.toLocaleString('he-IL', { maximumFractionDigits: 2 })} ₪</span></div>`;
-          }).join('');
-          
-          return `
-            <div class="category">
-              <div class="category-header">
-                <span class="category-name">${category}</span>
-                <span class="category-total">${data.total.toLocaleString('he-IL', { maximumFractionDigits: 0 })} ₪</span>
-              </div>
-              ${itemsHTML}
-            </div>
-          `;
-        }).join('');
+    function downloadAsPdf() {
+      window.print();
     }
 
     // בדיקה אם יש data ב-URL
