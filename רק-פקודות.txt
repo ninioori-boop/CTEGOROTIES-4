@@ -1,4 +1,4 @@
-cd "c:\Users\ninio\OneDrive\הכלכלן של הבית\CTEGOROTIES-4-main"
-git remote remove origin
-git remote add origin https://github.com/ninioori-boop/CTEGOROTIES-4.git
-git push -u origin main
+cd /d "C:\Users\ninio\OneDrive\B7A3~1\CTEGOROTIES-4-main"
+git add .
+git commit -m "נתוני דוח חד-פעמיים - sessionStorage בלי שמירה בדפדפן"
+git push origin main

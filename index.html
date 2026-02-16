@@ -2409,7 +2409,7 @@
         }
 
         // שמירה ומעבר לדוח
-        localStorage.setItem('expenseResults', JSON.stringify(allResults));
+        sessionStorage.setItem('expenseResults', JSON.stringify(allResults));
         window.location.href = 'report.html';
 
       } catch (error) {

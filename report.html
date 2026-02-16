@@ -585,8 +585,8 @@
     let currentCard = 'all';
 
     document.addEventListener('DOMContentLoaded', () => {
-      // קבלת הנתונים מ-localStorage
-      const data = localStorage.getItem('expenseResults');
+      // קבלת הנתונים מ-sessionStorage
+      const data = sessionStorage.getItem('expenseResults');
       
       if (!data) {
         alert('לא נמצאו נתונים. מעביר לעמוד ההעלאה...');
@@ -946,7 +946,6 @@
     if (urlParams.has('data')) {
       try {
         reportData = JSON.parse(decodeURIComponent(urlParams.get('data')));
-        localStorage.setItem('expenseResults', JSON.stringify(reportData));
       } catch (e) {
         console.error('Error parsing URL data:', e);
       }
