@@ -416,6 +416,14 @@
       display: flex;
       align-items: center;
       gap: 1rem;
+      padding: 0.4rem 0.6rem;
+      border-radius: 12px;
+      transition: background 0.2s;
+    }
+
+    .bar-item.drop-target {
+      background: rgba(49, 130, 206, 0.15);
+      box-shadow: inset 0 0 0 2px var(--accent);
     }
 
     .bar-label {
@@ -786,8 +794,18 @@
       });
     });
 
+    function handleExpenseDrop(index, targetCategory) {
+      const expenses = getExpensesForCard(currentCard);
+      const expense = expenses[index];
+      if (!expense || expense.category === targetCategory) return;
+      expense.category = targetCategory;
+      saveReportData();
+      renderExpenses(currentCard);
+    }
+
     function setupDragAndDrop() {
       const grid = document.getElementById('categoriesGrid');
+      const barChart = document.getElementById('barChart');
       if (!grid) return;
 
       grid.addEventListener('dragstart', (e) => {
@@ -802,6 +820,7 @@
       grid.addEventListener('dragend', (e) => {
         document.querySelectorAll('.expense-item.dragging').forEach(el => el.classList.remove('dragging'));
         document.querySelectorAll('.category-card.drop-target').forEach(el => el.classList.remove('drop-target'));
+        document.querySelectorAll('.bar-item.drop-target').forEach(el => el.classList.remove('drop-target'));
       });
 
       grid.addEventListener('dragover', (e) => {
@@ -810,6 +829,7 @@
         e.preventDefault();
         e.dataTransfer.dropEffect = 'move';
         document.querySelectorAll('.category-card.drop-target').forEach(el => el.classList.remove('drop-target'));
+        document.querySelectorAll('.bar-item.drop-target').forEach(el => el.classList.remove('drop-target'));
         card.classList.add('drop-target');
       });
 
@@ -827,17 +847,43 @@
         card.classList.remove('drop-target');
         try {
           const { index } = JSON.parse(e.dataTransfer.getData('text/plain'));
-          const targetCategory = card.dataset.category;
-          const expenses = getExpensesForCard(currentCard);
-          const expense = expenses[index];
-          if (!expense || expense.category === targetCategory) return;
-          expense.category = targetCategory;
-          saveReportData();
-          renderExpenses(currentCard);
+          handleExpenseDrop(index, card.dataset.category);
         } catch (err) {
           console.error('Drop error:', err);
         }
       });
+
+      if (barChart) {
+        barChart.addEventListener('dragover', (e) => {
+          const bar = e.target.closest('.bar-item');
+          if (!bar) return;
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'move';
+          document.querySelectorAll('.category-card.drop-target').forEach(el => el.classList.remove('drop-target'));
+          document.querySelectorAll('.bar-item.drop-target').forEach(el => el.classList.remove('drop-target'));
+          bar.classList.add('drop-target');
+        });
+
+        barChart.addEventListener('dragleave', (e) => {
+          const bar = e.target.closest('.bar-item');
+          if (!bar) return;
+          if (bar.contains(e.relatedTarget)) return;
+          bar.classList.remove('drop-target');
+        });
+
+        barChart.addEventListener('drop', (e) => {
+          e.preventDefault();
+          const bar = e.target.closest('.bar-item');
+          if (!bar) return;
+          bar.classList.remove('drop-target');
+          try {
+            const { index } = JSON.parse(e.dataTransfer.getData('text/plain'));
+            handleExpenseDrop(index, bar.dataset.category);
+          } catch (err) {
+            console.error('Drop error:', err);
+          }
+        });
+      }
     }
 
     function renderCardsSummary() {
@@ -1086,8 +1132,9 @@
       const barChartHTML = sortedCategories.slice(0, 10).map(([category, data]) => {
         const percentage = (data.total / maxAmount) * 100;
         const icon = CATEGORY_ICONS[category] || '📦';
+        const safeCategory = category.replace(/"/g, '&quot;');
         return `
-          <div class="bar-item">
+          <div class="bar-item" data-category="${safeCategory}">
             <div class="bar-label">${icon} ${category}</div>
             <div class="bar-container">
               <div class="bar-fill" style="width: ${percentage}%"></div>
