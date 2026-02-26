@@ -1,7 +1,0 @@
-@echo off
-chcp 65001 >nul
-cd /d "%~dp0"
-git add .
-git commit -m "קודם נתיב כותרות אחר כך תוכן - החזרים נכונים בדוח"
-git push origin main
-pause

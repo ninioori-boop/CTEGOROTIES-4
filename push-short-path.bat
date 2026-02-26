@@ -1,7 +1,0 @@
-@echo off
-chcp 65001 >nul
-cd /d "C:\Users\ninio\OneDrive\B7A3~1\CTEGOROTIES-4-main"
-git add .
-git commit -m "נתוני דוח חד-פעמיים - sessionStorage בלי שמירה בדפדפן"
-git push origin main
-pause

@@ -274,25 +274,10 @@
       align-items: center;
       padding: 0.6rem 0;
       border-bottom: 1px dashed #e2e8f0;
-      cursor: grab;
-      user-select: none;
-    }
-
-    .expense-item:active {
-      cursor: grabbing;
-    }
-
-    .expense-item.dragging {
-      opacity: 0.4;
     }
 
     .expense-item:last-child {
       border-bottom: none;
-    }
-
-    .category-card.drop-target {
-      border-right-color: var(--gold);
-      box-shadow: 0 0 0 3px rgba(214, 158, 46, 0.4);
     }
 
     .expense-name {
@@ -471,10 +456,6 @@
         display: none;
       }
       
-      .drag-hint {
-        display: none;
-      }
-      
       .category-card {
         break-inside: avoid;
       }
@@ -545,7 +526,6 @@
 
     <!-- Categories Grid -->
     <h2 class="categories-title">פירוט לפי קטגוריות</h2>
-    <p class="report-legend drag-hint" style="margin-bottom: 1rem;">גרור פריט בין קטגוריות כדי לעדכן את המיון</p>
     <div class="categories-grid" id="categoriesGrid"></div>
 
     <!-- Actions -->
@@ -623,62 +603,7 @@
 
       renderCardsSummary();
       renderExpenses('all');
-      setupDragAndDrop();
     });
-
-    function setupDragAndDrop() {
-      const grid = document.getElementById('categoriesGrid');
-      if (!grid) return;
-
-      grid.addEventListener('dragstart', (e) => {
-        const item = e.target.closest('.expense-item');
-        if (!item) return;
-        const index = item.dataset.expenseIndex;
-        e.dataTransfer.setData('text/plain', JSON.stringify({ index: parseInt(index, 10) }));
-        e.dataTransfer.effectAllowed = 'move';
-        item.classList.add('dragging');
-      });
-
-      grid.addEventListener('dragend', (e) => {
-        document.querySelectorAll('.expense-item.dragging').forEach(el => el.classList.remove('dragging'));
-        document.querySelectorAll('.category-card.drop-target').forEach(el => el.classList.remove('drop-target'));
-      });
-
-      grid.addEventListener('dragover', (e) => {
-        const card = e.target.closest('.category-card');
-        if (!card) return;
-        e.preventDefault();
-        e.dataTransfer.dropEffect = 'move';
-        document.querySelectorAll('.category-card.drop-target').forEach(el => el.classList.remove('drop-target'));
-        card.classList.add('drop-target');
-      });
-
-      grid.addEventListener('dragleave', (e) => {
-        const card = e.target.closest('.category-card');
-        if (!card) return;
-        if (card.contains(e.relatedTarget)) return;
-        card.classList.remove('drop-target');
-      });
-
-      grid.addEventListener('drop', (e) => {
-        e.preventDefault();
-        const card = e.target.closest('.category-card');
-        if (!card) return;
-        card.classList.remove('drop-target');
-        try {
-          const { index } = JSON.parse(e.dataTransfer.getData('text/plain'));
-          const targetCategory = card.dataset.category;
-          const expenses = getExpensesForCard(currentCard);
-          const expense = expenses[index];
-          if (!expense || expense.category === targetCategory) return;
-          expense.category = targetCategory;
-          sessionStorage.setItem('expenseResults', JSON.stringify(reportData));
-          renderExpenses(currentCard);
-        } catch (err) {
-          console.error('Drop error:', err);
-        }
-      });
-    }
 
     function renderCardsSummary() {
       const summaryContainer = document.getElementById('cardsSummary');
@@ -705,7 +630,7 @@
         }
         
         html += `
-          <div class="card-summary-item active" onclick="switchCard('all', event)">
+          <div class="card-summary-item active" onclick="switchCard('all')">
             <div class="card-summary-name">📊 כל הדוחות</div>
             <div class="card-summary-amount">${allTotal.toLocaleString('he-IL', { maximumFractionDigits: 0 })} ₪</div>
             <div class="card-summary-count">${allExpenses.length} הוצאות</div>
@@ -718,7 +643,7 @@
             const cardTotal = (card.expenses || []).reduce((sum, e) => sum + e.amount, 0);
             const safeName = (card.name || '').replace(/"/g, '&quot;');
             html += `
-              <div class="card-summary-item" onclick="switchCard('card_${index}', event)">
+              <div class="card-summary-item" onclick="switchCard('card_${index}')">
                 <div class="card-summary-name">💳 ${card.name || 'כרטיס ' + (index + 1)}</div>
                 <div class="card-summary-amount">${cardTotal.toLocaleString('he-IL', { maximumFractionDigits: 0 })} ₪</div>
                 <div class="card-summary-count">${(card.expenses || []).length} הוצאות</div>
@@ -732,7 +657,7 @@
           const bankTotal = (reportData.bank.expenses || []).reduce((sum, e) => sum + e.amount, 0);
           const safeBankName = (reportData.bank.name || 'עו"ש').replace(/"/g, '&quot;');
           html += `
-            <div class="card-summary-item bank" onclick="switchCard('bank', event)">
+            <div class="card-summary-item bank" onclick="switchCard('bank')">
               <div class="card-summary-name">🏦 ${reportData.bank.name || 'עו"ש'}</div>
               <div class="card-summary-amount">${bankTotal.toLocaleString('he-IL', { maximumFractionDigits: 0 })} ₪</div>
               <div class="card-summary-count">${(reportData.bank.expenses || []).length} הוצאות</div>
@@ -754,12 +679,12 @@
       summaryContainer.innerHTML = html;
     }
 
-    function switchCard(cardId, ev) {
+    function switchCard(cardId) {
       currentCard = cardId;
       
       // עדכון הכרטיס הפעיל
       document.querySelectorAll('.card-summary-item').forEach(el => el.classList.remove('active'));
-      if (ev && ev.currentTarget) ev.currentTarget.classList.add('active');
+      event.currentTarget.classList.add('active');
       
       renderExpenses(cardId);
     }
@@ -852,13 +777,12 @@
       const cardsHTML = sortedCategories.map(([category, data]) => {
         const icon = CATEGORY_ICONS[category] || '📦';
         const itemsHTML = data.items.map(item => {
-          const flatIndex = expenses.indexOf(item);
           const refundBadge = item.isRefund ? `<span class="refund-badge">החזר</span>` : '';
           const standingOrderBadge = item.isStandingOrder ? `<span class="standing-order-badge">הוראת קבע</span>` : '';
           const installmentBadge = item.installment_info ? `<span class="installment-badge">${item.display_note || 'תשלומים'}</span>` : '';
           const refundClass = item.isRefund ? ' refund' : '';
           return `
-          <div class="expense-item" draggable="true" data-expense-index="${flatIndex}">
+          <div class="expense-item">
               <span class="expense-name">${refundBadge}${standingOrderBadge}${installmentBadge}${item.description}</span>
             <span class="expense-amount${refundClass}">${item.amount.toLocaleString('he-IL', { maximumFractionDigits: 2 })} ₪</span>
           </div>
@@ -866,7 +790,7 @@
         }).join('');
 
         return `
-          <div class="category-card" data-category="${category.replace(/"/g, '&quot;')}">
+          <div class="category-card">
             <div class="category-header">
               <div class="category-name">
                 <span class="icon">${icon}</span>
