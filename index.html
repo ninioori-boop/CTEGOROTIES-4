@@ -551,6 +551,7 @@
 
       // ========== אוכל בחוץ ומסעדות (80+) ==========
       'הישות בעמ': 'אוכל בחוץ ובילויים', 'הישות': 'אוכל בחוץ ובילויים',
+      'טעינות חבר טעמים': 'אוכל בחוץ ובילויים', 'קצפת': 'אוכל בחוץ ובילויים',
       'אלוף': 'אוכל בחוץ ובילויים',
       'באביס': 'אוכל בחוץ ובילויים', 'בובאס': 'אוכל בחוץ ובילויים', 'bobas': 'אוכל בחוץ ובילויים',
       'ליבי פיטרסי': 'אוכל בחוץ ובילויים',
@@ -666,6 +667,7 @@
       'סנטראל פארק אשדוד': 'דלק וחניה', 'סנטראל פארק': 'דלק וחניה',
       'סנטרל פארק': 'דלק וחניה', 'אוטוטו': 'דלק וחניה',
       'חניון מוזיאון הסובלנ': 'דלק וחניה',
+      'רז גל': 'דלק וחניה',
 
       // ========== תחבורה ציבורית (30+) ==========
       'אגד': 'תחבצ', 'egged': 'תחבצ', 'דן': 'תחבצ', 'dan': 'תחבצ',
@@ -854,6 +856,7 @@
       // ========== כבישי אגרה ==========
       'כביש 6': 'כבישי אגרה', 'כביש שש': 'כבישי אגרה', 'מנהרות הכרמל': 'כבישי אגרה',
       'כרמל טונל': 'כבישי אגרה', 'נתיבי איילון': 'כבישי אגרה', 'fast lane': 'כבישי אגרה',
+      'הנתיב המהיר': 'כבישי אגרה',
 
       // ========== מיסים ==========
       'מס הכנסה': 'מיסים', 'נציבות מס': 'מיסים', 'מעמ': 'מיסים', 'מע"מ': 'מיסים',
@@ -885,7 +888,7 @@
       'איקאה': 'ריהוט והבית', 'ikea': 'ריהוט והבית', 'ריהוט': 'ריהוט והבית',
       'רהיטים': 'ריהוט והבית', 'מיניסו': 'ריהוט והבית', 'miniso': 'ריהוט והבית',
       'fox home': 'ריהוט והבית', 'פוקס הום': 'ריהוט והבית', 'h&o home': 'ריהוט והבית',
-      'המשביר': 'כלי בית',
+      'המשביר': 'כלי בית', 'דיל וזול': 'כלי בית', 'דיל זול': 'כלי בית',
 
       // ========== שונות ==========
       'כרטיס נטען': 'שונות', 'נטען בהצדעה': 'שונות', 'בהצדעה': 'שונות',
@@ -1415,6 +1418,7 @@
       text.split('\n').forEach(function(line) {
         line = line.trim();
         if (!line || line.includes('דוח הוצאות') || line.includes('===') || line.includes('הסכומים הם')) return;
+        if (/סה"כ\s*לחיוב|לחיוב\s*החודש\s*בכרטיס/.test(line)) return;
         const parts = line.split(/\s\|\s/);
         if (parts.length < 2) return;
         // מצא את החלק הראשון שמתחיל במספר – זה הסכום; כל מה שלפניו הוא התיאור
@@ -1468,6 +1472,7 @@
       for (const line of lines) {
         const trimmed = line.trim();
         if (!trimmed) continue;
+        if (/סה"כ\s*לחיוב|לחיוב\s*החודש\s*בכרטיס/.test(trimmed)) continue;
 
         if (inHeader && (trimmed.includes('דוח הוצאות') || trimmed.includes('===') || trimmed.includes('הסכומים הם'))) {
           headerLines.push(line);
@@ -2160,11 +2165,10 @@
         let processedCount = 0;
         for (const row of data) {
           if (!row || row.length === 0) continue;
-          
+          const rowText = row.map(c => String(c || '')).join(' ');
+          if (/סה"כ\s*לחיוב|לחיוב\s*החודש\s*בכרטיס/i.test(rowText)) continue;
           const description = row[detectedCols.description];
           const amount = row[detectedCols.amount];
-          
-          // דלג על שורות סיכום
           if (description && String(description).includes('סה"כ')) continue;
           
           if (description && amount !== null && amount !== undefined) {
@@ -2190,7 +2194,7 @@
       for (const row of data) {
         if (row && row.length > 0) {
           const rowText = row.filter(cell => cell !== null && cell !== undefined).join(' | ');
-          if (rowText.trim()) {
+          if (rowText.trim() && !/סה"כ\s*לחיוב|לחיוב\s*החודש\s*בכרטיס/i.test(rowText)) {
             text += rowText + '\n';
           }
         }
@@ -2322,6 +2326,14 @@
             const row = data[i];
             if (!row || row.length === 0) continue;
             
+            // דלג על שורות סיכום (חישוב שהאקסל עשה – סה"כ לחיוב וכיו"ב)
+            const rowText = row.map(c => String(c || '')).join(' ');
+            if (/סה"כ\s*לחיוב|לחיוב\s*החודש\s*בכרטיס|סה"כ\s*לחיוב\s*החודש/i.test(rowText)) {
+              console.log(`⏭️ Skipping summary row: ${rowText.substring(0, 60)}...`);
+              skippedCount++;
+              continue;
+            }
+            
             const description = row[columns.description];
             const transactionType = columns.transactionType !== -1 ? row[columns.transactionType] : '';
             const notes = columns.notes !== -1 ? row[columns.notes] : '';
@@ -2358,6 +2370,11 @@
             }
             
             if (!description || amount === null || amount === undefined) continue;
+            
+            if (description && String(description).includes('סה"כ')) {
+              skippedCount++;
+              continue;
+            }
             
             // נרמול סכום (כולל פורמט (X) = החזר) וכפיית שלילי לפי הערות או עמודת זיכוי
             let amountNum = parseAmount(amount);
@@ -2450,6 +2467,8 @@
         let processedCount = 0;
         for (const row of data) {
           if (!row || row.length === 0) continue;
+          const rowText = row.map(c => String(c || '')).join(' ');
+          if (/סה"כ\s*לחיוב|לחיוב\s*החודש\s*בכרטיס/i.test(rowText)) continue;
           const description = row[contentCols.description];
           const amount = row[contentCols.amount];
           if (description && String(description).includes('סה"כ')) continue;
