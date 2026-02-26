@@ -501,7 +501,7 @@
       'youtube': 'תקשורת', 'google one': 'תקשורת', 'google cha': 'תקשורת',
       'google bus': 'תקשורת', '012': 'תקשורת', '013': 'תקשורת', '014': 'תקשורת',
       'ידיעות אחרונות': 'תקשורת', 'הארץ': 'תקשורת', 'גלובס': 'תקשורת', 'כלכליסט': 'תקשורת',
-      'black phone': 'תקשורת', 'קי אס פי': 'תקשורת', 'ksp': 'תקשורת',
+      'black phone': 'תקשורת', 'קי אס פי': 'תקשורת', 'קיי אס פי': 'תקשורת', 'ksp': 'תקשורת',
       'מיכאליס': 'אוכל בחוץ ובילויים', 'michaelis': 'אוכל בחוץ ובילויים', 'apple.com/bill': 'תקשורת',
 
       // ========== ביט ומזומן ==========
@@ -840,6 +840,7 @@
       'שטוקינג גלובל בעמ': 'חינוך וקייטנות', 'שטוקינג גלובל': 'חינוך וקייטנות', 'stocking global': 'חינוך וקייטנות',
       'המקיע הצעיר': 'חינוך וקייטנות', 'המשקיע הצעיר': 'חינוך וקייטנות',
       'טוקינג אנגליש': 'חינוך וקייטנות', 'talking english': 'חינוך וקייטנות',
+      'טוקינג גלובל': 'חינוך וקייטנות', 'talking global': 'חינוך וקייטנות',
 
       // ========== תרומות (20+) ==========
       'יד שרה': 'תרומות', 'לתת': 'תרומות', 'עזר מציון': 'תרומות',
@@ -947,9 +948,9 @@
           const total = parseInt(match[2]);
           // הגבלה לסדרת תשלומים סבירה (מונע זיהוי תאריכים כמו 2024/2025)
           if (current > 0 && total > 0 && total <= 60 && current <= total && total > 1) {
-            // חשב את התשלום החודשי
-            const monthlyAmount = Math.round(amount / (total - current + 1));
-            
+            // חשב את התשלום החודשי (מניח ש-amount הוא סה"כ - אם הוא כבר חודשי יתקבל ערך שגוי!)
+            const remaining = total - current + 1;
+            const monthlyAmount = Math.round(amount / remaining);
             return {
               isInstallment: true,
               installment_current: current,
@@ -1366,13 +1367,36 @@
         expense.auto_corrected = true;
       }
       
-      // תיקון 8: זיהוי תשלומים שלא חולקו
-      const installment = parseInstallment(expense.description, expense.amount);
-      if (installment.isInstallment) {
+      // תיקון 8: זיהוי תשלומים – חלוקה לסכום חודשי + הצגת תשלומים נותרים
+      let installment = parseInstallment(expense.description, expense.amount);
+      // אם parseInstallment לא מצא (למשל "המשקיע הצעיר" בלי X/Y בתיאור) אבל יש installment_info מהמקור
+      if (!installment.isInstallment && expense.installment_info && expense.installment_info.current && expense.installment_info.total) {
+        const cur = expense.installment_info.current;
+        const tot = expense.installment_info.total;
+        const remaining = tot - cur + 1;
+        const monthlyAmount = Math.round(expense.amount / remaining);
+        installment = {
+          isInstallment: true,
+          installment_current: cur,
+          installment_total: tot,
+          monthly_amount: monthlyAmount,
+          total_amount: expense.amount,
+          remaining: remaining
+        };
+        // חלק רק אם הסכום לא מסומן כבר כחודשי (מסכום חיוב באקסל)
+        if (!expense.amount_is_monthly) {
+          expense.amount = installment.monthly_amount;
+          console.log(`🔧 חלוקה לתשלומים (ממקור): "${expense.description}" → ${installment.monthly_amount}₪/חודש (${cur}/${tot})`);
+        }
+        expense.installment_info = installment;
+      } else if (installment.isInstallment) {
         console.log(`🔧 חלוקה לתשלומים: "${expense.description}" → ${installment.monthly_amount}₪/חודש (${installment.installment_current}/${installment.installment_total})`);
         expense.amount = installment.monthly_amount;
         expense.installment_info = installment;
-        expense.display_note = `תשלום ${installment.installment_current}/${installment.installment_total}`;
+      }
+      if (installment.isInstallment) {
+        const remaining = installment.installment_total - installment.installment_current;
+        expense.display_note = `תשלום ${installment.installment_current}/${installment.installment_total}${remaining > 0 ? ` (${remaining} נותרו)` : ''}`;
       }
       
       // וולידציה: סכום גבוה מחשיד
@@ -1400,21 +1424,21 @@
             const amount = parseFloat(numMatch[1]);
             if (!isNaN(amount)) {
               const rawDesc = parts.slice(0, i).join(' | ');
-              // חלץ מידע תשלומים מהתיאור לפני ניקוי (תשלום X/Y)
+              const amountPart = parts[i];
               let installment = null;
-              const instMatch = rawDesc.match(/\(\s*תשלום\s+(\d+)\s*[\/\-]\s*(\d+)\s*\)/);
+              let amount_is_monthly = false;
+              const instMatch = rawDesc.match(/\(\s*תשלום\s+(\d+)\s*[\/\-]\s*(\d+)[^\)]*\)/);
               if (instMatch) {
                 installment = { current: parseInt(instMatch[1]), total: parseInt(instMatch[2]) };
+                amount_is_monthly = (instMatch[0] || '').includes('חודשי');
               }
-              // חלץ מידע תשלומים מחלק הסכום (למשל "150 (תשלום 1/12)")
               if (!installment) {
-                const amountPart = parts[i];
-                const amountPartMatch = amountPart && amountPart.match(/\(\s*תשלום\s+(\d+)\s*[\/\-]\s*(\d+)\s*\)/);
+                const amountPartMatch = amountPart && amountPart.match(/\(\s*תשלום\s+(\d+)\s*[\/\-]\s*(\d+)[^\)]*\)/);
                 if (amountPartMatch) {
                   installment = { current: parseInt(amountPartMatch[1]), total: parseInt(amountPartMatch[2]) };
+                  amount_is_monthly = (amountPartMatch[0] || '').includes('חודשי');
                 }
               }
-              // גם מההערות בסוף השורה
               if (!installment) {
                 const fullLine = parts.join(' | ');
                 const notesMatch = fullLine.match(/הערות:\s*תשלום\s*(\d+)\s*מתוך\s*(\d+)/);
@@ -1423,8 +1447,8 @@
                 }
               }
               const description = rawDesc
-                .replace(/\s*\(\s*תשלום\s+\d+.*$/, '').replace(/\s*\[.*\]\s*$/, '').trim();
-              if (description) lines.push({ description: description, amount: amount, installment: installment });
+                .replace(/\s*\(\s*תשלום\s+\d+[^\)]*\)/, '').replace(/\s*\[.*\]\s*$/, '').trim();
+              if (description) lines.push({ description, amount, installment, amount_is_monthly });
             }
             break;
           }
@@ -1461,19 +1485,27 @@
             const amount = parseFloat(numMatch[1]);
             if (!isNaN(amount)) {
               const rawDesc = parts.slice(0, i).join(' | ');
+              const amountPart = parts[i];
               let installment = null;
-              const instMatch = rawDesc.match(/\(\s*תשלום\s+(\d+)\s*[\/\-]\s*(\d+)\s*\)/);
-              if (instMatch) installment = { current: parseInt(instMatch[1]), total: parseInt(instMatch[2]) };
+              let amount_is_monthly = false;
+              const instMatch = rawDesc.match(/\(\s*תשלום\s+(\d+)\s*[\/\-]\s*(\d+)[^\)]*\)/);
+              if (instMatch) {
+                installment = { current: parseInt(instMatch[1]), total: parseInt(instMatch[2]) };
+                amount_is_monthly = (instMatch[0] || '').includes('חודשי');
+              }
               if (!installment) {
-                const amountPartMatch = parts[i].match(/\(\s*תשלום\s+(\d+)\s*[\/\-]\s*(\d+)\s*\)/);
-                if (amountPartMatch) installment = { current: parseInt(amountPartMatch[1]), total: parseInt(amountPartMatch[2]) };
+                const amountPartMatch = amountPart && amountPart.match(/\(\s*תשלום\s+(\d+)\s*[\/\-]\s*(\d+)[^\)]*\)/);
+                if (amountPartMatch) {
+                  installment = { current: parseInt(amountPartMatch[1]), total: parseInt(amountPartMatch[2]) };
+                  amount_is_monthly = (amountPartMatch[0] || '').includes('חודשי');
+                }
               }
               if (!installment) {
                 const notesMatch = trimmed.match(/הערות:\s*תשלום\s*(\d+)\s*מתוך\s*(\d+)/);
                 if (notesMatch) installment = { current: parseInt(notesMatch[1]), total: parseInt(notesMatch[2]) };
               }
-              const description = rawDesc.replace(/\s*\(\s*תשלום\s+\d+.*$/, '').replace(/\s*\[.*\]\s*$/, '').trim();
-              if (description) parsed = { description, amount, installment };
+              const description = rawDesc.replace(/\s*\(\s*תשלום\s+\d+[^\)]*\)/, '').replace(/\s*\[.*\]\s*$/, '').trim();
+              if (description) parsed = { description, amount, installment, amount_is_monthly };
               break;
             }
           }
@@ -1490,7 +1522,9 @@
           };
           if (parsed.installment) {
             exp.installment_info = parsed.installment;
-            exp.display_note = `עסקה בתשלומים ${parsed.installment.current}/${parsed.installment.total}`;
+            exp.amount_is_monthly = parsed.amount_is_monthly;
+            const remaining = parsed.installment.total - parsed.installment.current;
+            exp.display_note = `עסקה בתשלומים ${parsed.installment.current}/${parsed.installment.total}${remaining > 0 ? ` (${remaining} נותרו)` : ''}`;
           }
           dbExpenses.push(exp);
           console.log(`📂 מאגר: "${parsed.description}" → ${dbCategory}`);
@@ -1524,8 +1558,10 @@
       // פונקציית עזר: העתק מידע תשלומים מהמקור ל-expense (תצוגה בלבד — לא משנה סכומים!)
       function applyInstallmentFromSource(exp, srcLine) {
         if (srcLine.installment && srcLine.installment.current && srcLine.installment.total) {
-          exp.display_note = `עסקה בתשלומים ${srcLine.installment.current}/${srcLine.installment.total}`;
+          const remaining = srcLine.installment.total - srcLine.installment.current;
+          exp.display_note = `עסקה בתשלומים ${srcLine.installment.current}/${srcLine.installment.total}${remaining > 0 ? ` (${remaining} נותרו)` : ''}`;
           exp.installment_info = srcLine.installment;
+          exp.amount_is_monthly = srcLine.amount_is_monthly;
           console.log(`💳 סימון תשלומים מהמקור: "${exp.description}" → ${srcLine.installment.current}/${srcLine.installment.total}`);
         }
       }
@@ -2371,7 +2407,8 @@
             }
             let installmentNote = '';
             if (installment) {
-              installmentNote = ` (תשלום ${installment.current}/${installment.total})`;
+              const usedCharge = columns.chargeAmount !== -1 && row[columns.chargeAmount] !== undefined && row[columns.chargeAmount] !== null && row[columns.chargeAmount] !== '';
+              installmentNote = ` (תשלום ${installment.current}/${installment.total}${usedCharge ? ', חודשי' : ''})`;
             }
             
             // הוסף את הענף אם קיים והערות כדי שה-AI יזהה החזרים
