@@ -607,7 +607,6 @@
       'קטרינה': 'אוכל בחוץ ובילויים', 'לוצנה': 'אוכל בחוץ ובילויים', 'חצר עין כרם': 'אוכל בחוץ ובילויים',
       'אלביס': 'אוכל בחוץ ובילויים', 'elvis': 'אוכל בחוץ ובילויים',
       'טעינות חבר טעמים': 'אוכל בחוץ ובילויים', 'חבר טעמים': 'אוכל בחוץ ובילויים',
-      'המשקיע הצעיר': 'אוכל בחוץ ובילויים',
       'בלאק סטור': 'אוכל בחוץ ובילויים', 'black store': 'אוכל בחוץ ובילויים',
       'משקט': 'אוכל בחוץ ובילויים', 'מכונות מ.א': 'אוכל בחוץ ובילויים',
       'רי באר': 'אוכל בחוץ ובילויים', 'מולה בוטני': 'אוכל בחוץ ובילויים',
@@ -838,6 +837,9 @@
       'גן ילדים': 'חינוך וקייטנות', 'בית ספר': 'חינוך וקייטנות',
       'אוניברסיטה': 'חינוך וקייטנות', 'שכר לימוד': 'חינוך וקייטנות', 'חוג': 'חינוך וקייטנות',
       'שכ"ל': 'חינוך וקייטנות', 'שכל אינטרנט': 'חינוך וקייטנות', 'שכ"ל אינטרנט': 'חינוך וקייטנות',
+      'שטוקינג גלובל בעמ': 'חינוך וקייטנות', 'שטוקינג גלובל': 'חינוך וקייטנות', 'stocking global': 'חינוך וקייטנות',
+      'המקיע הצעיר': 'חינוך וקייטנות', 'המשקיע הצעיר': 'חינוך וקייטנות',
+      'טוקינג אנגליש': 'חינוך וקייטנות', 'talking english': 'חינוך וקייטנות',
 
       // ========== תרומות (20+) ==========
       'יד שרה': 'תרומות', 'לתת': 'תרומות', 'עזר מציון': 'תרומות',
@@ -1404,6 +1406,14 @@
               if (instMatch) {
                 installment = { current: parseInt(instMatch[1]), total: parseInt(instMatch[2]) };
               }
+              // חלץ מידע תשלומים מחלק הסכום (למשל "150 (תשלום 1/12)")
+              if (!installment) {
+                const amountPart = parts[i];
+                const amountPartMatch = amountPart && amountPart.match(/\(\s*תשלום\s+(\d+)\s*[\/\-]\s*(\d+)\s*\)/);
+                if (amountPartMatch) {
+                  installment = { current: parseInt(amountPartMatch[1]), total: parseInt(amountPartMatch[2]) };
+                }
+              }
               // גם מההערות בסוף השורה
               if (!installment) {
                 const fullLine = parts.join(' | ');
@@ -1421,6 +1431,78 @@
         }
       });
       return lines;
+    }
+
+    // פיצול שורות לפי מאגר: עסקאות במאגר → dbExpenses, השאר → aiText (ל-AI בלבד)
+    function splitLinesByDatabase(text) {
+      const lines = text.split('\n');
+      const headerLines = [];
+      const dbExpenses = [];
+      const aiLines = [];
+      let inHeader = true;
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed) continue;
+
+        if (inHeader && (trimmed.includes('דוח הוצאות') || trimmed.includes('===') || trimmed.includes('הסכומים הם'))) {
+          headerLines.push(line);
+          continue;
+        }
+        inHeader = false;
+
+        const parts = trimmed.split(/\s\|\s/);
+        if (parts.length < 2) { aiLines.push(line); continue; }
+
+        let parsed = null;
+        for (let i = 1; i < parts.length; i++) {
+          const numMatch = parts[i].match(/^(-?\d+(?:\.\d+)?)/);
+          if (numMatch) {
+            const amount = parseFloat(numMatch[1]);
+            if (!isNaN(amount)) {
+              const rawDesc = parts.slice(0, i).join(' | ');
+              let installment = null;
+              const instMatch = rawDesc.match(/\(\s*תשלום\s+(\d+)\s*[\/\-]\s*(\d+)\s*\)/);
+              if (instMatch) installment = { current: parseInt(instMatch[1]), total: parseInt(instMatch[2]) };
+              if (!installment) {
+                const amountPartMatch = parts[i].match(/\(\s*תשלום\s+(\d+)\s*[\/\-]\s*(\d+)\s*\)/);
+                if (amountPartMatch) installment = { current: parseInt(amountPartMatch[1]), total: parseInt(amountPartMatch[2]) };
+              }
+              if (!installment) {
+                const notesMatch = trimmed.match(/הערות:\s*תשלום\s*(\d+)\s*מתוך\s*(\d+)/);
+                if (notesMatch) installment = { current: parseInt(notesMatch[1]), total: parseInt(notesMatch[2]) };
+              }
+              const description = rawDesc.replace(/\s*\(\s*תשלום\s+\d+.*$/, '').replace(/\s*\[.*\]\s*$/, '').trim();
+              if (description) parsed = { description, amount, installment };
+              break;
+            }
+          }
+        }
+
+        if (!parsed) { aiLines.push(line); continue; }
+
+        const dbCategory = categorizeByDatabase(parsed.description);
+        if (dbCategory) {
+          const exp = {
+            description: parsed.description,
+            amount: parsed.amount,
+            category: dbCategory
+          };
+          if (parsed.installment) {
+            exp.installment_info = parsed.installment;
+            exp.display_note = `עסקה בתשלומים ${parsed.installment.current}/${parsed.installment.total}`;
+          }
+          dbExpenses.push(exp);
+          console.log(`📂 מאגר: "${parsed.description}" → ${dbCategory}`);
+        } else {
+          aiLines.push(line);
+        }
+      }
+
+      const aiText = headerLines.length > 0
+        ? headerLines.join('\n') + '\n' + aiLines.join('\n')
+        : aiLines.join('\n');
+      return { dbExpenses, aiText, hasAiContent: aiLines.length > 0 };
     }
 
     // מיזוג תיאורים + מידע תשלומים מהמקור (אקסל) לתשובת ה-AI – כך ששם בית העסק תמיד מהאקסל
@@ -2413,23 +2495,26 @@
           document.getElementById('loadingSubtext').textContent = `מנתח כרטיס ${step}...`;
           
           const text = formatDataForAI(cardInfo.data, cardInfo.name);
-          
-        const response = await fetch(API_BASE + '/api/analyze', {
-          method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ text: text.substring(0, 20000) })
-          });
+          const { dbExpenses, aiText, hasAiContent } = splitLinesByDatabase(text);
+          let expenses = [...dbExpenses];
 
-          if (!response.ok) {
-            const err = await response.json();
-            throw new Error(err.error || 'שגיאה בניתוח');
+          if (hasAiContent) {
+            const response = await fetch(API_BASE + '/api/analyze', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ text: aiText.substring(0, 20000) })
+            });
+            if (!response.ok) {
+              const err = await response.json();
+              throw new Error(err.error || 'שגיאה בניתוח');
+            }
+            const data = await response.json();
+            const aiExpenses = data.expenses || [];
+            mergeDescriptionsFromSource(aiExpenses, aiText);
+            expenses = [...dbExpenses, ...aiExpenses];
           }
 
-        const data = await response.json();
-          // שמירת שמות החנויות מהאקסל (הטקסט שנשלח) – כך שהדוח יציג תמיד את שם בית העסק
-          mergeDescriptionsFromSource(data.expenses || [], text);
-          // עיבוד אחרי AI
-          const processedExpenses = postProcessCategories(data.expenses || []);
+          const processedExpenses = postProcessCategories(expenses);
           
           allResults.cards.push({
             name: cardInfo.name.replace(/\.[^.]+$/, ''),
