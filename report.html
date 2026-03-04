@@ -1156,11 +1156,13 @@
           if (item.installment_info && item.installment_info.current) {
             const cur = item.installment_info.current;
             const tot = item.installment_info.total;
-            if (tot == null) instLabel = 'תשלום ' + cur;
+            const prefix = 'עסקה בתשלומים · ';
+            if (tot == null) instLabel = prefix + 'תשלום ' + cur;
             else {
               const remaining = tot - cur;
               const safeNote = item.display_note && String(item.display_note).trim();
-              instLabel = safeNote || `תשלום ${cur}/${tot}${remaining > 0 ? ' (' + remaining + ' נותרו)' : ''}`;
+              const detail = safeNote || `תשלום ${cur}/${tot}${remaining > 0 ? ' (' + remaining + ' נותרו)' : ''}`;
+              instLabel = detail.startsWith('עסקה בתשלומים') ? detail : prefix + detail;
             }
           }
           const installmentBadge = instLabel ? `<span class="installment-badge">${instLabel}</span>` : '';
