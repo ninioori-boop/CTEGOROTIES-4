@@ -1,0 +1,4 @@
+cd /d "c:\Users\ninio\OneDrive\הכלכלן של הבית\CTEGOROTIES-4-main"
+git add .
+git commit -m "תיקון זיהוי תשלומים: עמודת שובר/פירוט נוסף, תיקון headerRow, מיזוג לפי תיאור"
+git push origin main

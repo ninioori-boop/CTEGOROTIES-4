@@ -1830,6 +1830,10 @@
                 const notesMatch = trimmed.match(/הערות:\s*תשלום\s*(\d+)\s*מתוך\s*(\d+)/);
                 if (notesMatch) installment = { current: parseInt(notesMatch[1]), total: parseInt(notesMatch[2]) };
               }
+              if (!installment) {
+                const onlyInstMatch = rawDesc.match(/\(\s*תשלום\s+(\d+)\s*\)/) || (amountPart && amountPart.match(/\(\s*תשלום\s+(\d+)\s*\)/));
+                if (onlyInstMatch) installment = { current: parseInt(onlyInstMatch[1]), total: null };
+              }
               const description = rawDesc.replace(/\s*\(\s*תשלום\s+\d+[^\)]*\)/, '').replace(/\s*\[.*\]\s*$/, '').trim();
               if (description) parsed = { description, amount, installment, amount_is_monthly };
               break;
@@ -1849,8 +1853,12 @@
           if (parsed.installment) {
             exp.installment_info = parsed.installment;
             exp.amount_is_monthly = parsed.amount_is_monthly;
-            const remaining = parsed.installment.total - parsed.installment.current;
-            exp.display_note = `עסקה בתשלומים ${parsed.installment.current}/${parsed.installment.total}${remaining > 0 ? ` (${remaining} נותרו)` : ''}`;
+            if (parsed.installment.total != null) {
+              const remaining = parsed.installment.total - parsed.installment.current;
+              exp.display_note = `עסקה בתשלומים ${parsed.installment.current}/${parsed.installment.total}${remaining > 0 ? ` (${remaining} נותרו)` : ''}`;
+            } else {
+              exp.display_note = `תשלום ${parsed.installment.current}`;
+            }
           }
           dbExpenses.push(exp);
           console.log(`📂 מאגר: "${parsed.description}" → ${dbCategory}`);
@@ -1868,7 +1876,8 @@
     // מיזוג תיאורים + מידע תשלומים מהמקור (אקסל) לתשובת ה-AI – כך ששם בית העסק תמיד מהאקסל
     function mergeDescriptionsFromSource(expenses, sentText) {
       const sourceLines = parseSentTextToLines(sentText);
-      console.log(`🔗 mergeDescriptions: ${expenses.length} expenses, ${sourceLines.length} source lines`);
+      const withInst = sourceLines.filter(function(sl) { return sl.installment && sl.installment.current; }).length;
+      console.log(`🔗 mergeDescriptions: ${expenses.length} expenses, ${sourceLines.length} source lines (${withInst} with installment)`);
       if (!sourceLines.length) return expenses;
 
       // בנה סט של שמות בתי עסק אמיתיים (רק מה שפורסר כתיאור, לא קטגוריות/הערות)
@@ -1898,34 +1907,51 @@
         }
       }
 
-      // סבב 1: התאמה לפי סכום – לכל expense, חפש שורת מקור עם סכום תואם
+      // סבב 1: התאמה לפי סכום – לכל expense, חפש שורת מקור עם סכום תואם (עדיף גם תיאור דומה)
       const used = {};
       expenses.forEach(function(exp, idx) {
         const amount = typeof exp.amount === 'number' ? exp.amount : parseFloat(exp.amount);
         if (isNaN(amount)) return;
+        const desc = String(exp.description || '').trim();
+        function descMatch(sl) {
+          const d = String(sl.description || '').trim();
+          return !d || !desc || d === desc || desc.includes(d) || d.includes(desc);
+        }
         // קודם נסה אותו אינדקס
         if (idx < sourceLines.length && !used[idx]) {
-          const diff = Math.abs(sourceLines[idx].amount - amount);
-          const pct = Math.abs(sourceLines[idx].amount) > 0 ? diff / Math.abs(sourceLines[idx].amount) : diff;
-          if (diff < 10 || pct < 0.1) {
-            exp.description = sourceLines[idx].description;
-            applyInstallmentFromSource(exp, sourceLines[idx]);
+          const sl = sourceLines[idx];
+          const diff = Math.abs(sl.amount - amount);
+          const pct = Math.abs(sl.amount) > 0 ? diff / Math.abs(sl.amount) : diff;
+          if ((diff < 10 || pct < 0.1) && descMatch(sl)) {
+            exp.description = sl.description;
+            applyInstallmentFromSource(exp, sl);
             used[idx] = true;
             return;
           }
         }
-        // אחרת חפש הכי קרוב
-        let bestIdx = -1, bestDiff = Infinity;
+        // אחרת חפש הכי קרוב – עדיף שורה עם תיאור תואם
+        let bestIdx = -1, bestDiff = Infinity, bestDescMatch = false;
         for (let i = 0; i < sourceLines.length; i++) {
           if (used[i]) continue;
           const diff = Math.abs(sourceLines[i].amount - amount);
-          if (diff < bestDiff) { bestDiff = diff; bestIdx = i; }
+          const pct = Math.abs(sourceLines[i].amount) > 0 ? diff / Math.abs(sourceLines[i].amount) : diff;
+          if (diff >= 10 && pct >= 0.1) continue;
+          const dMatch = descMatch(sourceLines[i]);
+          if (dMatch && (!bestDescMatch || diff < bestDiff)) {
+            bestIdx = i;
+            bestDiff = diff;
+            bestDescMatch = true;
+          } else if (!bestDescMatch && (bestIdx === -1 || diff < bestDiff)) {
+            bestIdx = i;
+            bestDiff = diff;
+          }
         }
         if (bestIdx !== -1) {
-          const pct = Math.abs(sourceLines[bestIdx].amount) > 0 ? bestDiff / Math.abs(sourceLines[bestIdx].amount) : bestDiff;
+          const sl = sourceLines[bestIdx];
+          const pct = Math.abs(sl.amount) > 0 ? bestDiff / Math.abs(sl.amount) : bestDiff;
           if (bestDiff < 10 || pct < 0.1) {
-            exp.description = sourceLines[bestIdx].description;
-            applyInstallmentFromSource(exp, sourceLines[bestIdx]);
+            exp.description = sl.description;
+            applyInstallmentFromSource(exp, sl);
             used[bestIdx] = true;
           }
         }
@@ -2166,11 +2192,16 @@
         if ((originalText.includes('זיכוי') || originalText.includes('החזר')) && !originalText.includes('הערות')) {
           if (columns.creditAmount === -1) columns.creditAmount = index;
         }
-        if (originalText.includes('הערות') || originalText.includes('הערה') || originalText.includes('פירוט')) {
+        if (originalText.includes('הערות') || originalText.includes('הערה') || (originalText.includes('פירוט') && !originalText.includes('נוסף'))) {
           columns.notes = index;
         }
-        if (originalText.includes('מספר') || originalText.includes('פר שובר') || originalText.includes('פירוט נוסף') || originalText.includes('שובר פירוט')) {
-          if (columns.voucherOrDetail === -1) columns.voucherOrDetail = index;
+        // עמודת תשלומים: רק כותרות שמכילות שובר/פירוט נוסף – לא "מספר עסקה" או "מספר כרטיס"
+        const isVoucherCol = originalText.includes('שובר') && (originalText.includes('פירוט') || originalText.includes('מספר') || originalText.includes("מס'")) ||
+            originalText.includes('פירוט נוסף') || (originalText.includes('פר שובר') || /פר\s*שובר/.test(originalText)) ||
+            (originalText.includes('מספר') && originalText.includes('פירוט'));
+        if (isVoucherCol && columns.voucherOrDetail === -1) {
+          columns.voucherOrDetail = index;
+          console.log(`💳 עמודת תשלומים (voucherOrDetail): index ${index} "${originalText}"`);
         }
         if (originalText.includes('ענף') || originalText.includes('קטגוריה')) {
           columns.category = index;
@@ -2567,8 +2598,9 @@
           break;
         }
       }
-      
-      if (columns && columns.description !== -1) {
+      const headerRow = headerRowIndex >= 0 ? data[headerRowIndex] : null;
+
+      if (columns && columns.description !== -1 && headerRow) {
         // ===== ולידציה: האם עמודת התיאור מכילה קטגוריות ולא שמות חנויות? =====
         // אם רוב הערכים חוזרים על עצמם (cardinality נמוכה), כנראה זו עמודת ענף/קטגוריה
         const descValues = {};
@@ -2684,10 +2716,14 @@
             const voucherCell = columns.voucherOrDetail !== -1 ? row[columns.voucherOrDetail] : '';
             const notesStr = String(notes || '').trim();
             const notesAndVoucher = [notesStr, String(voucherCell || '').trim()].filter(Boolean).join(' ');
+            // דלג על שורת "רכישה בתשלומים" רק אם אין בשורה פירוט תשלום – אחרת זו שורת תשלום בודדת שצריך להציג
             if (transactionType && String(transactionType).includes('רכישה בתשלומים')) {
-              console.log(`⏭️ Skipping installment purchase row: ${description}`);
-              skippedCount++;
-              continue;
+              const hasInstallmentInRow = extractInstallmentInfoFromNotes(notesAndVoucher) || /תשלום\s*\d+/.test(notesAndVoucher);
+              if (!hasInstallmentInRow) {
+                console.log(`⏭️ Skipping installment purchase summary row: ${description}`);
+                skippedCount++;
+                continue;
+              }
             }
             
             // השתמש בסכום חיוב (חודשי), לא בסכום עסקה (כולל)
@@ -2768,6 +2804,7 @@
             }
             let installmentNote = '';
             if (installment) {
+              console.log(`💳 זוהה תשלום: "${description}" → ${installment.current}${installment.total != null ? '/' + installment.total : ''}`);
               const usedCharge = columns.chargeAmount !== -1 && row[columns.chargeAmount] !== undefined && row[columns.chargeAmount] !== null && row[columns.chargeAmount] !== '';
               installmentNote = installment.total != null
                 ? ` (תשלום ${installment.current}/${installment.total}${usedCharge ? ', חודשי' : ''})`
@@ -2783,7 +2820,7 @@
             processedCount++;
           }
           
-          console.log(`✅ Processed ${processedCount} rows, skipped ${skippedCount} installment purchase rows, ${zeroAmountCount} zero amounts`);
+          console.log(`✅ Processed ${processedCount} rows, skipped ${skippedCount} rows, ${zeroAmountCount} zero amounts`);
           
           // אם יותר מדי סכומים אפסיים - כנראה יש בעיה בזיהוי העמודות
           if (zeroAmountCount > processedCount * 0.5 && processedCount > 5) {
