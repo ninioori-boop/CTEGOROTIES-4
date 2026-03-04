@@ -2795,8 +2795,12 @@
               console.log(`⚠️ Zero amount for: ${description}, row:`, row);
             }
             
-            // חלץ מידע על תשלומים: מהערות + עמודת מספר/פר שובר, מסוג עסקה, ומתיאור (כולל כל השדות יחד)
-            let installment = extractInstallmentInfoFromNotes(notesAndVoucher);
+            // חלץ מידע על תשלומים: קודם מכל תאי השורה יחד (תפיסה מקסימלית), ואז מהעמודות המוכרות
+            const fullRowText = row.map(c => String(c ?? '').trim()).filter(Boolean).join(' ');
+            let installment = extractInstallmentInfoFromNotes(fullRowText);
+            if (!installment) {
+              installment = extractInstallmentInfoFromNotes(notesAndVoucher);
+            }
             if (!installment && transactionType) {
               installment = extractInstallmentInfoFromNotes(String(transactionType));
             }
