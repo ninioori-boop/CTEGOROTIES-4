@@ -1238,6 +1238,7 @@
     // === פרסר תשלומים חכם - מזהה תבניות בדוח מיפוי ובכרטיסי אשראי ===
     function parseInstallment(description, amount) {
       const patterns = [
+        /תשלום\s*(\d+)\s*מ\s*(\d+)/,          // "תשלום 21 מ 12" (רק אם Y<=60 – אחרת ב-extractInstallmentInfoFromNotes)
         /תשלום\s+(\d+)[\/\-](\d+)/i,           // "תשלום 11/12"
         /תשלום\s*(\d+)\s*מתוך\s*(\d+)/i,       // "תשלום 11 מתוך 12" (דוח מיפוי)
         /חלק\s*(\d+)\s*מתוך\s*(\d+)/i,        // "חלק 1 מתוך 12"
@@ -1684,8 +1685,8 @@
       
       // תיקון 8: זיהוי תשלומים – חלוקה לסכום חודשי + הצגת תשלומים נותרים
       let installment = parseInstallment(expense.description, expense.amount);
-      // אם parseInstallment לא מצא (למשל "המשקיע הצעיר" בלי X/Y בתיאור) אבל יש installment_info מהמקור
-      if (!installment.isInstallment && expense.installment_info && expense.installment_info.current && expense.installment_info.total) {
+      // אם parseInstallment לא מצא אבל יש installment_info מהמקור (כולל total)
+      if (!installment.isInstallment && expense.installment_info && expense.installment_info.current && expense.installment_info.total != null) {
         const cur = expense.installment_info.current;
         const tot = expense.installment_info.total;
         const remaining = tot - cur + 1;
@@ -1704,12 +1705,16 @@
           console.log(`🔧 חלוקה לתשלומים (ממקור): "${expense.description}" → ${installment.monthly_amount}₪/חודש (${cur}/${tot})`);
         }
         expense.installment_info = installment;
+      } else if (expense.installment_info && expense.installment_info.current && expense.installment_info.total == null) {
+        // תשלום נוכחי בלבד (סה"כ לא ידוע) – לא מחליפים סכום
+        installment = { isInstallment: true, installment_current: expense.installment_info.current, installment_total: null };
+        expense.display_note = `תשלום ${expense.installment_info.current}`;
       } else if (installment.isInstallment) {
         console.log(`🔧 חלוקה לתשלומים: "${expense.description}" → ${installment.monthly_amount}₪/חודש (${installment.installment_current}/${installment.installment_total})`);
         expense.amount = installment.monthly_amount;
         expense.installment_info = installment;
       }
-      if (installment.isInstallment) {
+      if (installment.isInstallment && installment.installment_total != null) {
         const remaining = installment.installment_total - installment.installment_current;
         expense.display_note = `תשלום ${installment.installment_current}/${installment.installment_total}${remaining > 0 ? ` (${remaining} נותרו)` : ''}`;
       }
@@ -1761,6 +1766,10 @@
                 if (notesMatch) {
                   installment = { current: parseInt(notesMatch[1]), total: parseInt(notesMatch[2]) };
                 }
+              }
+              if (!installment) {
+                const onlyInstMatch = rawDesc.match(/\(\s*תשלום\s+(\d+)\s*\)/) || (amountPart && amountPart.match(/\(\s*תשלום\s+(\d+)\s*\)/));
+                if (onlyInstMatch) installment = { current: parseInt(onlyInstMatch[1]), total: null };
               }
               const description = rawDesc
                 .replace(/\s*\(\s*תשלום\s+\d+[^\)]*\)/, '').replace(/\s*\[.*\]\s*$/, '').trim();
@@ -1874,12 +1883,18 @@
 
       // פונקציית עזר: העתק מידע תשלומים מהמקור ל-expense (תצוגה בלבד — לא משנה סכומים!)
       function applyInstallmentFromSource(exp, srcLine) {
-        if (srcLine.installment && srcLine.installment.current && srcLine.installment.total) {
-          const remaining = srcLine.installment.total - srcLine.installment.current;
-          exp.display_note = `עסקה בתשלומים ${srcLine.installment.current}/${srcLine.installment.total}${remaining > 0 ? ` (${remaining} נותרו)` : ''}`;
-          exp.installment_info = srcLine.installment;
-          exp.amount_is_monthly = srcLine.amount_is_monthly;
-          console.log(`💳 סימון תשלומים מהמקור: "${exp.description}" → ${srcLine.installment.current}/${srcLine.installment.total}`);
+        if (!srcLine.installment || !srcLine.installment.current) return;
+        const cur = srcLine.installment.current;
+        const tot = srcLine.installment.total;
+        exp.installment_info = srcLine.installment;
+        exp.amount_is_monthly = srcLine.amount_is_monthly;
+        if (tot != null) {
+          const remaining = tot - cur;
+          exp.display_note = `עסקה בתשלומים ${cur}/${tot}${remaining > 0 ? ` (${remaining} נותרו)` : ''}`;
+          console.log(`💳 סימון תשלומים מהמקור: "${exp.description}" → ${cur}/${tot}`);
+        } else {
+          exp.display_note = `תשלום ${cur}`;
+          console.log(`💳 סימון תשלום מהמקור: "${exp.description}" → תשלום ${cur}`);
         }
       }
 
@@ -2101,6 +2116,7 @@
         creditAmount: -1,      // זיכוי/החזר (אופציונלי)
         transactionType: -1,   // סוג עסקה
         notes: -1,             // הערות
+        voucherOrDetail: -1,   // מספר / פר שובר פירוט נוסף (מקור למידע תשלומים)
         category: -1           // ענף
       };
       
@@ -2152,6 +2168,9 @@
         }
         if (originalText.includes('הערות') || originalText.includes('הערה') || originalText.includes('פירוט')) {
           columns.notes = index;
+        }
+        if (originalText.includes('מספר') || originalText.includes('פר שובר') || originalText.includes('פירוט נוסף') || originalText.includes('שובר פירוט')) {
+          if (columns.voucherOrDetail === -1) columns.voucherOrDetail = index;
         }
         if (originalText.includes('ענף') || originalText.includes('קטגוריה')) {
           columns.category = index;
@@ -2248,6 +2267,19 @@
         const c = parseInt(m[1]), t = parseInt(m[2]);
         if (c > 0 && t > 1 && t <= 60 && c <= t) return { current: c, total: t };
       }
+      
+      // "תשלום N מ Y" – רק אם Y סביר כמספר תשלומים (אחרת Y = אסמכתא)
+      m = notesStr.match(/תשלום\s*(\d+)\s*מ\s*(\d+)/);
+      if (m) {
+        const cur = parseInt(m[1]);
+        const y = parseInt(m[2]);
+        if (cur > 0 && y >= cur && y <= 60) return { current: cur, total: y };
+        return { current: cur, total: null };
+      }
+      
+      // "תשלום N" בלבד (כולל "XXXXXXX תשלום N", "תשלום N מ" בלי מספר שני)
+      m = notesStr.match(/תשלום\s*(\d+)(?:\s*מ\s*$|\s*$|$)/) || notesStr.match(/\d+\s+תשלום\s*(\d+)(?:\s*מ\s*$|\s*$|$)/);
+      if (m) return { current: parseInt(m[1]), total: null };
       
       return null;
     }
@@ -2649,8 +2681,9 @@
             const description = row[columns.description];
             const transactionType = columns.transactionType !== -1 ? row[columns.transactionType] : '';
             const notes = columns.notes !== -1 ? row[columns.notes] : '';
-            
-            // דלג על שורות "רכישה בתשלומים" - התשלומים הבודדים נספרים בנפרד
+            const voucherCell = columns.voucherOrDetail !== -1 ? row[columns.voucherOrDetail] : '';
+            const notesStr = String(notes || '').trim();
+            const notesAndVoucher = [notesStr, String(voucherCell || '').trim()].filter(Boolean).join(' ');
             if (transactionType && String(transactionType).includes('רכישה בתשלומים')) {
               console.log(`⏭️ Skipping installment purchase row: ${description}`);
               skippedCount++;
@@ -2691,7 +2724,6 @@
             // נרמול סכום (כולל פורמט (X) = החזר) וכפיית שלילי לפי הערות או עמודת זיכוי
             let amountNum = parseAmount(amount);
             if (isNaN(amountNum)) amountNum = 0;
-            const notesStr = String(notes || '').trim();
             if (columns.creditAmount !== -1 && row[columns.creditAmount] !== undefined && row[columns.creditAmount] !== null && row[columns.creditAmount] !== '') {
               const creditVal = parseAmount(row[columns.creditAmount]);
               if (!isNaN(creditVal) && creditVal !== 0) amountNum = -Math.abs(creditVal);
@@ -2706,13 +2738,13 @@
               console.log(`⚠️ Zero amount for: ${description}, row:`, row);
             }
             
-            // חלץ מידע על תשלומים: מהערות, מסוג עסקה, ומתיאור (כולל כל השדות יחד)
-            let installment = extractInstallmentInfoFromNotes(notes);
+            // חלץ מידע על תשלומים: מהערות + עמודת מספר/פר שובר, מסוג עסקה, ומתיאור (כולל כל השדות יחד)
+            let installment = extractInstallmentInfoFromNotes(notesAndVoucher);
             if (!installment && transactionType) {
               installment = extractInstallmentInfoFromNotes(String(transactionType));
             }
             if (!installment) {
-              const combinedForParse = [description, transactionType, notesStr].filter(Boolean).join(' ');
+              const combinedForParse = [description, transactionType, notesAndVoucher].filter(Boolean).join(' ');
               const parsed = parseInstallment(combinedForParse, amountNum);
               if (parsed.isInstallment) {
                 installment = { current: parsed.installment_current, total: parsed.installment_total };
@@ -2729,7 +2761,7 @@
                   if (p.isInstallment) installment = { current: p.installment_current, total: p.installment_total };
                 }
                 if (installment) {
-                  console.log(`💳 זוהה תשלום מסריקת שורה: "${description}" מתוך עמודה ${c} → ${installment.current}/${installment.total}`);
+                  console.log(`💳 זוהה תשלום מסריקת שורה: "${description}" מתוך עמודה ${c} → ${installment.current}${installment.total != null ? '/' + installment.total : ''}`);
                   break;
                 }
               }
@@ -2737,7 +2769,9 @@
             let installmentNote = '';
             if (installment) {
               const usedCharge = columns.chargeAmount !== -1 && row[columns.chargeAmount] !== undefined && row[columns.chargeAmount] !== null && row[columns.chargeAmount] !== '';
-              installmentNote = ` (תשלום ${installment.current}/${installment.total}${usedCharge ? ', חודשי' : ''})`;
+              installmentNote = installment.total != null
+                ? ` (תשלום ${installment.current}/${installment.total}${usedCharge ? ', חודשי' : ''})`
+                : ` (תשלום ${installment.current})`;
             }
             
             // הוסף את הענף אם קיים והערות כדי שה-AI יזהה החזרים

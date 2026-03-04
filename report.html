@@ -1152,7 +1152,7 @@
           const flatIndex = expenses.indexOf(item);
           const refundBadge = item.isRefund ? `<span class="refund-badge">החזר</span>` : '';
           const standingOrderBadge = item.isStandingOrder ? `<span class="standing-order-badge">הוראת קבע</span>` : '';
-          const installmentBadge = item.installment_info ? `<span class="installment-badge">${item.display_note || 'תשלומים'}</span>` : '';
+          const installmentBadge = item.installment_info ? `<span class="installment-badge">${item.installment_info.total == null ? ('תשלום ' + item.installment_info.current) : (item.display_note || 'תשלומים')}</span>` : '';
           const refundClass = item.isRefund ? ' refund' : '';
           return `
           <div class="expense-item" draggable="true" data-expense-index="${flatIndex}">
