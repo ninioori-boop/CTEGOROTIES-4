@@ -2195,10 +2195,11 @@
         if (originalText.includes('הערות') || originalText.includes('הערה') || (originalText.includes('פירוט') && !originalText.includes('נוסף'))) {
           columns.notes = index;
         }
-        // עמודת תשלומים: רק כותרות שמכילות שובר/פירוט נוסף – לא "מספר עסקה" או "מספר כרטיס"
+        // עמודת תשלומים: כותרות שמכילות שובר/פירוט נוסף או תשלום
         const isVoucherCol = originalText.includes('שובר') && (originalText.includes('פירוט') || originalText.includes('מספר') || originalText.includes("מס'")) ||
             originalText.includes('פירוט נוסף') || (originalText.includes('פר שובר') || /פר\s*שובר/.test(originalText)) ||
-            (originalText.includes('מספר') && originalText.includes('פירוט'));
+            (originalText.includes('מספר') && originalText.includes('פירוט')) ||
+            (originalText.includes('תשלום') && (originalText.includes('מס') || originalText.includes('מספר') || originalText.includes("מס'") || originalText.trim().length <= 25));
         if (isVoucherCol && columns.voucherOrDetail === -1) {
           columns.voucherOrDetail = index;
           console.log(`💳 עמודת תשלומים (voucherOrDetail): index ${index} "${originalText}"`);
@@ -2688,6 +2689,26 @@
         // אם יש עמודת סכום - בונים מנתיב כותרות (הערות, זיכוי, החזרים)
         if (columns.chargeAmount !== -1 || columns.transactionAmount !== -1) {
           console.log('✅ Final columns detected:', columns);
+          // אם לא זיהינו עמודת תשלומים – ננסה לפי תוכן: עמודה שבה הרבה תאים עם "תשלום X מתוך Y"
+          if (columns.voucherOrDetail === -1 && headerRow) {
+            const maxCol = headerRow.length;
+            let bestVoucherCol = -1, bestCount = 0;
+            for (let col = 0; col < maxCol; col++) {
+              if (col === columns.description || col === columns.notes) continue;
+              let count = 0;
+              for (let r = headerRowIndex + 1; r < Math.min(data.length, headerRowIndex + 50); r++) {
+                const rw = data[r];
+                if (!rw || col >= rw.length) continue;
+                const val = String(rw[col] || '').trim();
+                if (val && extractInstallmentInfoFromNotes(val)) count++;
+              }
+              if (count > bestCount && count >= 2) { bestCount = count; bestVoucherCol = col; }
+            }
+            if (bestVoucherCol !== -1) {
+              columns.voucherOrDetail = bestVoucherCol;
+              console.log(`💳 עמודת תשלומים לפי תוכן: index ${bestVoucherCol} (${bestCount} שורות עם תשלום)`);
+            }
+          }
           
           let text = `דוח הוצאות - ${cardName}\n`;
           text += '='.repeat(50) + '\n';
@@ -2786,10 +2807,11 @@
                 installment = { current: parsed.installment_current, total: parsed.installment_total };
               }
             }
-            // סריקת כל תאי השורה לאיתור X/Y (מכסה כל עסקה בתשלומים - כולל "תשלום בתשלומים" בלי X/Y בעמודת סוג)
+            // סריקת כל תאי השורה לאיתור תשלום (כולל עמודות שלא ב-row כשהשורה קצרה)
             if (!installment) {
-              for (let c = 0; c < row.length; c++) {
-                const cellVal = String(row[c] || '').trim();
+              const maxCol = headerRow ? Math.max(row.length, headerRow.length) : row.length;
+              for (let c = 0; c < maxCol; c++) {
+                const cellVal = (row[c] !== undefined && row[c] !== null && row[c] !== '') ? String(row[c]).trim() : '';
                 if (!cellVal) continue;
                 installment = extractInstallmentInfoFromNotes(cellVal);
                 if (!installment) {
