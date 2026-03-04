@@ -200,12 +200,59 @@
     }
 
     /* Categories Grid */
+    .categories-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
     .categories-title {
       font-size: 1.5rem;
       font-weight: 700;
       color: var(--primary);
-      margin-bottom: 1.5rem;
-      text-align: center;
+      margin: 0;
+    }
+
+    .btn-add-category {
+      padding: 0.6rem 1.2rem;
+      font-size: 1rem;
+      background: var(--green);
+      color: var(--white);
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      font-family: 'Heebo', sans-serif;
+      font-weight: 600;
+    }
+
+    .btn-add-category:hover {
+      background: #276749;
+    }
+
+    .category-header-right {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .btn-add-item {
+      padding: 0.35rem 0.7rem;
+      font-size: 0.85rem;
+      background: var(--gray-light);
+      color: var(--primary);
+      border: 1px solid #e2e8f0;
+      border-radius: 20px;
+      cursor: pointer;
+      font-family: 'Heebo', sans-serif;
+      white-space: nowrap;
+    }
+
+    .btn-add-item:hover {
+      background: #ebf8ff;
+      border-color: var(--accent);
     }
 
     .categories-grid {
@@ -369,6 +416,14 @@
       display: flex;
       align-items: center;
       gap: 1rem;
+      padding: 0.4rem 0.6rem;
+      border-radius: 12px;
+      transition: background 0.2s;
+    }
+
+    .bar-item.drop-target {
+      background: rgba(49, 130, 206, 0.15);
+      box-shadow: inset 0 0 0 2px var(--accent);
     }
 
     .bar-label {
@@ -454,6 +509,79 @@
       color: var(--white);
     }
 
+    /* Modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: var(--white);
+      padding: 2rem;
+      border-radius: 16px;
+      max-width: 400px;
+      width: 90%;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    }
+
+    .modal-content h3 {
+      margin-bottom: 0.5rem;
+      color: var(--primary);
+    }
+
+    .modal-category-name {
+      font-size: 1rem;
+      color: var(--gray);
+      margin-bottom: 1.5rem;
+    }
+
+    .modal-content .form-group {
+      margin-bottom: 1rem;
+    }
+
+    .modal-content .form-group label {
+      display: block;
+      margin-bottom: 0.4rem;
+      font-weight: 500;
+      color: var(--black);
+    }
+
+    .modal-content .form-group input {
+      width: 100%;
+      padding: 0.7rem 1rem;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-family: 'Heebo', sans-serif;
+    }
+
+    .modal-content .form-group input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+
+    .modal-actions .btn {
+      flex: 1;
+    }
+
     /* Footer */
     footer {
       text-align: center;
@@ -473,6 +601,18 @@
       
       .drag-hint {
         display: none;
+      }
+
+      .btn-add-category {
+        display: none;
+      }
+
+      .btn-add-item {
+        display: none;
+      }
+
+      .modal-overlay {
+        display: none !important;
       }
       
       .category-card {
@@ -544,8 +684,11 @@
     </div>
 
     <!-- Categories Grid -->
-    <h2 class="categories-title">פירוט לפי קטגוריות</h2>
-    <p class="report-legend drag-hint" style="margin-bottom: 1rem;">גרור פריט בין קטגוריות כדי לעדכן את המיון</p>
+    <div class="categories-header-row">
+      <h2 class="categories-title">פירוט לפי קטגוריות</h2>
+      <button type="button" class="btn btn-add-category" onclick="createNewCategory()">+ קטגוריה חדשה</button>
+    </div>
+    <p class="report-legend drag-hint" style="margin-bottom: 1rem;">גרור פריט בין קטגוריות כדי לעדכן את המיון • לחץ על "הוסף פריט" כדי להוסיף הוצאה ידנית</p>
     <div class="categories-grid" id="categoriesGrid"></div>
 
     <!-- Actions -->
@@ -559,6 +702,26 @@
     <footer>
       <p>אורי ניניו</p>
     </footer>
+  </div>
+
+  <!-- Modal להוספת פריט -->
+  <div id="addItemModal" class="modal-overlay" onclick="if(event.target===this)closeAddItemModal()">
+    <div class="modal-content">
+      <h3>הוספת פריט לקטגוריה</h3>
+      <p class="modal-category-name" id="modalCategoryName"></p>
+      <div class="form-group">
+        <label for="addItemDesc">תיאור</label>
+        <input type="text" id="addItemDesc" placeholder="שם בית העסק / תיאור ההוצאה">
+      </div>
+      <div class="form-group">
+        <label for="addItemAmount">סכום (₪)</label>
+        <input type="number" id="addItemAmount" placeholder="0" min="0" step="0.01">
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" onclick="closeAddItemModal()">ביטול</button>
+        <button type="button" class="btn btn-primary" onclick="confirmAddItem()">שמור</button>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -614,6 +777,8 @@
       }
 
       reportData = JSON.parse(data);
+      if (!reportData.customCategories) reportData.customCategories = [];
+      if (!reportData.manualExpenses) reportData.manualExpenses = [];
       console.log('Report Data:', reportData);
 
       // תאריך
@@ -624,10 +789,23 @@
       renderCardsSummary();
       renderExpenses('all');
       setupDragAndDrop();
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeAddItemModal();
+      });
     });
+
+    function handleExpenseDrop(index, targetCategory) {
+      const expenses = getExpensesForCard(currentCard);
+      const expense = expenses[index];
+      if (!expense || expense.category === targetCategory) return;
+      expense.category = targetCategory;
+      saveReportData();
+      renderExpenses(currentCard);
+    }
 
     function setupDragAndDrop() {
       const grid = document.getElementById('categoriesGrid');
+      const barChart = document.getElementById('barChart');
       if (!grid) return;
 
       grid.addEventListener('dragstart', (e) => {
@@ -642,6 +820,7 @@
       grid.addEventListener('dragend', (e) => {
         document.querySelectorAll('.expense-item.dragging').forEach(el => el.classList.remove('dragging'));
         document.querySelectorAll('.category-card.drop-target').forEach(el => el.classList.remove('drop-target'));
+        document.querySelectorAll('.bar-item.drop-target').forEach(el => el.classList.remove('drop-target'));
       });
 
       grid.addEventListener('dragover', (e) => {
@@ -650,6 +829,7 @@
         e.preventDefault();
         e.dataTransfer.dropEffect = 'move';
         document.querySelectorAll('.category-card.drop-target').forEach(el => el.classList.remove('drop-target'));
+        document.querySelectorAll('.bar-item.drop-target').forEach(el => el.classList.remove('drop-target'));
         card.classList.add('drop-target');
       });
 
@@ -667,17 +847,43 @@
         card.classList.remove('drop-target');
         try {
           const { index } = JSON.parse(e.dataTransfer.getData('text/plain'));
-          const targetCategory = card.dataset.category;
-          const expenses = getExpensesForCard(currentCard);
-          const expense = expenses[index];
-          if (!expense || expense.category === targetCategory) return;
-          expense.category = targetCategory;
-          sessionStorage.setItem('expenseResults', JSON.stringify(reportData));
-          renderExpenses(currentCard);
+          handleExpenseDrop(index, card.dataset.category);
         } catch (err) {
           console.error('Drop error:', err);
         }
       });
+
+      if (barChart) {
+        barChart.addEventListener('dragover', (e) => {
+          const bar = e.target.closest('.bar-item');
+          if (!bar) return;
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'move';
+          document.querySelectorAll('.category-card.drop-target').forEach(el => el.classList.remove('drop-target'));
+          document.querySelectorAll('.bar-item.drop-target').forEach(el => el.classList.remove('drop-target'));
+          bar.classList.add('drop-target');
+        });
+
+        barChart.addEventListener('dragleave', (e) => {
+          const bar = e.target.closest('.bar-item');
+          if (!bar) return;
+          if (bar.contains(e.relatedTarget)) return;
+          bar.classList.remove('drop-target');
+        });
+
+        barChart.addEventListener('drop', (e) => {
+          e.preventDefault();
+          const bar = e.target.closest('.bar-item');
+          if (!bar) return;
+          bar.classList.remove('drop-target');
+          try {
+            const { index } = JSON.parse(e.dataTransfer.getData('text/plain'));
+            handleExpenseDrop(index, bar.dataset.category);
+          } catch (err) {
+            console.error('Drop error:', err);
+          }
+        });
+      }
     }
 
     function renderCardsSummary() {
@@ -703,6 +909,9 @@
           allExpenses = allExpenses.concat(reportData.bank.expenses || []);
           allTotal += (reportData.bank.expenses || []).reduce((sum, e) => sum + e.amount, 0);
         }
+        const manual = reportData.manualExpenses || [];
+        allExpenses = allExpenses.concat(manual);
+        allTotal += manual.reduce((sum, e) => sum + e.amount, 0);
         
         html += `
           <div class="card-summary-item active" onclick="switchCard('all', event)">
@@ -741,12 +950,16 @@
         }
       } else {
         // פורמט ישן - מערך פשוט של הוצאות
-        const total = reportData.reduce((sum, e) => sum + e.amount, 0);
+        const arrTotal = reportData.reduce((sum, e) => sum + e.amount, 0);
+        const manual = reportData.manualExpenses || [];
+        const manualTotal = manual.reduce((sum, e) => sum + e.amount, 0);
+        const total = arrTotal + manualTotal;
+        const count = reportData.length + manual.length;
         html += `
           <div class="card-summary-item active">
             <div class="card-summary-name">📊 כל ההוצאות</div>
             <div class="card-summary-amount">${total.toLocaleString('he-IL', { maximumFractionDigits: 0 })} ₪</div>
-            <div class="card-summary-count">${reportData.length} הוצאות</div>
+            <div class="card-summary-count">${count} הוצאות</div>
           </div>
         `;
       }
@@ -767,7 +980,8 @@
     function getExpensesForCard(cardId) {
       // פורמט ישן
       if (Array.isArray(reportData)) {
-        return reportData;
+        const manual = reportData.manualExpenses || [];
+        return reportData.concat(manual);
       }
       
       // פורמט חדש
@@ -781,6 +995,7 @@
         if (reportData.bank) {
           all = all.concat(reportData.bank.expenses || []);
         }
+        all = all.concat(reportData.manualExpenses || []);
         return all;
       }
       
@@ -794,6 +1009,77 @@
       }
       
       return [];
+    }
+
+    function saveReportData() {
+      sessionStorage.setItem('expenseResults', JSON.stringify(reportData));
+    }
+
+    let addItemTargetCategory = null;
+
+    function createNewCategory() {
+      const name = prompt('שם הקטגוריה החדשה:');
+      if (!name || !name.trim()) return;
+      const trimmed = name.trim();
+      if (!reportData.customCategories) reportData.customCategories = [];
+      if (reportData.customCategories.includes(trimmed)) {
+        alert('קטגוריה בשם זה כבר קיימת');
+        return;
+      }
+      reportData.customCategories.push(trimmed);
+      saveReportData();
+      if (currentCard !== 'all') {
+        currentCard = 'all';
+        document.querySelectorAll('.card-summary-item').forEach(el => el.classList.remove('active'));
+        const first = document.querySelector('.card-summary-item');
+        if (first) first.classList.add('active');
+      }
+      renderExpenses('all');
+    }
+
+    function showAddItemModal(btn) {
+      const card = btn.closest('.category-card');
+      if (!card) return;
+      addItemTargetCategory = card.dataset.category;
+      document.getElementById('modalCategoryName').textContent = addItemTargetCategory;
+      document.getElementById('addItemDesc').value = '';
+      document.getElementById('addItemAmount').value = '';
+      document.getElementById('addItemModal').classList.add('active');
+    }
+
+    function closeAddItemModal() {
+      document.getElementById('addItemModal').classList.remove('active');
+      addItemTargetCategory = null;
+    }
+
+    function confirmAddItem() {
+      if (!addItemTargetCategory) return;
+      const desc = document.getElementById('addItemDesc').value.trim();
+      const amount = parseFloat(document.getElementById('addItemAmount').value);
+      if (!desc) {
+        alert('נא להזין תיאור');
+        return;
+      }
+      if (isNaN(amount) || amount < 0) {
+        alert('נא להזין סכום תקין');
+        return;
+      }
+      if (!reportData.manualExpenses) reportData.manualExpenses = [];
+      reportData.manualExpenses.push({
+        description: desc,
+        amount: amount,
+        category: addItemTargetCategory
+      });
+      saveReportData();
+      closeAddItemModal();
+      if (currentCard !== 'all') {
+        currentCard = 'all';
+        document.querySelectorAll('.card-summary-item').forEach(el => el.classList.remove('active'));
+        const first = document.querySelector('.card-summary-item');
+        if (first) first.classList.add('active');
+      }
+      renderExpenses('all');
+      renderCardsSummary();
     }
 
     function renderExpenses(cardId) {
@@ -813,6 +1099,16 @@
         grouped[cat].total += expense.amount;
         totalAmount += expense.amount;
       });
+
+      // הוספת קטגוריות מותאמות ריקות (רק בתצוגת הכל)
+      const customCats = reportData.customCategories || [];
+      if (cardId === 'all') {
+        customCats.forEach(cat => {
+          if (!grouped[cat]) {
+            grouped[cat] = { items: [], total: 0 };
+          }
+        });
+      }
 
       // סיכום כולל
       document.getElementById('totalAmount').textContent = totalAmount.toLocaleString('he-IL', { maximumFractionDigits: 2 }) + ' ₪';
@@ -836,8 +1132,9 @@
       const barChartHTML = sortedCategories.slice(0, 10).map(([category, data]) => {
         const percentage = (data.total / maxAmount) * 100;
         const icon = CATEGORY_ICONS[category] || '📦';
+        const safeCategory = category.replace(/"/g, '&quot;');
         return `
-          <div class="bar-item">
+          <div class="bar-item" data-category="${safeCategory}">
             <div class="bar-label">${icon} ${category}</div>
             <div class="bar-container">
               <div class="bar-fill" style="width: ${percentage}%"></div>
@@ -865,14 +1162,18 @@
           `;
         }).join('');
 
+        const safeCategory = category.replace(/"/g, '&quot;');
         return `
-          <div class="category-card" data-category="${category.replace(/"/g, '&quot;')}">
+          <div class="category-card" data-category="${safeCategory}">
             <div class="category-header">
               <div class="category-name">
                 <span class="icon">${icon}</span>
                 <span>${category}</span>
               </div>
-              <div class="category-total">${data.total.toLocaleString('he-IL', { maximumFractionDigits: 2 })} ₪</div>
+              <div class="category-header-right">
+                <button type="button" class="btn-add-item" onclick="showAddItemModal(this)" title="הוסף פריט">+ הוסף פריט</button>
+                <div class="category-total">${data.total.toLocaleString('he-IL', { maximumFractionDigits: 2 })} ₪</div>
+              </div>
             </div>
             <div class="category-count">${data.items.length} פריטים</div>
             <div class="expense-list">${itemsHTML}</div>
