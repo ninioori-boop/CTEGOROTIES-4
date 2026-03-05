@@ -1807,6 +1807,11 @@
                 }
               }
               if (!installment) {
+                const fullLine = parts.join(' | ');
+                const notesPortion = fullLine.match(/הערות:\s*(.+)/);
+                if (notesPortion) installment = extractInstallmentInfoFromNotes(notesPortion[1]);
+              }
+              if (!installment) {
                 const onlyInstMatch = rawDesc.match(/\(\s*תשלום\s+(\d+)\s*\)/) || (amountPart && amountPart.match(/\(\s*תשלום\s+(\d+)\s*\)/));
                 if (onlyInstMatch) installment = { current: parseInt(onlyInstMatch[1]), total: null };
               }
@@ -1870,6 +1875,10 @@
               if (!installment) {
                 const notesMatch = trimmed.match(/הערות:\s*תשלום\s*(\d+)\s*מתוך\s*(\d+)/);
                 if (notesMatch) installment = { current: parseInt(notesMatch[1]), total: parseInt(notesMatch[2]) };
+              }
+              if (!installment) {
+                const notesPortion = trimmed.match(/הערות:\s*(.+)/);
+                if (notesPortion) installment = extractInstallmentInfoFromNotes(notesPortion[1]);
               }
               if (!installment) {
                 const onlyInstMatch = rawDesc.match(/\(\s*תשלום\s+(\d+)\s*\)/) || (amountPart && amountPart.match(/\(\s*תשלום\s+(\d+)\s*\)/));
@@ -2286,10 +2295,12 @@
           columns.notes = index;
         }
         // עמודת תשלומים: כותרות שמכילות שובר/פירוט נוסף או תשלום
+        const trimmedText = originalText.trim();
         const isVoucherCol = originalText.includes('שובר') && (originalText.includes('פירוט') || originalText.includes('מספר') || originalText.includes("מס'")) ||
             originalText.includes('פירוט נוסף') || (originalText.includes('פר שובר') || /פר\s*שובר/.test(originalText)) ||
             (originalText.includes('מספר') && originalText.includes('פירוט')) ||
-            (originalText.includes('תשלום') && (originalText.includes('מס') || originalText.includes('מספר') || originalText.includes("מס'") || originalText.includes('פרטי') || originalText.trim().length <= 25));
+            /^תשלומ?י?ם?\s*$/.test(trimmedText) ||
+            (originalText.includes('תשלום') && (originalText.includes('מס') || originalText.includes('מספר') || originalText.includes("מס'") || originalText.includes('פרטי') || trimmedText.length <= 25));
         if (isVoucherCol && columns.voucherOrDetail === -1) {
           columns.voucherOrDetail = index;
           console.log(`💳 עמודת תשלומים (voucherOrDetail): index ${index} "${originalText}"`);
@@ -2956,6 +2967,17 @@
                 }
               }
             }
+            // מספר פשוט בעמודת תשלומים (למשל "3" בלבד) – מספר תשלום נוכחי בלי סה"כ
+            if (!installment && columns.voucherOrDetail !== -1) {
+              const vVal = row[columns.voucherOrDetail];
+              if (vVal !== undefined && vVal !== null && vVal !== '') {
+                const num = typeof vVal === 'number' ? vVal : parseInt(String(vVal).trim(), 10);
+                if (!isNaN(num) && num > 0 && num <= 60 && /^\d+$/.test(String(vVal).trim())) {
+                  installment = { current: num, total: null };
+                  console.log(`💳 זוהה תשלום ממספר פשוט בעמודת voucherOrDetail: "${description}" → תשלום ${num}`);
+                }
+              }
+            }
             let installmentNote = '';
             if (installment) {
               console.log(`💳 זוהה תשלום: "${description}" → ${installment.current}${installment.total != null ? '/' + installment.total : ''}`);
@@ -3027,7 +3049,9 @@
                   if (p.isInstallment) installment = { current: p.installment_current, total: p.installment_total };
                 }
               }
-              if (installment) installmentNote = ` (תשלום ${installment.current}/${installment.total})`;
+              if (installment) installmentNote = installment.total != null
+                ? ` (תשלום ${installment.current}/${installment.total})`
+                : ` (תשלום ${installment.current})`;
               text += `${description} | ${numAmount}${installmentNote}\n`;
               processedCount++;
             }
