@@ -358,7 +358,7 @@
   </style>
 </head>
 <body>
-  <div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-overlay" id="loadingOverlay" role="status" aria-live="polite" aria-label="המערכת מנתחת את הדוחות">
     <div class="loading-spinner"></div>
     <div class="loading-text" id="loadingText">מנתח את הדוחות...</div>
     <div class="loading-subtext" id="loadingSubtext">ChatGPT מקטלג את ההוצאות</div>
@@ -383,7 +383,7 @@
             <div class="icon" id="cardIcon1">📄</div>
             <h4 id="cardTitle1">כרטיס אשראי 1</h4>
             <p id="cardDesc1">לחץ לבחירת קובץ</p>
-            <input type="file" id="cardInput1" accept=".xlsx,.xls,.csv" onchange="handleCardFile(1, this)">
+            <input type="file" id="cardInput1" accept=".xlsx,.xls,.csv" onchange="handleCardFile(1, this)" aria-label="העלאת קובץ דוח כרטיס אשראי 1">
           </div>
           <div class="add-card-btn" onclick="console.log('Add card clicked'); addCardSlot();">
             <div class="icon">➕</div>
@@ -402,7 +402,7 @@
             <div class="icon" id="bankIcon">📄</div>
             <h4 id="bankTitle">דוח תנועות עו"ש</h4>
             <p id="bankDesc">לחץ לבחירת קובץ Excel/CSV</p>
-            <input type="file" id="bankInput" accept=".xlsx,.xls,.csv" onchange="handleBankFile(this)">
+            <input type="file" id="bankInput" accept=".xlsx,.xls,.csv" onchange="handleBankFile(this)" aria-label="העלאת קובץ דוח חשבון עו״ש">
           </div>
         </div>
       </div>
@@ -410,7 +410,9 @@
       <div class="success-message" id="successMessage"></div>
       <div class="error-message" id="errorMessage"></div>
 
-      <button class="btn btn-green" onclick="analyzeAllCards()" id="analyzeBtn" disabled>
+      <button class="btn btn-green" onclick="analyzeAllCards()" id="analyzeBtn" disabled
+        aria-label="נתח את כל הדוחות שהועלו"
+        title="נתח את כל הדוחות שהועלו">
         נתח את כל הדוחות
       </button>
     </div>
@@ -1209,13 +1211,40 @@
       'פייפרלס': 'שונות', 'paperless': 'שונות',
 
       // ========== חסכונות ==========
-      'חסכון מפתח': 'חסכונות'
+      'חסכון מפתח': 'חסכונות',
+
+      // ========== עסקים מדוחות Visa / מהמשתמש ==========
+      'יוגנד פוטו': 'שונות', 'yugend': 'שונות', 'יוגנד': 'שונות',
+      'ברסו צילום': 'שונות', 'barso': 'שונות', 'ברסו': 'שונות',
+      'מוטי פרץ חומרי בניין': 'ריהוט והבית', 'מוטי פרץ': 'ריהוט והבית',
+      'העברות לקרדיט': 'שונות', 'העברה לקרדיט': 'שונות',
+      'powerdoc': 'שונות', 'חדשנות דיגי': 'שונות',
+      'creatorz': 'שונות', 'creatorz.pro': 'שונות',
+      'שוועת עניים': 'תרומות',
+      'איקאה ראשלצ': 'ריהוט והבית', 'איקאה גמא': 'ריהוט והבית', 'איקאה ת"א': 'ריהוט והבית',
+      'איקאה ראשל"צ': 'ריהוט והבית', 'איקאה ראשל\'צ': 'ריהוט והבית'
     };
+
+    // ניקוי תיאור לפני התאמה למאגר – הסרת סיומות סניף ותבניות תשלום
+    function normalizeForCategory(description) {
+      if (!description) return '';
+      let s = String(description).trim();
+      s = s.replace(/\s*\(תשלום\s+\d+[^\)]*\)/g, '');
+      s = s.replace(/\s*תשלום\s+\d+\s*מתוך\s*\d+/g, '');
+      s = s.replace(/\s*\d+\s*\/\s*\d+\s*$/g, '');
+      const branchSuffixes = ['ראשלצ', 'ראשל"צ', 'גמא', 'ת"א', 'חיפה', 'באר שבע', 'נתניה', 'אשדוד', 'פתח תקווה', 'הרצליה', 'רמת גן'];
+      for (const suf of branchSuffixes) {
+        const re = new RegExp('\\s*[\\-־]?\\s*' + suf.replace(/"/g, '"') + '\\s*$', 'i');
+        s = s.replace(re, '');
+      }
+      return s.replace(/\s+/g, ' ').trim();
+    }
 
     // פונקציה לקטלוג מהמאגר
     function categorizeByDatabase(description) {
       if (!description) return null;
-      const lowerDesc = description.toLowerCase().trim();
+      const normalized = normalizeForCategory(description);
+      const lowerDesc = normalized.toLowerCase();
       
       // #region agent log
       console.log(`🔍 categorizeByDatabase checking: "${description}"`);
@@ -1342,6 +1371,16 @@
         expense.auto_corrected = true;
       }
       
+      // === תיקון קריטי: העברות לקרדיט / תשלום / פרעון → שונות (לא אוכל) ===
+      if (desc.includes('העברות לקרדיט') || desc.includes('העברה לקרדיט') || desc.includes('תשלום לכרטיס') || desc.includes('פרעון')) {
+        if (expense.category !== 'שונות') {
+          console.log(`🔧 תיקון: "${expense.description}" מ-"${expense.category}" ל-"שונות" (העברה/פרעון)`);
+          expense.category = 'שונות';
+          expense.auto_corrected = true;
+        }
+        return expense;
+      }
+
       // === תיקון קריטי 0: ביטוח לאומי (חייב להיות ראשון!) ===
       if (desc.includes('ביטוח לאומי')) {
         if (expense.category !== 'ביטוח לאומי') {
@@ -1773,7 +1812,9 @@
               }
               const description = rawDesc
                 .replace(/\s*\(\s*תשלום\s+\d+[^\)]*\)/, '').replace(/\s*\[.*\]\s*$/, '').trim();
-              if (description) lines.push({ description, amount, installment, amount_is_monthly });
+              const fullLine = parts.join(' | ');
+              const isStandingOrder = /הוראת קבע|הוראות קבע/i.test(fullLine);
+              if (description) lines.push({ description, amount, installment, amount_is_monthly, isStandingOrder });
             }
             break;
           }
@@ -1835,7 +1876,9 @@
                 if (onlyInstMatch) installment = { current: parseInt(onlyInstMatch[1]), total: null };
               }
               const description = rawDesc.replace(/\s*\(\s*תשלום\s+\d+[^\)]*\)/, '').replace(/\s*\[.*\]\s*$/, '').trim();
-              if (description) parsed = { description, amount, installment, amount_is_monthly };
+              const fullLine = parts.join(' | ');
+              const isStandingOrder = /הוראת קבע|הוראות קבע/i.test(fullLine);
+              if (description) parsed = { description, amount, installment, amount_is_monthly, isStandingOrder };
               break;
             }
           }
@@ -1850,6 +1893,10 @@
             amount: parsed.amount,
             category: dbCategory
           };
+          if (parsed.isStandingOrder) {
+            exp.isStandingOrder = true;
+            exp.standing_order_note = 'הוראת קבע';
+          }
           if (parsed.installment) {
             exp.installment_info = parsed.installment;
             exp.amount_is_monthly = parsed.amount_is_monthly;
@@ -1906,6 +1953,12 @@
           console.log(`💳 סימון תשלום מהמקור: "${exp.description}" → תשלום ${cur}`);
         }
       }
+      function applyStandingOrderFromSource(exp, srcLine) {
+        if (srcLine.isStandingOrder) {
+          exp.isStandingOrder = true;
+          exp.standing_order_note = 'הוראת קבע';
+        }
+      }
 
       // סבב 1: התאמה לפי סכום – לכל expense, חפש שורת מקור עם סכום תואם (עדיף גם תיאור דומה)
       const used = {};
@@ -1925,6 +1978,7 @@
           if ((diff < 10 || pct < 0.1) && descMatch(sl)) {
             exp.description = sl.description;
             applyInstallmentFromSource(exp, sl);
+            applyStandingOrderFromSource(exp, sl);
             used[idx] = true;
             return;
           }
@@ -1952,6 +2006,7 @@
           if (bestDiff < 10 || pct < 0.1) {
             exp.description = sl.description;
             applyInstallmentFromSource(exp, sl);
+            applyStandingOrderFromSource(exp, sl);
             used[bestIdx] = true;
           }
         }
@@ -1967,7 +2022,31 @@
           console.log(`🔄 Replacing AI description "${desc}" with source "${sourceLines[unusedSrc[ui]].description}"`);
           exp.description = sourceLines[unusedSrc[ui]].description;
           applyInstallmentFromSource(exp, sourceLines[unusedSrc[ui]]);
+          applyStandingOrderFromSource(exp, sourceLines[unusedSrc[ui]]);
           ui++;
+        }
+      });
+
+      // סבב 3: לכל expense שעדיין בלי installment_info – התאם שורת מקור לא משומשת לפי סכום
+      const stillUnused = [];
+      for (let i = 0; i < sourceLines.length; i++) { if (!used[i]) stillUnused.push(i); }
+      expenses.forEach(function(exp) {
+        if (exp.installment_info && exp.installment_info.current) return;
+        const amount = typeof exp.amount === 'number' ? exp.amount : parseFloat(exp.amount);
+        if (isNaN(amount)) return;
+        for (let u = 0; u < stillUnused.length; u++) {
+          const idx = stillUnused[u];
+          const sl = sourceLines[idx];
+          if (!sl.installment || !sl.installment.current) continue;
+          const diff = Math.abs(sl.amount - amount);
+          const pct = Math.abs(sl.amount) > 0 ? diff / Math.abs(sl.amount) : diff;
+          if (diff < 10 || pct < 0.1) {
+            applyInstallmentFromSource(exp, sl);
+            applyStandingOrderFromSource(exp, sl);
+            used[idx] = true;
+            stillUnused.splice(u, 1);
+            break;
+          }
         }
       });
 
@@ -2039,7 +2118,7 @@
         <div class="icon" id="cardIcon${currentCardNum}">📄</div>
         <h4 id="cardTitle${currentCardNum}">כרטיס אשראי ${currentCardNum}</h4>
         <p id="cardDesc${currentCardNum}">לחץ לבחירת קובץ</p>
-        <input type="file" id="cardInput${currentCardNum}" accept=".xlsx,.xls,.csv" onchange="handleCardFile(${currentCardNum}, this)">
+        <input type="file" id="cardInput${currentCardNum}" accept=".xlsx,.xls,.csv" onchange="handleCardFile(${currentCardNum}, this)" aria-label="העלאת קובץ דוח כרטיס אשראי ${currentCardNum}">
       `;
       
       grid.insertBefore(newCard, addBtn);
@@ -2110,10 +2189,17 @@
     async function readExcelFile(file) {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
+        const isCsv = /\.csv$/i.test(file.name);
         reader.onload = (e) => {
           try {
-            const data = new Uint8Array(e.target.result);
-            const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+            let workbook;
+            if (isCsv) {
+              const str = typeof e.target.result === 'string' ? e.target.result : new TextDecoder().decode(e.target.result);
+              workbook = XLSX.read(str, { type: 'string', raw: true, cellDates: true });
+            } else {
+              const data = new Uint8Array(e.target.result);
+              workbook = XLSX.read(data, { type: 'array', cellDates: true });
+            }
             const sheetName = workbook.SheetNames[0];
             const worksheet = workbook.Sheets[sheetName];
             const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
@@ -2123,7 +2209,11 @@
           }
         };
         reader.onerror = reject;
-        reader.readAsArrayBuffer(file);
+        if (isCsv) {
+          reader.readAsText(file, 'utf-8');
+        } else {
+          reader.readAsArrayBuffer(file);
+        }
       });
     }
 
@@ -2199,7 +2289,7 @@
         const isVoucherCol = originalText.includes('שובר') && (originalText.includes('פירוט') || originalText.includes('מספר') || originalText.includes("מס'")) ||
             originalText.includes('פירוט נוסף') || (originalText.includes('פר שובר') || /פר\s*שובר/.test(originalText)) ||
             (originalText.includes('מספר') && originalText.includes('פירוט')) ||
-            (originalText.includes('תשלום') && (originalText.includes('מס') || originalText.includes('מספר') || originalText.includes("מס'") || originalText.trim().length <= 25));
+            (originalText.includes('תשלום') && (originalText.includes('מס') || originalText.includes('מספר') || originalText.includes("מס'") || originalText.includes('פרטי') || originalText.trim().length <= 25));
         if (isVoucherCol && columns.voucherOrDetail === -1) {
           columns.voucherOrDetail = index;
           console.log(`💳 עמודת תשלומים (voucherOrDetail): index ${index} "${originalText}"`);
@@ -2550,7 +2640,21 @@
           if (description && amount !== null && amount !== undefined) {
             const numAmount = typeof amount === 'number' ? amount : parseFloat(String(amount).replace(/,/g, ''));
             if (!isNaN(numAmount) && numAmount !== 0) {
-              text += `${description} | ${numAmount}\n`;
+              const fullRowText = row.map(c => String(c ?? '').trim()).filter(Boolean).join(' ');
+              let installment = extractInstallmentInfoFromNotes(fullRowText);
+              if (!installment) {
+                const parsed = parseInstallment(fullRowText, numAmount);
+                if (parsed.isInstallment) installment = { current: parsed.installment_current, total: parsed.installment_total };
+              }
+              let installmentNote = '';
+              if (installment) {
+                installmentNote = installment.total != null
+                  ? ` (תשלום ${installment.current}/${installment.total})`
+                  : ` (תשלום ${installment.current})`;
+              }
+              const transactionType = detectedCols.transactionType !== -1 ? row[detectedCols.transactionType] : '';
+              const standingOrderNote = transactionType && /הוראת קבע|הוראות קבע/i.test(String(transactionType)) ? ' | הוראת קבע' : '';
+              text += `${description} | ${numAmount}${installmentNote}${standingOrderNote}\n`;
               processedCount++;
             }
           }
@@ -2569,8 +2673,32 @@
       
       for (const row of data) {
         if (row && row.length > 0) {
-          const rowText = row.filter(cell => cell !== null && cell !== undefined).join(' | ');
+          let rowText = row.filter(cell => cell !== null && cell !== undefined).join(' | ');
           if (rowText.trim() && !/סה"כ\s*לחיוב|לחיוב\s*החודש\s*בכרטיס/i.test(rowText)) {
+            let installment = extractInstallmentInfoFromNotes(rowText);
+            if (!installment) {
+              const firstNum = row.find(c => {
+                const n = parseFloat(String(c || '').replace(/,/g, ''));
+                return !isNaN(n) && n !== 0;
+              });
+              if (firstNum !== undefined) {
+                const parsed = parseInstallment(rowText, parseFloat(String(firstNum).replace(/,/g, '')));
+                if (parsed.isInstallment) installment = { current: parsed.installment_current, total: parsed.installment_total };
+              }
+            }
+            if (installment) {
+              const instSuffix = installment.total != null
+                ? ` (תשלום ${installment.current}/${installment.total})`
+                : ` (תשלום ${installment.current})`;
+              const parts = rowText.split(/\s*\|\s*/);
+              for (let i = 0; i < parts.length; i++) {
+                if (/^-?\d+(?:\.\d+)?/.test(parts[i].trim())) {
+                  parts[i] = parts[i].trim() + instSuffix;
+                  break;
+                }
+              }
+              rowText = parts.join(' | ');
+            }
             text += rowText + '\n';
           }
         }
@@ -2588,7 +2716,7 @@
       let headerRowIndex = -1;
       let columns = null;
       const headerKeywords = ['שם בית עסק', 'שם בית העסק', 'בית עסק', 'תיאור', 'פרטים', 'שם העסק'];
-      for (let i = 0; i < Math.min(15, data.length); i++) {
+      for (let i = 0; i < Math.min(25, data.length); i++) {
         const row = data[i];
         if (!row) continue;
         const rowText = row.map(cell => String(cell || '')).join(' ');
@@ -2785,7 +2913,7 @@
               const creditVal = parseAmount(row[columns.creditAmount]);
               if (!isNaN(creditVal) && creditVal !== 0) amountNum = -Math.abs(creditVal);
             }
-            if (notesStr && (notesStr.includes('ביטול עסקה') || notesStr.includes('זיכוי'))) {
+            if (notesStr && (notesStr.includes('ביטול עסקה') || notesStr.includes('ביטול') || notesStr.includes('זיכוי') || notesStr.includes('החזר'))) {
               amountNum = -Math.abs(amountNum);
             }
             
@@ -2841,8 +2969,9 @@
             const category = columns.category !== -1 ? row[columns.category] : '';
             const categoryNote = category ? ` [${category}]` : '';
             const notesNote = notesStr ? ` | הערות: ${notesStr}` : '';
+            const standingOrderNote = transactionType && /הוראת קבע|הוראות קבע/i.test(String(transactionType)) ? ' | הוראת קבע' : '';
             
-            text += `${description} | ${amountNum}${installmentNote}${categoryNote}${notesNote}\n`;
+            text += `${description} | ${amountNum}${installmentNote}${categoryNote}${notesNote}${standingOrderNote}\n`;
             processedCount++;
           }
           
@@ -3020,6 +3149,108 @@
           };
         }
 
+        // === חיפוש באינטרנט לעסקים לא מזוהים (שנשארו ב"שונות") ===
+        const allExpenseLists = allResults.cards.map(c => c.expenses);
+        if (allResults.bank) allExpenseLists.push(allResults.bank.expenses);
+
+        const unknownBusinesses = [];
+        const unknownExpenseRefs = [];
+        const searchCache = JSON.parse(sessionStorage.getItem('webSearchCache') || '{}');
+
+        for (const expList of allExpenseLists) {
+          for (const exp of expList) {
+            if (exp.category !== 'שונות') continue;
+            const desc = String(exp.description || '').trim();
+            if (!desc) continue;
+            if (searchCache[desc.toLowerCase()]) {
+              const cached = searchCache[desc.toLowerCase()];
+              if (cached.category !== 'שונות') {
+                exp.category = cached.category;
+                exp.webSearched = true;
+              }
+            } else {
+              unknownBusinesses.push({ description: desc, amount: exp.amount });
+              unknownExpenseRefs.push(exp);
+            }
+          }
+        }
+
+        if (unknownBusinesses.length > 0) {
+          const uniqueNames = [...new Set(unknownBusinesses.map(b => b.description))];
+          const uniqueToSearch = uniqueNames.map(name => {
+            const match = unknownBusinesses.find(b => b.description === name);
+            return { description: name, amount: match ? match.amount : 0 };
+          });
+
+          console.log(`🔍 Web search: ${uniqueToSearch.length} unknown businesses`);
+          document.getElementById('loadingSubtext').textContent = `מחפש ${uniqueToSearch.length} עסקים באינטרנט...`;
+
+          try {
+            const searchResponse = await fetch(API_BASE + '/api/search-business', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ businesses: uniqueToSearch })
+            });
+
+            if (searchResponse.ok) {
+              const searchData = await searchResponse.json();
+              const resultMap = {};
+              (searchData.results || []).forEach(r => {
+                resultMap[String(r.description || '').toLowerCase()] = r;
+              });
+
+              for (const exp of unknownExpenseRefs) {
+                const desc = String(exp.description || '').trim().toLowerCase();
+                const found = resultMap[desc];
+                if (found && found.category && found.category !== 'שונות') {
+                  exp.category = found.category;
+                  exp.webSearched = true;
+                  console.log(`🌐 Web search: "${exp.description}" → ${found.category} (${found.confidence || 'unknown'})`);
+                }
+                if (found) {
+                  searchCache[desc] = { category: found.category, confidence: found.confidence };
+                }
+              }
+              sessionStorage.setItem('webSearchCache', JSON.stringify(searchCache));
+            } else {
+              console.warn('⚠️ Web search failed, continuing without it');
+            }
+          } catch (searchError) {
+            console.warn('⚠️ Web search error, continuing without it:', searchError.message);
+          }
+        }
+
+        // חישוב סיכום הניתוח
+        function countExpenses(arr) {
+          if (!arr || !arr.expenses) return { total: 0, installments: 0, refunds: 0, standingOrders: 0, webSearched: 0 };
+          const exp = arr.expenses;
+          return {
+            total: exp.length,
+            installments: exp.filter(e => e.installment_info && e.installment_info.current).length,
+            refunds: exp.filter(e => e.isRefund).length,
+            standingOrders: exp.filter(e => e.isStandingOrder).length,
+            webSearched: exp.filter(e => e.webSearched).length
+          };
+        }
+        let summary = { total: 0, installments: 0, refunds: 0, standingOrders: 0, webSearched: 0 };
+        allResults.cards.forEach(c => {
+          const s = countExpenses(c);
+          summary.total += s.total;
+          summary.installments += s.installments;
+          summary.refunds += s.refunds;
+          summary.standingOrders += s.standingOrders;
+          summary.webSearched += s.webSearched;
+        });
+        if (allResults.bank) {
+          const s = countExpenses(allResults.bank);
+          summary.total += s.total;
+          summary.installments += s.installments;
+          summary.refunds += s.refunds;
+          summary.standingOrders += s.standingOrders;
+          summary.webSearched += s.webSearched;
+        }
+        allResults.summary = summary;
+
         // שמירה ומעבר לדוח
         sessionStorage.setItem('expenseResults', JSON.stringify(allResults));
         window.location.href = 'report.html';
@@ -3034,11 +3265,15 @@
     function showLoading(text, subtext) {
       document.getElementById('loadingText').textContent = text;
       document.getElementById('loadingSubtext').textContent = subtext;
-      document.getElementById('loadingOverlay').classList.add('active');
+      const overlay = document.getElementById('loadingOverlay');
+      overlay.classList.add('active');
+      overlay.setAttribute('aria-busy', 'true');
     }
 
     function hideLoading() {
-      document.getElementById('loadingOverlay').classList.remove('active');
+      const overlay = document.getElementById('loadingOverlay');
+      overlay.classList.remove('active');
+      overlay.setAttribute('aria-busy', 'false');
     }
 
     function showError(message) {

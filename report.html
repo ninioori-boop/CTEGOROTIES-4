@@ -69,6 +69,22 @@
       opacity: 0.8;
     }
 
+    .analysis-summary {
+      margin-top: 1rem;
+      font-size: 0.95rem;
+      opacity: 0.95;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      justify-content: center;
+    }
+
+    .analysis-summary span {
+      background: rgba(255,255,255,0.2);
+      padding: 0.35rem 0.75rem;
+      border-radius: 20px;
+    }
+
     /* Card Tabs */
     .card-tabs {
       display: flex;
@@ -389,6 +405,12 @@
       margin-right: 0.5rem;
     }
 
+    .web-search-badge {
+      font-size: 0.8rem;
+      margin-right: 0.3rem;
+      cursor: help;
+    }
+
     /* Chart Section */
     .chart-section {
       background: var(--white);
@@ -663,6 +685,7 @@
       <h1>📊 דוח מיפוי הוצאות</h1>
       <p>ניתוח מפורט של ההוצאות לפי קטגוריות</p>
       <div class="report-date" id="reportDate"></div>
+      <div class="analysis-summary" id="analysisSummary" aria-live="polite"></div>
     </div>
 
     <!-- Cards Summary -->
@@ -783,8 +806,25 @@
 
       // תאריך
       const now = new Date();
-      document.getElementById('reportDate').textContent = 
+      document.getElementById('reportDate').textContent =
         `נוצר בתאריך: ${now.toLocaleDateString('he-IL')} בשעה ${now.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}`;
+
+      const summaryEl = document.getElementById('analysisSummary');
+      if (reportData.summary && summaryEl) {
+        const s = reportData.summary;
+        const parts = [];
+        if (s.total > 0) parts.push(`סה"כ ${s.total} עסקאות`);
+        if (s.installments > 0) parts.push(`${s.installments} בתשלומים`);
+        if (s.refunds > 0) parts.push(`${s.refunds} החזרים`);
+        if (s.standingOrders > 0) parts.push(`${s.standingOrders} הוראות קבע`);
+        if (s.webSearched > 0) parts.push(`🌐 ${s.webSearched} זוהו באינטרנט`);
+        summaryEl.textContent = '';
+        parts.forEach(p => {
+          const span = document.createElement('span');
+          span.textContent = p;
+          summaryEl.appendChild(span);
+        });
+      }
 
       renderCardsSummary();
       renderExpenses('all');
@@ -1166,10 +1206,11 @@
             }
           }
           const installmentBadge = instLabel ? `<span class="installment-badge">${instLabel}</span>` : '';
+          const webSearchBadge = item.webSearched ? `<span class="web-search-badge" title="זוהה באמצעות חיפוש באינטרנט">🌐</span>` : '';
           const refundClass = item.isRefund ? ' refund' : '';
           return `
           <div class="expense-item" draggable="true" data-expense-index="${flatIndex}">
-              <span class="expense-name">${refundBadge}${standingOrderBadge}${installmentBadge}${item.description}</span>
+              <span class="expense-name">${refundBadge}${standingOrderBadge}${installmentBadge}${webSearchBadge}${item.description}</span>
             <span class="expense-amount${refundClass}">${item.amount.toLocaleString('he-IL', { maximumFractionDigits: 2 })} ₪</span>
           </div>
           `;

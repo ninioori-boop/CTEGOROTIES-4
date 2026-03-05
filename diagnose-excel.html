@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>אבחון מבנה אקסל - המקטרג</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    body { font-family: Heebo, sans-serif; padding: 2rem; max-width: 800px; margin: 0 auto; }
+    h1 { color: #1a365d; }
+    .drop-zone { border: 2px dashed #3182ce; padding: 2rem; text-align: center; cursor: pointer; margin: 1rem 0; border-radius: 8px; }
+    .drop-zone:hover { background: #ebf8ff; }
+    #output { white-space: pre-wrap; font-family: monospace; font-size: 12px; background: #f7fafc; padding: 1rem; overflow-x: auto; max-height: 400px; overflow-y: auto; }
+    button { background: #3182ce; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; margin-top: 0.5rem; }
+    button:hover { background: #2c5282; }
+  </style>
+</head>
+<body>
+  <h1>אבחון מבנה אקסל</h1>
+  <p>גרור קובץ xlsx כאן או לחץ לבחירה. הפלט יוצג למטה ויועתק לקונסולה (F12).</p>
+  <div class="drop-zone" id="dropZone">לחץ או גרור קובץ Excel (.xlsx, .xls)</div>
+  <input type="file" id="fileInput" accept=".xlsx,.xls" style="display:none">
+  <button id="downloadBtn" style="display:none">הורד JSON</button>
+  <pre id="output"></pre>
+
+  <script>
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const output = document.getElementById('output');
+    const downloadBtn = document.getElementById('downloadBtn');
+    let lastResult = null;
+
+    dropZone.onclick = () => fileInput.click();
+    dropZone.ondragover = (e) => { e.preventDefault(); dropZone.style.background = '#ebf8ff'; };
+    dropZone.ondragleave = () => { dropZone.style.background = ''; };
+    dropZone.ondrop = (e) => {
+      e.preventDefault();
+      dropZone.style.background = '';
+      const file = e.dataTransfer.files[0];
+      if (file) processFile(file);
+    };
+    fileInput.onchange = (e) => { const f = e.target.files[0]; if (f) processFile(f); };
+
+    function processFile(file) {
+      output.textContent = 'טוען...';
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+          const sheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[sheetName];
+          const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+          const result = diagnose(jsonData, file.name);
+          lastResult = result;
+          const str = JSON.stringify(result, null, 2);
+          output.textContent = str;
+          console.log('=== אבחון אקסל ===\n', str);
+          downloadBtn.style.display = 'inline-block';
+          downloadBtn.onclick = () => {
+            const a = document.createElement('a');
+            a.href = 'data:application/json;charset=utf-8,' + encodeURIComponent(str);
+            a.download = 'diagnose-' + file.name.replace(/\.[^.]+$/, '') + '.json';
+            a.click();
+          };
+        } catch (err) {
+          output.textContent = 'שגיאה: ' + err.message;
+          console.error(err);
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    function diagnose(data, fileName) {
+      const res = { file: fileName, rowCount: data.length, rows0to10: [], headerRowIndex: -1, headerRow: null, first5DataRows: [], columnsWithKeywords: {}, installmentSamples: [] };
+      const headerKeywords = ['שם בית עסק', 'שם בית העסק', 'בית עסק', 'תיאור', 'פרטים', 'שם העסק', 'סכום חיוב', 'סכום עסקה'];
+      const keywords = ['תשלום', 'מתוך', 'שובר', 'זיכוי', 'החזר'];
+
+      for (let i = 0; i < Math.min(11, data.length); i++) {
+        const row = data[i] || [];
+        res.rows0to10.push({ rowIndex: i, cells: row.map(c => String(c ?? '').substring(0, 50)) });
+        const rowText = row.map(c => String(c || '')).join(' ');
+        if (res.headerRowIndex === -1 && headerKeywords.some(k => rowText.includes(k))) {
+          res.headerRowIndex = i;
+          res.headerRow = row.map(c => String(c ?? ''));
+        }
+      }
+
+      const headerRow = res.headerRow || (data[0] || []);
+      for (let c = 0; c < headerRow.length; c++) {
+        const h = String(headerRow[c] || '');
+        for (const kw of keywords) {
+          if (h.includes(kw)) {
+            if (!res.columnsWithKeywords[kw]) res.columnsWithKeywords[kw] = [];
+            res.columnsWithKeywords[kw].push({ colIndex: c, header: h });
+          }
+        }
+      }
+
+      const startRow = (res.headerRowIndex >= 0 ? res.headerRowIndex + 1 : 1);
+      for (let i = startRow; i < Math.min(startRow + 5, data.length); i++) {
+        const row = data[i] || [];
+        res.first5DataRows.push({ rowIndex: i, cells: row.map(c => String(c ?? '').substring(0, 80)) });
+        for (let c = 0; c < row.length; c++) {
+          const val = String(row[c] || '');
+          if (/תשלום\s*\d+\s*מתוך\s*\d+/.test(val) || /תשלום\s*\d+[\-\/]\d+/.test(val)) {
+            res.installmentSamples.push({ row: i, col: c, value: val });
+          }
+        }
+      }
+
+      return res;
+    }
+  </script>
+</body>
+</html>
