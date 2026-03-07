@@ -300,6 +300,10 @@
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
     }
 
+    body.dragging-active .category-card {
+      transition: none !important;
+    }
+
     .category-header {
       display: flex;
       justify-content: space-between;
@@ -366,7 +370,8 @@
 
     .category-card.drop-target {
       border-right-color: var(--gold);
-      box-shadow: 0 0 0 3px rgba(214, 158, 46, 0.4);
+      outline: 3px solid rgba(214, 158, 46, 0.6);
+      outline-offset: -3px;
     }
 
     .expense-name {
@@ -940,7 +945,6 @@
 
       const sourceCategory = expense.category || 'שונות';
       expense.category = targetCategory;
-      saveReportData();
 
       const grid = document.getElementById('categoriesGrid');
       const sourceCard = grid.querySelector(`.category-card[data-category="${CSS.escape(sourceCategory)}"]`);
@@ -996,6 +1000,12 @@
           }
         });
       }
+
+      if (window.requestIdleCallback) {
+        requestIdleCallback(() => saveReportData());
+      } else {
+        setTimeout(() => saveReportData(), 0);
+      }
     }
 
     let _currentDropTarget = null;
@@ -1014,6 +1024,7 @@
         e.dataTransfer.effectAllowed = 'move';
         item.classList.add('dragging');
         document.body.classList.add('dragging-active');
+        grid.querySelectorAll('.category-card').forEach(c => { c.style.willChange = 'outline, border-color'; });
         _currentDropTarget = null;
       });
 
@@ -1025,6 +1036,7 @@
           _currentDropTarget = null;
         }
         document.body.classList.remove('dragging-active');
+        grid.querySelectorAll('.category-card').forEach(c => { c.style.willChange = ''; });
         _dragOverRAF = false;
       });
 
