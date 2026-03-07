@@ -2280,8 +2280,8 @@
                  !originalText.includes('תאריך') && !originalText.includes('מועד') && !originalText.includes('מטבע')) {
           columns.chargeAmount = index;
         }
-        // סכום עסקה (כולל) - עדיפות שניה
-        else if (originalText.includes('סכום עסקה') || originalText.includes('סכום העסקה')) {
+        // סכום עסקה (כולל) - עדיפות שניה – כולל "סכום מקורי" בעסקאות חו"ל
+        else if (originalText.includes('סכום עסקה') || originalText.includes('סכום העסקה') || originalText.includes('סכום מקורי')) {
           columns.transactionAmount = index;
         }
         
@@ -2630,7 +2630,7 @@
       console.log('🔄 oldFormatDataForAI called, trying content detection first...');
       
       // ננסה לזהות עמודות לפי תוכן
-      const detectedCols = detectColumnsByContent(data);
+      let detectedCols = detectColumnsByContent(data);
       
       if (detectedCols) {
         // מצאנו עמודות - נעבד את הנתונים בצורה מסודרת
@@ -2640,10 +2640,26 @@
         text += '='.repeat(50) + '\n';
         
         let processedCount = 0;
-        for (const row of data) {
+        for (let idx = 0; idx < data.length; idx++) {
+          const row = data[idx];
           if (!row || row.length === 0) continue;
           const rowText = row.map(c => String(c || '')).join(' ');
-          if (/סה"כ\s*לחיוב|לחיוב\s*החודש\s*בכרטיס/i.test(rowText)) continue;
+          
+          // זיהוי מעבר לחלק עסקאות חו"ל
+          if (/עסקאות\s*(ב?חו"?ל|בחו)/.test(rowText)) {
+            const nextRow = data[idx + 1];
+            if (nextRow) {
+              const newCols = detectColumns(nextRow);
+              if (newCols && newCols.description !== -1) {
+                detectedCols = { description: newCols.description, amount: newCols.chargeAmount !== -1 ? newCols.chargeAmount : newCols.transactionAmount };
+                idx++;
+                console.log('🌍 oldFormat: עמודות חו"ל מעודכנות:', detectedCols);
+              }
+            }
+            continue;
+          }
+          
+          if (/סה"כ\s*לחיוב|סך\s*חיוב|לחיוב\s*החודש\s*בכרטיס/i.test(rowText)) continue;
           const description = row[detectedCols.description];
           const amount = row[detectedCols.amount];
           if (description && String(description).includes('סה"כ')) continue;
@@ -2685,7 +2701,8 @@
       for (const row of data) {
         if (row && row.length > 0) {
           let rowText = row.filter(cell => cell !== null && cell !== undefined).join(' | ');
-          if (rowText.trim() && !/סה"כ\s*לחיוב|לחיוב\s*החודש\s*בכרטיס/i.test(rowText)) {
+          if (/עסקאות\s*(ב?חו"?ל|בחו)/.test(rowText)) continue;
+          if (rowText.trim() && !/סה"כ\s*לחיוב|סך\s*חיוב|לחיוב\s*החודש\s*בכרטיס/i.test(rowText)) {
             let installment = extractInstallmentInfoFromNotes(rowText);
             if (!installment) {
               const firstNum = row.find(c => {
@@ -2738,7 +2755,7 @@
           break;
         }
       }
-      const headerRow = headerRowIndex >= 0 ? data[headerRowIndex] : null;
+      let headerRow = headerRowIndex >= 0 ? data[headerRowIndex] : null;
 
       if (columns && columns.description !== -1 && headerRow) {
         // ===== ולידציה: האם עמודת התיאור מכילה קטגוריות ולא שמות חנויות? =====
@@ -2862,9 +2879,26 @@
             const row = data[i];
             if (!row || row.length === 0) continue;
             
-            // דלג על שורות סיכום (חישוב שהאקסל עשה – סה"כ לחיוב וכיו"ב)
             const rowText = row.map(c => String(c || '')).join(' ');
-            if (/סה"כ\s*לחיוב|לחיוב\s*החודש\s*בכרטיס|סה"כ\s*לחיוב\s*החודש/i.test(rowText)) {
+            
+            // זיהוי מעבר לחלק עסקאות חו"ל – שורת כותרת סקציה עם כותרות עמודות חדשות
+            if (/עסקאות\s*(ב?חו"?ל|בחו)/.test(rowText)) {
+              console.log(`🌍 זוהה חלק עסקאות חו"ל בשורה ${i}: ${rowText.substring(0, 60)}`);
+              const nextRow = data[i + 1];
+              if (nextRow) {
+                const newCols = detectColumns(nextRow);
+                if (newCols && newCols.description !== -1) {
+                  columns = newCols;
+                  headerRow = nextRow;
+                  i++;
+                  console.log('🌍 עמודות חו"ל מעודכנות:', columns);
+                }
+              }
+              continue;
+            }
+            
+            // דלג על שורות סיכום (חישוב שהאקסל עשה – סה"כ לחיוב, סך חיוב וכיו"ב)
+            if (/סה"כ\s*לחיוב|סך\s*חיוב|לחיוב\s*החודש\s*בכרטיס|סה"כ\s*לחיוב\s*החודש/i.test(rowText)) {
               console.log(`⏭️ Skipping summary row: ${rowText.substring(0, 60)}...`);
               skippedCount++;
               continue;
@@ -3017,7 +3051,7 @@
       }
       
       // ניסיון שני: פורמט מוכר או זיהוי לפי תוכן (רק אם לא היה נתיב כותרות)
-      const contentCols = detectKnownFormat(data) || detectColumnsByContent(data);
+      let contentCols = detectKnownFormat(data) || detectColumnsByContent(data);
       if (contentCols) {
         console.log('✅ Using detected columns (known format or content)');
         let text = `דוח הוצאות - ${cardName}\n`;
@@ -3025,10 +3059,26 @@
         text += 'הסכומים הם חודשיים\n';
         text += '='.repeat(50) + '\n';
         let processedCount = 0;
-        for (const row of data) {
+        for (let idx = 0; idx < data.length; idx++) {
+          const row = data[idx];
           if (!row || row.length === 0) continue;
           const rowText = row.map(c => String(c || '')).join(' ');
-          if (/סה"כ\s*לחיוב|לחיוב\s*החודש\s*בכרטיס/i.test(rowText)) continue;
+          
+          // זיהוי מעבר לחלק עסקאות חו"ל
+          if (/עסקאות\s*(ב?חו"?ל|בחו)/.test(rowText)) {
+            const nextRow = data[idx + 1];
+            if (nextRow) {
+              const newCols = detectColumns(nextRow);
+              if (newCols && newCols.description !== -1) {
+                contentCols = { description: newCols.description, amount: newCols.chargeAmount !== -1 ? newCols.chargeAmount : newCols.transactionAmount };
+                idx++;
+                console.log('🌍 content-path: עמודות חו"ל מעודכנות:', contentCols);
+              }
+            }
+            continue;
+          }
+          
+          if (/סה"כ\s*לחיוב|סך\s*חיוב|לחיוב\s*החודש\s*בכרטיס/i.test(rowText)) continue;
           const description = row[contentCols.description];
           const amount = row[contentCols.amount];
           if (description && String(description).includes('סה"כ')) continue;
