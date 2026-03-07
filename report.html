@@ -938,6 +938,26 @@
       });
     });
 
+    function saveUserMapping(description, category) {
+      try {
+        const raw = localStorage.getItem('mekatregUserMappings');
+        const mappings = raw ? JSON.parse(raw) : [];
+        const key = description.trim().toLowerCase();
+        const existing = mappings.findIndex(m => m.key === key);
+        if (existing !== -1) mappings.splice(existing, 1);
+        mappings.unshift({ key, description: description.trim(), category });
+        if (mappings.length > 50) mappings.length = 50;
+        localStorage.setItem('mekatregUserMappings', JSON.stringify(mappings));
+      } catch (e) {}
+    }
+
+    function getUserMappings() {
+      try {
+        const raw = localStorage.getItem('mekatregUserMappings');
+        return raw ? JSON.parse(raw) : [];
+      } catch (e) { return []; }
+    }
+
     function handleExpenseDrop(index, targetCategory) {
       const expenses = getExpensesForCard(currentCard);
       const expense = expenses[index];
@@ -945,6 +965,7 @@
 
       const sourceCategory = expense.category || 'שונות';
       expense.category = targetCategory;
+      saveUserMapping(expense.description, targetCategory);
 
       const grid = document.getElementById('categoriesGrid');
       const sourceCard = grid.querySelector(`.category-card[data-category="${CSS.escape(sourceCategory)}"]`);

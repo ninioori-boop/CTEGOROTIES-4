@@ -12,7 +12,7 @@ module.exports = async (req, res) => {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { text } = req.body || {};
+  const { text, userMappings } = req.body || {};
 
   if (!text) {
     return res.status(400).json({ error: 'No text provided' });
@@ -27,7 +27,17 @@ module.exports = async (req, res) => {
   // הגבלת אורך הטקסט
   const cleanText = text.substring(0, 20000);
 
-  const systemMessage = `אתה מנתח דפי חשבון כרטיס אשראי ישראלי. החזר JSON בלבד: {"expenses":[{"description":"שם בית העסק המדויק","amount":123,"category":"קטגוריה"}]}
+  // בניית הקטע של מיפויי המשתמש
+  let userMappingsSection = '';
+  if (userMappings && userMappings.length > 0) {
+    const examples = userMappings
+      .slice(0, 15)
+      .map(m => `"${m.description}" → ${m.category}`)
+      .join('\n');
+    userMappingsSection = `\n\n=== ✅ מיפויים שהמשתמש תיקן בעצמו – עדיפות עליונה! ===\nהמשתמש תיקן ידנית את הסיווגים הבאים. השתמש בהם כדוגמה לסיווג עסקים דומים:\n${examples}\n`;
+  }
+
+  const systemMessage = `אתה מנתח דפי חשבון כרטיס אשראי ישראלי.${userMappingsSection} החזר JSON בלבד: {"expenses":[{"description":"שם בית העסק המדויק","amount":123,"category":"קטגוריה"}]}
 
 === שם בית העסק (description) – קריטי! ===
 ב-description חובה לרשום את שם בית העסק/החנות **בדיוק** כמו שמופיע בטקסט!

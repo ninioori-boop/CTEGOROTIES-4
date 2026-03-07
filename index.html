@@ -1241,6 +1241,25 @@
     }
 
     // פונקציה לקטלוג מהמאגר
+    function getUserMappingsFromStorage() {
+      try {
+        const raw = localStorage.getItem('mekatregUserMappings');
+        return raw ? JSON.parse(raw) : [];
+      } catch (e) { return []; }
+    }
+
+    function categorizeByUserMappings(description) {
+      if (!description) return null;
+      const key = description.trim().toLowerCase();
+      const mappings = getUserMappingsFromStorage();
+      const match = mappings.find(m => key.includes(m.key) || m.key.includes(key));
+      if (match) {
+        console.log(`👤 מיפוי משתמש: "${description}" → ${match.category}`);
+        return match.category;
+      }
+      return null;
+    }
+
     function categorizeByDatabase(description) {
       if (!description) return null;
       const normalized = normalizeForCategory(description);
@@ -1895,7 +1914,7 @@
 
         if (!parsed) { aiLines.push(line); continue; }
 
-        const dbCategory = categorizeByDatabase(parsed.description);
+        const dbCategory = categorizeByUserMappings(parsed.description) || categorizeByDatabase(parsed.description);
         if (dbCategory) {
           const exp = {
             description: parsed.description,
@@ -2069,10 +2088,11 @@
       // #endregion
       const processed = expenses.map((exp, index) => {
         const originalCategory = exp.category;
-        // קודם נסה מהמאגר
-        const dbCategory = categorizeByDatabase(exp.description);
+        // קודם מיפויי משתמש, אחר כך מאגר
+        const userCategory = categorizeByUserMappings(exp.description);
+        const dbCategory = userCategory || categorizeByDatabase(exp.description);
         if (dbCategory && dbCategory !== exp.category) {
-          console.log(`🔧 תיקון ממאגר: "${exp.description}" מ-"${exp.category}" ל-"${dbCategory}"`);
+          console.log(`🔧 תיקון${userCategory ? ' (משתמש)' : ' (מאגר)'}: "${exp.description}" מ-"${exp.category}" ל-"${dbCategory}"`);
           exp.category = dbCategory;
         } else if (dbCategory === null) {
           // #region agent log
@@ -3167,10 +3187,11 @@
           let expenses = [...dbExpenses];
 
           if (hasAiContent) {
+            const userMappings = getUserMappingsFromStorage().slice(0, 15);
             const response = await fetch(API_BASE + '/api/analyze', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ text: aiText.substring(0, 20000) })
+              body: JSON.stringify({ text: aiText.substring(0, 20000), userMappings })
             });
             if (!response.ok) {
               const err = await response.json();
