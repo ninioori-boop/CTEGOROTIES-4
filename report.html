@@ -252,6 +252,8 @@
       display: flex;
       align-items: center;
       gap: 0.75rem;
+      flex-shrink: 0;
+      white-space: nowrap;
     }
 
     .btn-add-item {
@@ -285,11 +287,17 @@
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
       transition: transform 0.3s ease, box-shadow 0.3s ease;
       border-right: 5px solid var(--accent);
+      overflow: hidden;
     }
 
     .category-card:hover {
       transform: translateY(-5px);
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+    }
+
+    body.dragging-active .category-card:hover {
+      transform: none;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
     }
 
     .category-header {
@@ -308,6 +316,9 @@
       font-size: 1.2rem;
       font-weight: 600;
       color: var(--primary);
+      min-width: 0;
+      flex-shrink: 1;
+      overflow: hidden;
     }
 
     .category-name .icon {
@@ -315,7 +326,7 @@
     }
 
     .category-total {
-      font-size: 1.5rem;
+      font-size: 1.25rem;
       font-weight: 700;
       color: var(--accent);
     }
@@ -926,10 +937,69 @@
       const expenses = getExpensesForCard(currentCard);
       const expense = expenses[index];
       if (!expense || expense.category === targetCategory) return;
+
+      const sourceCategory = expense.category || 'שונות';
       expense.category = targetCategory;
       saveReportData();
-      renderExpenses(currentCard);
+
+      const grid = document.getElementById('categoriesGrid');
+      const sourceCard = grid.querySelector(`.category-card[data-category="${CSS.escape(sourceCategory)}"]`);
+      const targetCard = grid.querySelector(`.category-card[data-category="${CSS.escape(targetCategory)}"]`);
+      const draggedEl = grid.querySelector(`.expense-item[data-expense-index="${index}"]`);
+
+      if (!sourceCard || !targetCard || !draggedEl) {
+        renderExpenses(currentCard);
+        return;
+      }
+
+      const sourceList = sourceCard.querySelector('.expense-list');
+      const targetList = targetCard.querySelector('.expense-list');
+      targetList.appendChild(draggedEl);
+
+      const amt = expense.amount;
+
+      const srcTotal = sourceCard.querySelector('.category-total');
+      const srcCount = sourceCard.querySelector('.category-count');
+      const srcItems = sourceList.querySelectorAll('.expense-item');
+      const srcNewTotal = Array.from(srcItems).reduce((s, el) => {
+        const idx = parseInt(el.dataset.expenseIndex, 10);
+        const e = expenses[idx];
+        return s + (e ? e.amount : 0);
+      }, 0);
+      srcTotal.textContent = srcNewTotal.toLocaleString('he-IL', { maximumFractionDigits: 2 }) + ' ₪';
+      srcCount.textContent = srcItems.length + ' פריטים';
+
+      const tgtTotal = targetCard.querySelector('.category-total');
+      const tgtCount = targetCard.querySelector('.category-count');
+      const tgtItems = targetList.querySelectorAll('.expense-item');
+      const tgtNewTotal = Array.from(tgtItems).reduce((s, el) => {
+        const idx = parseInt(el.dataset.expenseIndex, 10);
+        const e = expenses[idx];
+        return s + (e ? e.amount : 0);
+      }, 0);
+      tgtTotal.textContent = tgtNewTotal.toLocaleString('he-IL', { maximumFractionDigits: 2 }) + ' ₪';
+      tgtCount.textContent = tgtItems.length + ' פריטים';
+
+      if (srcItems.length === 0) {
+        sourceCard.remove();
+      }
+
+      const barChart = document.getElementById('barChart');
+      if (barChart) {
+        const allBars = barChart.querySelectorAll('.bar-item');
+        allBars.forEach(bar => {
+          const cat = bar.dataset.category;
+          if (cat === sourceCategory) {
+            bar.querySelector('.bar-value').textContent = srcNewTotal.toLocaleString('he-IL', { maximumFractionDigits: 0 }) + ' ₪';
+          } else if (cat === targetCategory) {
+            bar.querySelector('.bar-value').textContent = tgtNewTotal.toLocaleString('he-IL', { maximumFractionDigits: 0 }) + ' ₪';
+          }
+        });
+      }
     }
+
+    let _currentDropTarget = null;
+    let _dragOverRAF = false;
 
     function setupDragAndDrop() {
       const grid = document.getElementById('categoriesGrid');
@@ -943,12 +1013,19 @@
         e.dataTransfer.setData('text/plain', JSON.stringify({ index: parseInt(index, 10) }));
         e.dataTransfer.effectAllowed = 'move';
         item.classList.add('dragging');
+        document.body.classList.add('dragging-active');
+        _currentDropTarget = null;
       });
 
       grid.addEventListener('dragend', (e) => {
-        document.querySelectorAll('.expense-item.dragging').forEach(el => el.classList.remove('dragging'));
-        document.querySelectorAll('.category-card.drop-target').forEach(el => el.classList.remove('drop-target'));
-        document.querySelectorAll('.bar-item.drop-target').forEach(el => el.classList.remove('drop-target'));
+        const dragging = grid.querySelector('.expense-item.dragging');
+        if (dragging) dragging.classList.remove('dragging');
+        if (_currentDropTarget) {
+          _currentDropTarget.classList.remove('drop-target');
+          _currentDropTarget = null;
+        }
+        document.body.classList.remove('dragging-active');
+        _dragOverRAF = false;
       });
 
       grid.addEventListener('dragover', (e) => {
@@ -956,9 +1033,17 @@
         if (!card) return;
         e.preventDefault();
         e.dataTransfer.dropEffect = 'move';
-        document.querySelectorAll('.category-card.drop-target').forEach(el => el.classList.remove('drop-target'));
-        document.querySelectorAll('.bar-item.drop-target').forEach(el => el.classList.remove('drop-target'));
-        card.classList.add('drop-target');
+        if (card === _currentDropTarget) return;
+        if (_dragOverRAF) return;
+        _dragOverRAF = true;
+        requestAnimationFrame(() => {
+          _dragOverRAF = false;
+          if (_currentDropTarget && _currentDropTarget !== card) {
+            _currentDropTarget.classList.remove('drop-target');
+          }
+          card.classList.add('drop-target');
+          _currentDropTarget = card;
+        });
       });
 
       grid.addEventListener('dragleave', (e) => {
@@ -966,6 +1051,7 @@
         if (!card) return;
         if (card.contains(e.relatedTarget)) return;
         card.classList.remove('drop-target');
+        if (_currentDropTarget === card) _currentDropTarget = null;
       });
 
       grid.addEventListener('drop', (e) => {
@@ -973,6 +1059,7 @@
         const card = e.target.closest('.category-card');
         if (!card) return;
         card.classList.remove('drop-target');
+        if (_currentDropTarget === card) _currentDropTarget = null;
         try {
           const { index } = JSON.parse(e.dataTransfer.getData('text/plain'));
           handleExpenseDrop(index, card.dataset.category);
@@ -987,9 +1074,17 @@
           if (!bar) return;
           e.preventDefault();
           e.dataTransfer.dropEffect = 'move';
-          document.querySelectorAll('.category-card.drop-target').forEach(el => el.classList.remove('drop-target'));
-          document.querySelectorAll('.bar-item.drop-target').forEach(el => el.classList.remove('drop-target'));
-          bar.classList.add('drop-target');
+          if (bar === _currentDropTarget) return;
+          if (_dragOverRAF) return;
+          _dragOverRAF = true;
+          requestAnimationFrame(() => {
+            _dragOverRAF = false;
+            if (_currentDropTarget && _currentDropTarget !== bar) {
+              _currentDropTarget.classList.remove('drop-target');
+            }
+            bar.classList.add('drop-target');
+            _currentDropTarget = bar;
+          });
         });
 
         barChart.addEventListener('dragleave', (e) => {
@@ -997,6 +1092,7 @@
           if (!bar) return;
           if (bar.contains(e.relatedTarget)) return;
           bar.classList.remove('drop-target');
+          if (_currentDropTarget === bar) _currentDropTarget = null;
         });
 
         barChart.addEventListener('drop', (e) => {
@@ -1004,6 +1100,7 @@
           const bar = e.target.closest('.bar-item');
           if (!bar) return;
           bar.classList.remove('drop-target');
+          if (_currentDropTarget === bar) _currentDropTarget = null;
           try {
             const { index } = JSON.parse(e.dataTransfer.getData('text/plain'));
             handleExpenseDrop(index, bar.dataset.category);
