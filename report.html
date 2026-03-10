@@ -1146,16 +1146,29 @@
     }
 
     document.addEventListener('click', (e) => {
-      if (_activeSuggestPopup && !e.target.closest('.category-suggest-popup') && !e.target.closest('.suggest-categories-btn')) {
-        closeSuggestPopup();
+      if (_activeSuggestPopup) {
+        const willClose = !e.target.closest('.category-suggest-popup') && !e.target.closest('.suggest-categories-btn');
+        // #region agent log
+        console.log('[DEBUG-H5] doc click with active popup, willClose:', willClose, 'target:', e.target.tagName, e.target.className);
+        fetch('http://127.0.0.1:7373/ingest/4b985a7c-b014-4127-90b4-c78f901c5db0',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'ab5aab'},body:JSON.stringify({sessionId:'ab5aab',location:'report.html:doc-click',message:'H5: doc click with active popup',data:{willClose:willClose,targetTag:e.target.tagName,targetClass:e.target.className},timestamp:Date.now(),hypothesisId:'H5'})}).catch(()=>{});
+        // #endregion
+        if (willClose) closeSuggestPopup();
       }
     });
 
     function showCategorySuggestions(flatIndex, btnElement) {
+      // #region agent log
+      console.log('[DEBUG-H3] showCategorySuggestions entered, flatIndex:', flatIndex, 'btnElement:', !!btnElement, 'currentCard:', currentCard);
+      fetch('http://127.0.0.1:7373/ingest/4b985a7c-b014-4127-90b4-c78f901c5db0',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'ab5aab'},body:JSON.stringify({sessionId:'ab5aab',location:'report.html:showCategorySuggestions-entry',message:'H3: function entered',data:{flatIndex:flatIndex,btnElement:!!btnElement,currentCard:currentCard},timestamp:Date.now(),hypothesisId:'H3'})}).catch(()=>{});
+      // #endregion
       closeSuggestPopup();
 
       const expenses = getExpensesForCard(currentCard);
       const expense = expenses[flatIndex];
+      // #region agent log
+      console.log('[DEBUG-H3] expense lookup:', flatIndex, 'found:', !!expense, 'total expenses:', expenses.length);
+      fetch('http://127.0.0.1:7373/ingest/4b985a7c-b014-4127-90b4-c78f901c5db0',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'ab5aab'},body:JSON.stringify({sessionId:'ab5aab',location:'report.html:showCategorySuggestions-expense',message:'H3: expense lookup',data:{flatIndex:flatIndex,expenseFound:!!expense,expensesLength:expenses.length,expenseDesc:expense?expense.description:'N/A'},timestamp:Date.now(),hypothesisId:'H3'})}).catch(()=>{});
+      // #endregion
       if (!expense) return;
 
       const currentCat = expense.category || 'שונות';
@@ -1184,6 +1197,9 @@
 
       document.body.appendChild(popup);
       _activeSuggestPopup = popup;
+      // #region agent log
+      console.log('[DEBUG-H4] popup created, children:', popup.children.length, 'height:', popup.offsetHeight, 'width:', popup.offsetWidth);
+      fetch('http://127.0.0.1:7373/ingest/4b985a7c-b014-4127-90b4-c78f901c5db0',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'ab5aab'},body:JSON.stringify({sessionId:'ab5aab',location:'report.html:showCategorySuggestions-popup',message:'H4: popup created and appended',data:{popupChildren:popup.children.length,popupHeight:popup.offsetHeight,popupWidth:popup.offsetWidth},timestamp:Date.now(),hypothesisId:'H4'})}).catch(()=>{});
 
       const rect = btnElement.getBoundingClientRect();
       const popupHeight = popup.offsetHeight;
@@ -1210,11 +1226,24 @@
       const barChart = document.getElementById('barChart');
       if (!grid) return;
 
+      // #region agent log
+      console.log('[DEBUG-H1] setupDragAndDrop called, grid found:', !!grid);
+      fetch('http://127.0.0.1:7373/ingest/4b985a7c-b014-4127-90b4-c78f901c5db0',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'ab5aab'},body:JSON.stringify({sessionId:'ab5aab',location:'report.html:setupDragAndDrop',message:'H1: setupDragAndDrop called',data:{gridExists:!!grid},timestamp:Date.now(),hypothesisId:'H1'})}).catch(()=>{});
+      // #endregion
+
       grid.addEventListener('click', (e) => {
+        // #region agent log
+        console.log('[DEBUG-H2] grid click:', e.target.tagName, e.target.className, 'closestBtn:', !!e.target.closest('.suggest-categories-btn'));
+        fetch('http://127.0.0.1:7373/ingest/4b985a7c-b014-4127-90b4-c78f901c5db0',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'ab5aab'},body:JSON.stringify({sessionId:'ab5aab',location:'report.html:grid-click',message:'H2: grid click fired',data:{targetTag:e.target.tagName,targetClass:e.target.className,closestBtn:!!e.target.closest('.suggest-categories-btn')},timestamp:Date.now(),hypothesisId:'H2'})}).catch(()=>{});
+        // #endregion
         const suggestBtn = e.target.closest('.suggest-categories-btn');
         if (suggestBtn) {
           e.stopPropagation();
           const idx = parseInt(suggestBtn.dataset.suggestIndex, 10);
+          // #region agent log
+          console.log('[DEBUG-H2] suggest btn matched! idx:', idx);
+          fetch('http://127.0.0.1:7373/ingest/4b985a7c-b014-4127-90b4-c78f901c5db0',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'ab5aab'},body:JSON.stringify({sessionId:'ab5aab',location:'report.html:grid-click-match',message:'H2: suggest btn matched',data:{idx:idx,dataAttr:suggestBtn.dataset.suggestIndex},timestamp:Date.now(),hypothesisId:'H2'})}).catch(()=>{});
+          // #endregion
           showCategorySuggestions(idx, suggestBtn);
         }
       });
