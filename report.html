@@ -1150,6 +1150,7 @@
     }
 
     let _activeSuggestPopup = null;
+    let _suggestPopupOpenTime = 0;
 
     function closeSuggestPopup() {
       if (_activeSuggestPopup) {
@@ -1159,9 +1160,10 @@
     }
 
     document.addEventListener('click', (e) => {
-      if (_activeSuggestPopup && !e.target.closest('.category-suggest-popup') && !e.target.closest('.suggest-categories-btn')) {
-        closeSuggestPopup();
-      }
+      if (!_activeSuggestPopup) return;
+      if (Date.now() - _suggestPopupOpenTime < 300) return;
+      if (e.target.closest('.category-suggest-popup') || e.target.closest('.suggest-categories-btn')) return;
+      closeSuggestPopup();
     });
 
     function showCategorySuggestions(flatIndex, btnElement) {
@@ -1197,6 +1199,7 @@
 
       document.body.appendChild(popup);
       _activeSuggestPopup = popup;
+      _suggestPopupOpenTime = Date.now();
 
       const rect = btnElement.getBoundingClientRect();
       const popupHeight = popup.offsetHeight;
