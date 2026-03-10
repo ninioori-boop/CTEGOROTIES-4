@@ -1150,7 +1150,6 @@
     }
 
     let _activeSuggestPopup = null;
-    let _suggestPopupOpenTime = 0;
 
     function closeSuggestPopup() {
       if (_activeSuggestPopup) {
@@ -1159,66 +1158,71 @@
       }
     }
 
-    document.addEventListener('click', (e) => {
-      if (!_activeSuggestPopup) return;
-      if (Date.now() - _suggestPopupOpenTime < 300) return;
-      if (e.target.closest('.category-suggest-popup') || e.target.closest('.suggest-categories-btn')) return;
-      closeSuggestPopup();
-    });
-
     function showCategorySuggestions(flatIndex, btnElement) {
       closeSuggestPopup();
 
       const expenses = getExpensesForCard(currentCard);
       const expense = expenses[flatIndex];
-      if (!expense) { alert('DEBUG: no expense at index ' + flatIndex); return; }
+      if (!expense) return;
 
       const currentCat = expense.category || 'שונות';
 
       const allCategories = new Set(Object.keys(CATEGORY_ICONS));
       expenses.forEach(e => { if (e.category) allCategories.add(e.category); });
 
-      const filtered = Array.from(allCategories).filter(cat => cat !== currentCat);
-      alert('DEBUG: function called. expense=' + expense.description + ', currentCat=' + currentCat + ', options=' + filtered.length);
-
-      const popup = document.createElement('div');
-      popup.className = 'category-suggest-popup';
-
-      filtered
-        .sort((a, b) => a.localeCompare(b, 'he'))
-        .forEach(cat => {
-          const icon = CATEGORY_ICONS[cat] || '📦';
-          const item = document.createElement('div');
-          item.className = 'category-suggest-item';
-          item.innerHTML = `<span class="suggest-icon">${icon}</span><span>${cat}</span>`;
-          item.addEventListener('click', (e) => {
-            e.stopPropagation();
-            closeSuggestPopup();
-            handleExpenseDrop(flatIndex, cat);
-          });
-          popup.appendChild(item);
-        });
-
-      document.body.appendChild(popup);
-      _activeSuggestPopup = popup;
-      _suggestPopupOpenTime = Date.now();
-
       const rect = btnElement.getBoundingClientRect();
-      const popupHeight = popup.offsetHeight;
-      const spaceBelow = window.innerHeight - rect.bottom;
-      const openAbove = spaceBelow < popupHeight + 10 && rect.top > popupHeight;
+      const btnTop = rect.top;
+      const btnBottom = rect.bottom;
+      const btnLeft = rect.left;
+      const btnWidth = rect.width;
 
-      if (openAbove) {
-        popup.style.top = (rect.top + window.scrollY - popupHeight - 6) + 'px';
-      } else {
-        popup.style.top = (rect.bottom + window.scrollY + 6) + 'px';
-      }
+      setTimeout(() => {
+        const popup = document.createElement('div');
+        popup.className = 'category-suggest-popup';
 
-      const popupWidth = popup.offsetWidth;
-      let leftPos = rect.left + window.scrollX + (rect.width / 2) - (popupWidth / 2);
-      leftPos = Math.max(8, Math.min(leftPos, window.innerWidth - popupWidth - 8));
-      popup.style.left = leftPos + 'px';
-      alert('DEBUG: popup created and positioned. top=' + popup.style.top + ' left=' + popup.style.left);
+        Array.from(allCategories)
+          .filter(cat => cat !== currentCat)
+          .sort((a, b) => a.localeCompare(b, 'he'))
+          .forEach(cat => {
+            const icon = CATEGORY_ICONS[cat] || '📦';
+            const item = document.createElement('div');
+            item.className = 'category-suggest-item';
+            item.innerHTML = `<span class="suggest-icon">${icon}</span><span>${cat}</span>`;
+            item.addEventListener('click', (e) => {
+              e.stopPropagation();
+              closeSuggestPopup();
+              handleExpenseDrop(flatIndex, cat);
+            });
+            popup.appendChild(item);
+          });
+
+        document.body.appendChild(popup);
+        _activeSuggestPopup = popup;
+
+        const popupHeight = popup.offsetHeight;
+        const spaceBelow = window.innerHeight - btnBottom;
+        const openAbove = spaceBelow < popupHeight + 10 && btnTop > popupHeight;
+
+        if (openAbove) {
+          popup.style.top = (btnTop + window.scrollY - popupHeight - 6) + 'px';
+        } else {
+          popup.style.top = (btnBottom + window.scrollY + 6) + 'px';
+        }
+
+        const popupWidth = popup.offsetWidth;
+        let leftPos = btnLeft + window.scrollX + (btnWidth / 2) - (popupWidth / 2);
+        leftPos = Math.max(8, Math.min(leftPos, window.innerWidth - popupWidth - 8));
+        popup.style.left = leftPos + 'px';
+
+        function onDocClick(evt) {
+          if (evt.target.closest('.category-suggest-popup')) return;
+          closeSuggestPopup();
+          document.removeEventListener('click', onDocClick, true);
+        }
+        setTimeout(() => {
+          document.addEventListener('click', onDocClick, true);
+        }, 0);
+      }, 0);
     }
 
     let _currentDropTarget = null;
