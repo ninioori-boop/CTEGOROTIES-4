@@ -693,13 +693,13 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 24px;
-      height: 24px;
-      font-size: 0.85rem;
+      width: 28px;
+      height: 28px;
+      font-size: 0.95rem;
       text-decoration: none;
       border-radius: 50%;
-      margin-left: 6px;
-      background: #f0f4ff;
+      border: 1.5px solid #a4c8f0;
+      background: #e8f0fe;
       color: #4285f4;
       transition: all 0.2s ease;
       flex-shrink: 0;
@@ -708,6 +708,7 @@
     .google-search-btn:hover {
       background: #4285f4;
       color: #fff;
+      border-color: #4285f4;
       transform: scale(1.15);
       box-shadow: 0 2px 8px rgba(66, 133, 244, 0.4);
     }
@@ -717,12 +718,11 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 24px;
-      height: 24px;
-      font-size: 0.85rem;
-      border: none;
+      width: 28px;
+      height: 28px;
+      font-size: 0.95rem;
+      border: 1.5px solid #f0c78a;
       border-radius: 50%;
-      margin-left: 4px;
       background: #fef3e0;
       color: #e67e22;
       cursor: pointer;
@@ -730,51 +730,34 @@
       flex-shrink: 0;
       font-family: inherit;
       padding: 0;
-      position: relative;
     }
 
     .suggest-categories-btn:hover {
       background: #e67e22;
       color: #fff;
+      border-color: #e67e22;
       transform: scale(1.15);
       box-shadow: 0 2px 8px rgba(230, 126, 34, 0.4);
     }
 
     .category-suggest-popup {
-      position: absolute;
-      top: 100%;
-      left: 50%;
-      transform: translateX(-50%);
+      position: fixed;
       background: var(--white);
       border-radius: 12px;
-      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.18);
-      z-index: 999;
-      min-width: 220px;
-      max-height: 300px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.22);
+      z-index: 9999;
+      min-width: 230px;
+      max-height: 320px;
       overflow-y: auto;
       padding: 0.5rem 0;
-      margin-top: 6px;
       border: 1px solid #e2e8f0;
-    }
-
-    .category-suggest-popup::before {
-      content: '';
-      position: absolute;
-      top: -6px;
-      left: 50%;
-      transform: translateX(-50%) rotate(45deg);
-      width: 12px;
-      height: 12px;
-      background: var(--white);
-      border-top: 1px solid #e2e8f0;
-      border-left: 1px solid #e2e8f0;
     }
 
     .category-suggest-item {
       display: flex;
       align-items: center;
       gap: 0.5rem;
-      padding: 0.5rem 1rem;
+      padding: 0.55rem 1rem;
       cursor: pointer;
       font-size: 0.9rem;
       color: var(--black);
@@ -876,6 +859,10 @@
 
       .btn {
         width: 100%;
+      }
+
+      .category-suggest-popup {
+        min-width: 200px;
       }
     }
   </style>
@@ -1192,9 +1179,24 @@
           popup.appendChild(item);
         });
 
-      btnElement.style.position = 'relative';
-      btnElement.appendChild(popup);
+      document.body.appendChild(popup);
       _activeSuggestPopup = popup;
+
+      const rect = btnElement.getBoundingClientRect();
+      const popupHeight = popup.offsetHeight;
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const openAbove = spaceBelow < popupHeight + 10 && rect.top > popupHeight;
+
+      if (openAbove) {
+        popup.style.top = (rect.top + window.scrollY - popupHeight - 6) + 'px';
+      } else {
+        popup.style.top = (rect.bottom + window.scrollY + 6) + 'px';
+      }
+
+      const popupWidth = popup.offsetWidth;
+      let leftPos = rect.left + window.scrollX + (rect.width / 2) - (popupWidth / 2);
+      leftPos = Math.max(8, Math.min(leftPos, window.innerWidth - popupWidth - 8));
+      popup.style.left = leftPos + 'px';
     }
 
     let _currentDropTarget = null;
@@ -1710,8 +1712,9 @@
           const refundClass = item.isRefund ? ' refund' : '';
           return `
           <div class="expense-item" draggable="true" data-expense-index="${flatIndex}">
-              <span class="expense-name">${refundBadge}${standingOrderBadge}${installmentBadge}${webSearchBadge}${item.description}${googleSearch}${suggestBtn}</span>
+              <span class="expense-name">${refundBadge}${standingOrderBadge}${installmentBadge}${webSearchBadge}${item.description}</span>
             <div class="expense-actions">
+              ${googleSearch}${suggestBtn}
               <span class="expense-amount${refundClass}">${item.amount.toLocaleString('he-IL', { maximumFractionDigits: 2 })} ₪</span>
               <button type="button" class="btn-expense-action" onclick="event.stopPropagation();editExpense(${flatIndex})" title="ערוך">✏️</button>
               <button type="button" class="btn-expense-action btn-expense-delete" onclick="event.stopPropagation();deleteExpense(${flatIndex})" title="מחק">✕</button>
