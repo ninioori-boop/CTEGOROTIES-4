@@ -756,6 +756,16 @@
       }
     }
 
+    .suggest-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 9998;
+      background: transparent;
+    }
+
     .category-suggest-popup {
       position: fixed;
       background: var(--white);
@@ -811,6 +821,10 @@
       }
 
       .category-suggest-popup {
+        display: none;
+      }
+
+      .suggest-overlay {
         display: none;
       }
       
@@ -1150,11 +1164,16 @@
     }
 
     let _activeSuggestPopup = null;
+    let _activeSuggestOverlay = null;
 
     function closeSuggestPopup() {
       if (_activeSuggestPopup) {
         _activeSuggestPopup.remove();
         _activeSuggestPopup = null;
+      }
+      if (_activeSuggestOverlay) {
+        _activeSuggestOverlay.remove();
+        _activeSuggestOverlay = null;
       }
     }
 
@@ -1170,59 +1189,49 @@
       const allCategories = new Set(Object.keys(CATEGORY_ICONS));
       expenses.forEach(e => { if (e.category) allCategories.add(e.category); });
 
-      const rect = btnElement.getBoundingClientRect();
-      const btnTop = rect.top;
-      const btnBottom = rect.bottom;
-      const btnLeft = rect.left;
-      const btnWidth = rect.width;
+      const overlay = document.createElement('div');
+      overlay.className = 'suggest-overlay';
+      overlay.addEventListener('click', () => closeSuggestPopup());
 
-      setTimeout(() => {
-        const popup = document.createElement('div');
-        popup.className = 'category-suggest-popup';
+      const popup = document.createElement('div');
+      popup.className = 'category-suggest-popup';
 
-        Array.from(allCategories)
-          .filter(cat => cat !== currentCat)
-          .sort((a, b) => a.localeCompare(b, 'he'))
-          .forEach(cat => {
-            const icon = CATEGORY_ICONS[cat] || '📦';
-            const item = document.createElement('div');
-            item.className = 'category-suggest-item';
-            item.innerHTML = `<span class="suggest-icon">${icon}</span><span>${cat}</span>`;
-            item.addEventListener('click', (e) => {
-              e.stopPropagation();
-              closeSuggestPopup();
-              handleExpenseDrop(flatIndex, cat);
-            });
-            popup.appendChild(item);
+      Array.from(allCategories)
+        .filter(cat => cat !== currentCat)
+        .sort((a, b) => a.localeCompare(b, 'he'))
+        .forEach(cat => {
+          const icon = CATEGORY_ICONS[cat] || '📦';
+          const item = document.createElement('div');
+          item.className = 'category-suggest-item';
+          item.innerHTML = `<span class="suggest-icon">${icon}</span><span>${cat}</span>`;
+          item.addEventListener('click', (e) => {
+            e.stopPropagation();
+            closeSuggestPopup();
+            handleExpenseDrop(flatIndex, cat);
           });
+          popup.appendChild(item);
+        });
 
-        document.body.appendChild(popup);
-        _activeSuggestPopup = popup;
+      document.body.appendChild(overlay);
+      document.body.appendChild(popup);
+      _activeSuggestPopup = popup;
+      _activeSuggestOverlay = overlay;
 
-        const popupHeight = popup.offsetHeight;
-        const spaceBelow = window.innerHeight - btnBottom;
-        const openAbove = spaceBelow < popupHeight + 10 && btnTop > popupHeight;
+      const rect = btnElement.getBoundingClientRect();
+      const popupHeight = popup.offsetHeight;
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const openAbove = spaceBelow < popupHeight + 10 && rect.top > popupHeight;
 
-        if (openAbove) {
-          popup.style.top = (btnTop + window.scrollY - popupHeight - 6) + 'px';
-        } else {
-          popup.style.top = (btnBottom + window.scrollY + 6) + 'px';
-        }
+      if (openAbove) {
+        popup.style.top = (rect.top + window.scrollY - popupHeight - 6) + 'px';
+      } else {
+        popup.style.top = (rect.bottom + window.scrollY + 6) + 'px';
+      }
 
-        const popupWidth = popup.offsetWidth;
-        let leftPos = btnLeft + window.scrollX + (btnWidth / 2) - (popupWidth / 2);
-        leftPos = Math.max(8, Math.min(leftPos, window.innerWidth - popupWidth - 8));
-        popup.style.left = leftPos + 'px';
-
-        function onDocClick(evt) {
-          if (evt.target.closest('.category-suggest-popup')) return;
-          closeSuggestPopup();
-          document.removeEventListener('click', onDocClick, true);
-        }
-        setTimeout(() => {
-          document.addEventListener('click', onDocClick, true);
-        }, 0);
-      }, 0);
+      const popupWidth = popup.offsetWidth;
+      let leftPos = rect.left + window.scrollX + (rect.width / 2) - (popupWidth / 2);
+      leftPos = Math.max(8, Math.min(leftPos, window.innerWidth - popupWidth - 8));
+      popup.style.left = leftPos + 'px';
     }
 
     let _currentDropTarget = null;
