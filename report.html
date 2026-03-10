@@ -703,6 +703,8 @@
       color: #4285f4;
       transition: all 0.2s ease;
       flex-shrink: 0;
+      cursor: pointer;
+      -webkit-user-drag: none;
     }
 
     .google-search-btn:hover {
@@ -730,6 +732,7 @@
       flex-shrink: 0;
       font-family: inherit;
       padding: 0;
+      -webkit-user-drag: none;
     }
 
     .suggest-categories-btn:hover {
@@ -1207,11 +1210,18 @@
       const barChart = document.getElementById('barChart');
       if (!grid) return;
 
+      let _dragClickedElement = null;
+      grid.addEventListener('mousedown', (e) => {
+        _dragClickedElement = e.target;
+      });
+
       grid.addEventListener('dragstart', (e) => {
-        if (e.target.closest('button, a, .google-search-btn, .suggest-categories-btn')) {
+        if (_dragClickedElement && _dragClickedElement.closest('button, a, .google-search-btn, .suggest-categories-btn')) {
           e.preventDefault();
+          _dragClickedElement = null;
           return;
         }
+        _dragClickedElement = null;
         const item = e.target.closest('.expense-item');
         if (!item) return;
         const index = item.dataset.expenseIndex;
@@ -1711,8 +1721,8 @@
           }
           const installmentBadge = instLabel ? `<span class="installment-badge">${instLabel}</span>` : '';
           const webSearchBadge = item.webSearched ? `<span class="web-search-badge" title="זוהה באמצעות חיפוש באינטרנט">🌐</span>` : '';
-          const googleSearch = `<a href="https://www.google.com/search?q=${encodeURIComponent(item.description)}" target="_blank" class="google-search-btn" title="חפש בגוגל">🔍</a>`;
-          const suggestBtn = `<button type="button" class="suggest-categories-btn" onclick="event.stopPropagation();showCategorySuggestions(${flatIndex}, this)" title="הצע קטגוריה חלופית">🏷️</button>`;
+          const googleSearch = `<a href="https://www.google.com/search?q=${encodeURIComponent(item.description)}" target="_blank" draggable="false" class="google-search-btn" title="חפש בגוגל">🔍</a>`;
+          const suggestBtn = `<button type="button" draggable="false" class="suggest-categories-btn" onclick="event.stopPropagation();event.preventDefault();showCategorySuggestions(${flatIndex}, this)" title="הצע קטגוריה חלופית">🏷️</button>`;
           const refundClass = item.isRefund ? ' refund' : '';
           return `
           <div class="expense-item" draggable="true" data-expense-index="${flatIndex}">
