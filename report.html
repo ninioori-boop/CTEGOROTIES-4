@@ -1208,6 +1208,10 @@
       if (!grid) return;
 
       grid.addEventListener('dragstart', (e) => {
+        if (e.target.closest('button, a, .google-search-btn, .suggest-categories-btn')) {
+          e.preventDefault();
+          return;
+        }
         const item = e.target.closest('.expense-item');
         if (!item) return;
         const index = item.dataset.expenseIndex;
