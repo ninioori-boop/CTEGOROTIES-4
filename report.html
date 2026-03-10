@@ -1223,19 +1223,15 @@
       const openAbove = spaceBelow < popupHeight + 10 && rect.top > popupHeight;
 
       if (openAbove) {
-        popup.style.top = (rect.top + window.scrollY - popupHeight - 6) + 'px';
+        popup.style.top = (rect.top - popupHeight - 6) + 'px';
       } else {
-        popup.style.top = (rect.bottom + window.scrollY + 6) + 'px';
+        popup.style.top = (rect.bottom + 6) + 'px';
       }
 
       const popupWidth = popup.offsetWidth;
-      let leftPos = rect.left + window.scrollX + (rect.width / 2) - (popupWidth / 2);
+      let leftPos = rect.left + (rect.width / 2) - (popupWidth / 2);
       leftPos = Math.max(8, Math.min(leftPos, window.innerWidth - popupWidth - 8));
       popup.style.left = leftPos + 'px';
-
-      popup.style.border = '3px solid red';
-      var dbg = 'POPUP CREATED: children=' + popup.children.length + ', top=' + popup.style.top + ', left=' + popup.style.left + ', inDOM=' + document.body.contains(popup) + ', overlayInDOM=' + document.body.contains(overlay);
-      alert(dbg);
     }
 
     let _currentDropTarget = null;
