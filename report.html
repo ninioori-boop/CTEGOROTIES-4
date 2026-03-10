@@ -1171,18 +1171,20 @@
 
       const expenses = getExpensesForCard(currentCard);
       const expense = expenses[flatIndex];
-      if (!expense) return;
+      if (!expense) { alert('DEBUG: no expense at index ' + flatIndex); return; }
 
       const currentCat = expense.category || 'שונות';
 
       const allCategories = new Set(Object.keys(CATEGORY_ICONS));
       expenses.forEach(e => { if (e.category) allCategories.add(e.category); });
 
+      const filtered = Array.from(allCategories).filter(cat => cat !== currentCat);
+      alert('DEBUG: function called. expense=' + expense.description + ', currentCat=' + currentCat + ', options=' + filtered.length);
+
       const popup = document.createElement('div');
       popup.className = 'category-suggest-popup';
 
-      Array.from(allCategories)
-        .filter(cat => cat !== currentCat)
+      filtered
         .sort((a, b) => a.localeCompare(b, 'he'))
         .forEach(cat => {
           const icon = CATEGORY_ICONS[cat] || '📦';
@@ -1216,6 +1218,7 @@
       let leftPos = rect.left + window.scrollX + (rect.width / 2) - (popupWidth / 2);
       leftPos = Math.max(8, Math.min(leftPos, window.innerWidth - popupWidth - 8));
       popup.style.left = leftPos + 'px';
+      alert('DEBUG: popup created and positioned. top=' + popup.style.top + ' left=' + popup.style.left);
     }
 
     let _currentDropTarget = null;
