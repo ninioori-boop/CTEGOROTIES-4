@@ -733,6 +733,7 @@
       font-family: inherit;
       padding: 0;
       -webkit-user-drag: none;
+      touch-action: manipulation;
     }
 
     .suggest-categories-btn:hover {
@@ -741,6 +742,16 @@
       border-color: #e67e22;
       transform: scale(1.15);
       box-shadow: 0 2px 8px rgba(230, 126, 34, 0.4);
+    }
+
+    @media (pointer: coarse) {
+      .suggest-categories-btn,
+      .google-search-btn {
+        min-width: 44px;
+        min-height: 44px;
+        width: 44px;
+        height: 44px;
+      }
     }
 
     .category-suggest-popup {
@@ -1146,29 +1157,16 @@
     }
 
     document.addEventListener('click', (e) => {
-      if (_activeSuggestPopup) {
-        const willClose = !e.target.closest('.category-suggest-popup') && !e.target.closest('.suggest-categories-btn');
-        // #region agent log
-        console.log('[DEBUG-H5] doc click with active popup, willClose:', willClose, 'target:', e.target.tagName, e.target.className);
-        fetch('http://127.0.0.1:7373/ingest/4b985a7c-b014-4127-90b4-c78f901c5db0',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'ab5aab'},body:JSON.stringify({sessionId:'ab5aab',location:'report.html:doc-click',message:'H5: doc click with active popup',data:{willClose:willClose,targetTag:e.target.tagName,targetClass:e.target.className},timestamp:Date.now(),hypothesisId:'H5'})}).catch(()=>{});
-        // #endregion
-        if (willClose) closeSuggestPopup();
+      if (_activeSuggestPopup && !e.target.closest('.category-suggest-popup') && !e.target.closest('.suggest-categories-btn')) {
+        closeSuggestPopup();
       }
     });
 
     function showCategorySuggestions(flatIndex, btnElement) {
-      // #region agent log
-      console.log('[DEBUG-H3] showCategorySuggestions entered, flatIndex:', flatIndex, 'btnElement:', !!btnElement, 'currentCard:', currentCard);
-      fetch('http://127.0.0.1:7373/ingest/4b985a7c-b014-4127-90b4-c78f901c5db0',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'ab5aab'},body:JSON.stringify({sessionId:'ab5aab',location:'report.html:showCategorySuggestions-entry',message:'H3: function entered',data:{flatIndex:flatIndex,btnElement:!!btnElement,currentCard:currentCard},timestamp:Date.now(),hypothesisId:'H3'})}).catch(()=>{});
-      // #endregion
       closeSuggestPopup();
 
       const expenses = getExpensesForCard(currentCard);
       const expense = expenses[flatIndex];
-      // #region agent log
-      console.log('[DEBUG-H3] expense lookup:', flatIndex, 'found:', !!expense, 'total expenses:', expenses.length);
-      fetch('http://127.0.0.1:7373/ingest/4b985a7c-b014-4127-90b4-c78f901c5db0',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'ab5aab'},body:JSON.stringify({sessionId:'ab5aab',location:'report.html:showCategorySuggestions-expense',message:'H3: expense lookup',data:{flatIndex:flatIndex,expenseFound:!!expense,expensesLength:expenses.length,expenseDesc:expense?expense.description:'N/A'},timestamp:Date.now(),hypothesisId:'H3'})}).catch(()=>{});
-      // #endregion
       if (!expense) return;
 
       const currentCat = expense.category || 'שונות';
@@ -1197,9 +1195,6 @@
 
       document.body.appendChild(popup);
       _activeSuggestPopup = popup;
-      // #region agent log
-      console.log('[DEBUG-H4] popup created, children:', popup.children.length, 'height:', popup.offsetHeight, 'width:', popup.offsetWidth);
-      fetch('http://127.0.0.1:7373/ingest/4b985a7c-b014-4127-90b4-c78f901c5db0',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'ab5aab'},body:JSON.stringify({sessionId:'ab5aab',location:'report.html:showCategorySuggestions-popup',message:'H4: popup created and appended',data:{popupChildren:popup.children.length,popupHeight:popup.offsetHeight,popupWidth:popup.offsetWidth},timestamp:Date.now(),hypothesisId:'H4'})}).catch(()=>{});
 
       const rect = btnElement.getBoundingClientRect();
       const popupHeight = popup.offsetHeight;
@@ -1226,55 +1221,7 @@
       const barChart = document.getElementById('barChart');
       if (!grid) return;
 
-      // #region agent log
-      console.log('[DEBUG-H1] setupDragAndDrop called, grid found:', !!grid);
-      fetch('http://127.0.0.1:7373/ingest/4b985a7c-b014-4127-90b4-c78f901c5db0',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'ab5aab'},body:JSON.stringify({sessionId:'ab5aab',location:'report.html:setupDragAndDrop',message:'H1: setupDragAndDrop called',data:{gridExists:!!grid},timestamp:Date.now(),hypothesisId:'H1'})}).catch(()=>{});
-      // #endregion
-
-      let _suggestHandled = false;
-
-      grid.addEventListener('mouseup', (e) => {
-        const suggestBtn = e.target.closest('.suggest-categories-btn');
-        if (suggestBtn) {
-          // #region agent log
-          console.log('[DEBUG-H6] mouseup on suggest btn, idx:', suggestBtn.dataset.suggestIndex);
-          // #endregion
-          e.stopPropagation();
-          _suggestHandled = true;
-          const idx = parseInt(suggestBtn.dataset.suggestIndex, 10);
-          showCategorySuggestions(idx, suggestBtn);
-          setTimeout(() => { _suggestHandled = false; }, 0);
-        }
-      });
-
-      grid.addEventListener('click', (e) => {
-        // #region agent log
-        console.log('[DEBUG-H2] grid click:', e.target.tagName, e.target.className, 'closestBtn:', !!e.target.closest('.suggest-categories-btn'), 'alreadyHandled:', _suggestHandled);
-        // #endregion
-        const suggestBtn = e.target.closest('.suggest-categories-btn');
-        if (suggestBtn) {
-          e.stopPropagation();
-          if (_suggestHandled) return;
-          const idx = parseInt(suggestBtn.dataset.suggestIndex, 10);
-          // #region agent log
-          console.log('[DEBUG-H2] suggest btn matched via click! idx:', idx);
-          // #endregion
-          showCategorySuggestions(idx, suggestBtn);
-        }
-      });
-
-      let _dragClickedElement = null;
-      grid.addEventListener('mousedown', (e) => {
-        _dragClickedElement = e.target;
-      });
-
       grid.addEventListener('dragstart', (e) => {
-        if (_dragClickedElement && _dragClickedElement.closest('button, a, .google-search-btn, .suggest-categories-btn')) {
-          e.preventDefault();
-          _dragClickedElement = null;
-          return;
-        }
-        _dragClickedElement = null;
         const item = e.target.closest('.expense-item');
         if (!item) return;
         const index = item.dataset.expenseIndex;
@@ -1775,7 +1722,7 @@
           const installmentBadge = instLabel ? `<span class="installment-badge">${instLabel}</span>` : '';
           const webSearchBadge = item.webSearched ? `<span class="web-search-badge" title="זוהה באמצעות חיפוש באינטרנט">🌐</span>` : '';
           const googleSearch = `<a href="https://www.google.com/search?q=${encodeURIComponent(item.description)}" target="_blank" draggable="false" class="google-search-btn" title="חפש בגוגל">🔍</a>`;
-          const suggestBtn = `<button type="button" draggable="false" class="suggest-categories-btn" data-suggest-index="${flatIndex}" title="הצע קטגוריה חלופית">🏷️</button>`;
+          const suggestBtn = `<button type="button" class="suggest-categories-btn" onclick="event.stopPropagation();showCategorySuggestions(${flatIndex}, this)" title="הצע קטגוריה חלופית">🏷️</button>`;
           const refundClass = item.isRefund ? ' refund' : '';
           return `
           <div class="expense-item" draggable="true" data-expense-index="${flatIndex}">
