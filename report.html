@@ -1231,18 +1231,33 @@
       fetch('http://127.0.0.1:7373/ingest/4b985a7c-b014-4127-90b4-c78f901c5db0',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'ab5aab'},body:JSON.stringify({sessionId:'ab5aab',location:'report.html:setupDragAndDrop',message:'H1: setupDragAndDrop called',data:{gridExists:!!grid},timestamp:Date.now(),hypothesisId:'H1'})}).catch(()=>{});
       // #endregion
 
+      let _suggestHandled = false;
+
+      grid.addEventListener('mouseup', (e) => {
+        const suggestBtn = e.target.closest('.suggest-categories-btn');
+        if (suggestBtn) {
+          // #region agent log
+          console.log('[DEBUG-H6] mouseup on suggest btn, idx:', suggestBtn.dataset.suggestIndex);
+          // #endregion
+          e.stopPropagation();
+          _suggestHandled = true;
+          const idx = parseInt(suggestBtn.dataset.suggestIndex, 10);
+          showCategorySuggestions(idx, suggestBtn);
+          setTimeout(() => { _suggestHandled = false; }, 0);
+        }
+      });
+
       grid.addEventListener('click', (e) => {
         // #region agent log
-        console.log('[DEBUG-H2] grid click:', e.target.tagName, e.target.className, 'closestBtn:', !!e.target.closest('.suggest-categories-btn'));
-        fetch('http://127.0.0.1:7373/ingest/4b985a7c-b014-4127-90b4-c78f901c5db0',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'ab5aab'},body:JSON.stringify({sessionId:'ab5aab',location:'report.html:grid-click',message:'H2: grid click fired',data:{targetTag:e.target.tagName,targetClass:e.target.className,closestBtn:!!e.target.closest('.suggest-categories-btn')},timestamp:Date.now(),hypothesisId:'H2'})}).catch(()=>{});
+        console.log('[DEBUG-H2] grid click:', e.target.tagName, e.target.className, 'closestBtn:', !!e.target.closest('.suggest-categories-btn'), 'alreadyHandled:', _suggestHandled);
         // #endregion
         const suggestBtn = e.target.closest('.suggest-categories-btn');
         if (suggestBtn) {
           e.stopPropagation();
+          if (_suggestHandled) return;
           const idx = parseInt(suggestBtn.dataset.suggestIndex, 10);
           // #region agent log
-          console.log('[DEBUG-H2] suggest btn matched! idx:', idx);
-          fetch('http://127.0.0.1:7373/ingest/4b985a7c-b014-4127-90b4-c78f901c5db0',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'ab5aab'},body:JSON.stringify({sessionId:'ab5aab',location:'report.html:grid-click-match',message:'H2: suggest btn matched',data:{idx:idx,dataAttr:suggestBtn.dataset.suggestIndex},timestamp:Date.now(),hypothesisId:'H2'})}).catch(()=>{});
+          console.log('[DEBUG-H2] suggest btn matched via click! idx:', idx);
           // #endregion
           showCategorySuggestions(idx, suggestBtn);
         }
