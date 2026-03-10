@@ -688,6 +688,30 @@
       color: var(--gray);
     }
 
+    /* Google Search Button */
+    .google-search-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      font-size: 0.85rem;
+      text-decoration: none;
+      border-radius: 50%;
+      margin-left: 6px;
+      background: #f0f4ff;
+      color: #4285f4;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+    }
+
+    .google-search-btn:hover {
+      background: #4285f4;
+      color: #fff;
+      transform: scale(1.15);
+      box-shadow: 0 2px 8px rgba(66, 133, 244, 0.4);
+    }
+
     /* Print Styles */
     @media print {
       body {
@@ -695,6 +719,10 @@
       }
       
       .actions {
+        display: none;
+      }
+
+      .google-search-btn {
         display: none;
       }
       
@@ -1518,6 +1546,7 @@
       // כרטיסיות קטגוריות
       const cardsHTML = sortedCategories.map(([category, data]) => {
         const icon = CATEGORY_ICONS[category] || '📦';
+        const isMisc = category === 'שונות';
         const itemsHTML = data.items.map(item => {
           const flatIndex = expenses.indexOf(item);
           const refundBadge = item.isRefund ? `<span class="refund-badge">החזר</span>` : '';
@@ -1537,10 +1566,13 @@
           }
           const installmentBadge = instLabel ? `<span class="installment-badge">${instLabel}</span>` : '';
           const webSearchBadge = item.webSearched ? `<span class="web-search-badge" title="זוהה באמצעות חיפוש באינטרנט">🌐</span>` : '';
+          const googleSearch = isMisc
+            ? `<a href="https://www.google.com/search?q=${encodeURIComponent(item.description)}" target="_blank" class="google-search-btn" title="חפש בגוגל">🔍</a>`
+            : '';
           const refundClass = item.isRefund ? ' refund' : '';
           return `
           <div class="expense-item" draggable="true" data-expense-index="${flatIndex}">
-              <span class="expense-name">${refundBadge}${standingOrderBadge}${installmentBadge}${webSearchBadge}${item.description}</span>
+              <span class="expense-name">${refundBadge}${standingOrderBadge}${installmentBadge}${webSearchBadge}${item.description}${googleSearch}</span>
             <div class="expense-actions">
               <span class="expense-amount${refundClass}">${item.amount.toLocaleString('he-IL', { maximumFractionDigits: 2 })} ₪</span>
               <button type="button" class="btn-expense-action" onclick="event.stopPropagation();editExpense(${flatIndex})" title="ערוך">✏️</button>
