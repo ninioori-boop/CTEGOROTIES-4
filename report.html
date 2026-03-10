@@ -1546,7 +1546,6 @@
       // כרטיסיות קטגוריות
       const cardsHTML = sortedCategories.map(([category, data]) => {
         const icon = CATEGORY_ICONS[category] || '📦';
-        const isMisc = category === 'שונות';
         const itemsHTML = data.items.map(item => {
           const flatIndex = expenses.indexOf(item);
           const refundBadge = item.isRefund ? `<span class="refund-badge">החזר</span>` : '';
@@ -1566,9 +1565,7 @@
           }
           const installmentBadge = instLabel ? `<span class="installment-badge">${instLabel}</span>` : '';
           const webSearchBadge = item.webSearched ? `<span class="web-search-badge" title="זוהה באמצעות חיפוש באינטרנט">🌐</span>` : '';
-          const googleSearch = isMisc
-            ? `<a href="https://www.google.com/search?q=${encodeURIComponent(item.description)}" target="_blank" class="google-search-btn" title="חפש בגוגל">🔍</a>`
-            : '';
+          const googleSearch = `<a href="https://www.google.com/search?q=${encodeURIComponent(item.description)}" target="_blank" class="google-search-btn" title="חפש בגוגל">🔍</a>`;
           const refundClass = item.isRefund ? ' refund' : '';
           return `
           <div class="expense-item" draggable="true" data-expense-index="${flatIndex}">
