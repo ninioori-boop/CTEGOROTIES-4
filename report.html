@@ -1724,7 +1724,7 @@
           const installmentBadge = instLabel ? `<span class="installment-badge">${instLabel}</span>` : '';
           const webSearchBadge = item.webSearched ? `<span class="web-search-badge" title="זוהה באמצעות חיפוש באינטרנט">🌐</span>` : '';
           const googleSearch = `<a href="https://www.google.com/search?q=${encodeURIComponent(item.description)}" target="_blank" draggable="false" class="google-search-btn" title="חפש בגוגל">🔍</a>`;
-          const suggestBtn = `<button type="button" draggable="false" class="suggest-categories-btn" onclick="event.stopPropagation();alert('suggest clicked');showCategorySuggestions(${flatIndex}, this)" title="הצע קטגוריה חלופית">🏷️</button>`;
+          const suggestBtn = `<button type="button" draggable="false" class="suggest-categories-btn" onclick="event.stopPropagation();showCategorySuggestions(${flatIndex}, this)" title="הצע קטגוריה חלופית">🏷️</button>`;
           const refundClass = item.isRefund ? ' refund' : '';
           return `
           <div class="expense-item" draggable="true" data-expense-index="${flatIndex}">
